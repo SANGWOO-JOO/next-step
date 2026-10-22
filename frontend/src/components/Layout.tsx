@@ -4,6 +4,7 @@ const MENUS = [
   { to: '/', label: '일정', end: true },
   { to: '/focus', label: '집중' },
   { to: '/plan', label: '계획' },
+  { to: '/log', label: '기록' },
   { to: '/dashboard', label: '대시보드' },
   { to: '/checklist', label: '체크리스트' },
   { to: '/settings', label: '설정' },

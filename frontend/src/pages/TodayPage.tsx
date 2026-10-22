@@ -1,13 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getCategories, type Category } from '../api/categories'
 import { errorMessage } from '../api/client'
-import {
-  getDailyGoalsBetween,
-  getUnfinishedDailyGoals,
-  moveDailyGoal,
-  type DailyGoal,
-} from '../api/dailyGoals'
+import { getDailyGoalsBetween, getUnfinishedDailyGoals, type DailyGoal } from '../api/dailyGoals'
 import { getWeeklyGoalsOfWeek, type WeeklyGoal } from '../api/goals'
 import {
   DEFAULT_BREAK_MINUTES,
@@ -19,15 +14,14 @@ import {
   startFocus,
   type FocusSession,
 } from '../api/focus'
-import { getHealth, type Health } from '../api/health'
-import { getDailyLog, getManualLogs, type DailyLog, type ManualStudyLog } from '../api/records'
+import { getHealth } from '../api/health'
+import { CONDITION_LABELS, getDailyLog, getManualLogs, type DailyLog, type ManualStudyLog } from '../api/records'
 import { getWeeklyJournals } from '../api/reviews'
 import { getWeeklyPlansOfDate, type WeeklyPlan } from '../api/weeklyPlans'
 import { getTimeBlocksBetween, type TimeBlock } from '../api/timeBlocks'
-import CategoryBadge from '../components/CategoryBadge'
 import DailyGoalPanel from '../components/DailyGoalPanel'
-import DailyLogCard from '../components/DailyLogCard'
-import WeeklyPlanItem from '../components/WeeklyPlanItem'
+import PullSection from '../components/today/PullSection'
+import ShutdownDialog from '../components/today/ShutdownDialog'
 import ScheduleView from '../components/ScheduleView'
 import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, todaySeoul, weekDates } from '../utils/date'
 import { journalDue, plannedKey } from './plan/planData'
@@ -55,6 +49,7 @@ export default function TodayPage() {
   const [plans, setPlans] = useState<WeeklyPlan[]>([])
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null)
   const [manualLogs, setManualLogs] = useState<ManualStudyLog[]>([])
+  const [shutdown, setShutdown] = useState(false)
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
 
@@ -152,6 +147,14 @@ export default function TodayPage() {
           </span>
           {uncheckedNotes > 0 && <Link to="/focus#notes">확인 안 한 메모 {uncheckedNotes}개</Link>}
           {!current && <Link to="/focus">분류만으로 집중하기</Link>}
+          <span className="status-end">
+            {dailyLog?.saved && (
+              <button className="ghost log-chip" onClick={() => setShutdown(true)} title="오늘 기록 보기·고치기">
+                오늘 기록 ✓ {dailyLog.condition ? CONDITION_LABELS[dailyLog.condition] : ''}
+              </button>
+            )}
+            {!dailyLog?.saved && <button onClick={() => setShutdown(true)}>🌙 하루 마무리</button>}
+          </span>
         </div>
       </div>
       {error && (
@@ -163,31 +166,17 @@ export default function TodayPage() {
         </p>
       )}
 
-      {weeklyGoals && <WeekPlanBanner today={today} monday={thisMonday} hasWeeklyGoals={weeklyGoals.length > 0} />}
-      <WeekReviewBanner today={today} monday={thisMonday} />
-
-      {unfinished.length > 0 && (
-        <UnfinishedCard goals={unfinished} today={today} weeklyGoals={weeklyGoals ?? []} run={run} />
-      )}
-
-      {plans.length > 0 && (
-        <div className="card">
-          <h3 className="timeline-title">이번 주 계획 중 오늘 할 것</h3>
-          <ul className="plan-list today-plans">
-            {plans.map((p) => (
-              <WeeklyPlanItem
-                key={p.id}
-                plan={p}
-                hasDailyGoal={goals.some((g) => g.content === p.content)}
-                run={run}
-              />
-            ))}
-          </ul>
-        </div>
-      )}
+      <AlertSlot
+        today={today}
+        monday={thisMonday}
+        hasWeeklyGoals={weeklyGoals === null ? null : weeklyGoals.length > 0}
+        logSaved={dailyLog?.saved ?? true}
+        onShutdown={() => setShutdown(true)}
+      />
 
       <div className="today-grid today-layout">
         <div className="card">
+          <Workload blocks={blocks.filter((b) => b.date === today)} goals={goals} />
           <DailyGoalPanel
             key={today}
             date={today}
@@ -198,6 +187,14 @@ export default function TodayPage() {
             run={run}
             timeBlocks={blocks.filter((b) => b.date === today)}
             onStartFocus={current ? undefined : startFocusFor}
+          />
+          <PullSection
+            today={today}
+            unfinished={unfinished}
+            plans={plans}
+            goals={goals}
+            weeklyGoals={weeklyGoals ?? []}
+            run={run}
           />
           {weeklyGoals?.length === 0 && (
             <p className="small">
@@ -231,145 +228,23 @@ export default function TodayPage() {
         </div>
       </div>
 
-      <DailyLogCard date={today} log={dailyLog} manualLogs={manualLogs} categories={categories} run={run} />
+      {shutdown && (
+        <ShutdownDialog
+          date={today}
+          log={dailyLog}
+          goals={goals}
+          manualLogs={manualLogs}
+          categories={categories}
+          plannedMinutes={blocks
+            .filter((b) => b.date === today)
+            .reduce((sum, b) => sum + minutesOfDay(b.endAt, today) - minutesOfDay(b.startAt, today), 0)}
+          run={run}
+          onClose={() => setShutdown(false)}
+        />
+      )}
 
-      <ServerStatus />
+      <ServerAlert />
     </section>
-  )
-}
-
-type UnfinishedProps = {
-  goals: DailyGoal[]
-  today: string
-  weeklyGoals: WeeklyGoal[]
-  run: (action: () => Promise<unknown>) => Promise<boolean>
-}
-
-/** 지난 날짜의 미완료 목표를 오늘로 옮긴다. 지난주 목표는 이번 주 주간 목표를 골라 연결한다. */
-function UnfinishedCard({ goals, today, weeklyGoals, run }: UnfinishedProps) {
-  const [open, setOpen] = useState(false)
-  const [pickedId, setPickedId] = useState<number | null>(null)
-  const thisMonday = mondayOf(today)
-  const weeklyGoalId = weeklyGoals.find((w) => w.id === pickedId)?.id ?? weeklyGoals[0]?.id ?? null
-  const needsWeekly = (g: DailyGoal) => mondayOf(g.date) !== thisMonday
-  const movable = (g: DailyGoal) => !needsWeekly(g) || weeklyGoalId !== null
-
-  const moveToToday = (g: DailyGoal) => moveDailyGoal(g.id, today, needsWeekly(g) ? weeklyGoalId : null)
-
-  const moveAll = () =>
-    run(async () => {
-      // 차례대로 옮겨야 핵심 3개 제한이 순서대로 적용된다
-      for (const g of goals.filter(movable)) await moveToToday(g)
-    })
-
-  return (
-    <div className="card warning-card">
-      <div className="goal-header">
-        <strong className="goal-title">지난 미완료 {goals.length}개</strong>
-        <button onClick={moveAll} disabled={!goals.some(movable)}>
-          모두 오늘로
-        </button>
-        <button className="ghost" onClick={() => setOpen(!open)}>
-          {open ? '접기' : '하나씩 보기'}
-        </button>
-      </div>
-      {goals.some(needsWeekly) &&
-        (weeklyGoals.length > 0 ? (
-          <p className="inline-form small">
-            지난주 목표는 이번 주 주간 목표에 연결돼요:
-            <select
-              value={weeklyGoalId ?? ''}
-              onChange={(e) => setPickedId(Number(e.target.value))}
-              aria-label="연결할 이번 주 주간 목표"
-            >
-              {weeklyGoals.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.content}
-                </option>
-              ))}
-            </select>
-          </p>
-        ) : (
-          <p className="muted small">지난주 목표를 옮기려면 이번 주 주간 목표가 먼저 있어야 해요.</p>
-        ))}
-      {open && (
-        <ul className="unfinished-list">
-          {goals.map((g) => (
-            <li key={g.id}>
-              <span className="muted small">{dayLabel(g.date)}</span>
-              <span>{g.content}</span>
-              {g.category && <CategoryBadge name={g.category.name} color={g.category.color} />}
-              {g.carryCount > 0 && <span className="carry">↻{g.carryCount}</span>}
-              <button className="ghost" disabled={!movable(g)} onClick={() => run(() => moveToToday(g))}>
-                오늘로
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-}
-
-function ServerStatus() {
-  const [health, setHealth] = useState<Health | null>(null)
-  const [failed, setFailed] = useState(false)
-
-  useEffect(() => {
-    getHealth()
-      .then(setHealth)
-      .catch(() => setFailed(true))
-  }, [])
-
-  return (
-    <p className="muted small server-status">
-      서버{' '}
-      {failed ? (
-        <span className="status down">연결 실패</span>
-      ) : (
-        <>
-          <span className={health?.status === 'UP' ? 'status up' : 'status'}>{health?.status ?? '…'}</span> · DB{' '}
-          <span className={health?.database === 'UP' ? 'status up' : 'status down'}>{health?.database ?? '…'}</span>
-        </>
-      )}
-    </p>
-  )
-}
-
-/** 월요일이거나 이번 주 주간 목표가 없으면 '이번 주 계획하기'를 띄운다(docs/design.md 1-4c). 월요일 배너는 이번 주만 닫을 수 있다. */
-function WeekPlanBanner({ today, monday, hasWeeklyGoals }: { today: string; monday: string; hasWeeklyGoals: boolean }) {
-  const read = () => {
-    try {
-      return localStorage.getItem(plannedKey(monday)) === '1'
-    } catch {
-      return false
-    }
-  }
-  const [dismissed, setDismissed] = useState(read)
-  const show = !hasWeeklyGoals || (today === monday && !dismissed)
-  if (!show) return null
-
-  const dismiss = () => {
-    try {
-      localStorage.setItem(plannedKey(monday), '1')
-    } catch {
-      // 저장 못 해도 지금은 닫는다
-    }
-    setDismissed(true)
-  }
-
-  return (
-    <p className="focus-banner plan-banner">
-      <span>{hasWeeklyGoals ? '새로운 한 주예요. 지난주를 돌아보고 이번 주를 계획해요.' : '이번 주 주간 목표가 아직 없어요.'}</span>
-      <span className="row-actions">
-        <Link className="button-link" to={`/plan?level=week&date=${monday}`}>이번 주 계획하기 ▶</Link>
-        {hasWeeklyGoals && (
-          <button className="icon" onClick={dismiss} aria-label="이번 주는 닫기">
-            ×
-          </button>
-        )}
-      </span>
-    </p>
   )
 }
 
@@ -406,25 +281,133 @@ function NowNext({ blocks }: { blocks: TimeBlock[] }) {
   return <span className="muted">오늘 남은 시간 블록이 없어요.</span>
 }
 
-/** 금~일요일에 이번 주 일지를 아직 안 썼으면 '이번 주 돌아보기'를 띄운다(docs/design.md 1-4c 회고 위치) */
-function WeekReviewBanner({ today, monday }: { today: string; monday: string }) {
-  const [written, setWritten] = useState<boolean | null>(null)
-  const due = journalDue(monday, today)
+/**
+ * 알림 한 칸(docs/design.md 6장 1-4d): 그때 가장 중요한 하나만 보여준다.
+ * 주간 목표 없음 > 월요일 계획하기 > 금~일 돌아보기 > 21시 이후 하루 마무리
+ */
+function AlertSlot({
+  today,
+  monday,
+  hasWeeklyGoals,
+  logSaved,
+  onShutdown,
+}: {
+  today: string
+  monday: string
+  hasWeeklyGoals: boolean | null
+  logSaved: boolean
+  onShutdown: () => void
+}) {
+  const [planDismissed, setPlanDismissed] = useState(() => {
+    try {
+      return localStorage.getItem(plannedKey(monday)) === '1'
+    } catch {
+      return false
+    }
+  })
+  const [journalWritten, setJournalWritten] = useState<boolean | null>(null)
+  const reviewDue = journalDue(monday, today)
 
   useEffect(() => {
-    if (!due) return
+    if (!reviewDue) return
     getWeeklyJournals(monday, monday)
-      .then((list) => setWritten(list.length > 0))
-      .catch(() => setWritten(null))
-  }, [due, monday])
+      .then((list) => setJournalWritten(list.length > 0))
+      .catch(() => setJournalWritten(null))
+  }, [reviewDue, monday])
 
-  if (!due || written !== false) return null
+  const dismissPlan = () => {
+    try {
+      localStorage.setItem(plannedKey(monday), '1')
+    } catch {
+      // 저장 못 해도 지금은 닫는다
+    }
+    setPlanDismissed(true)
+  }
+
+  if (hasWeeklyGoals === null) return null
+  const planLink = `/plan?level=week&date=${monday}`
+  let alert: { text: string; action: ReactNode; onClose?: () => void } | null = null
+  if (!hasWeeklyGoals) {
+    alert = { text: '이번 주 주간 목표가 아직 없어요.', action: <Link className="button-link" to={planLink}>이번 주 계획하기 ▶</Link> }
+  } else if (today === monday && !planDismissed) {
+    alert = {
+      text: '새로운 한 주예요. 지난주를 돌아보고 이번 주를 계획해요.',
+      action: <Link className="button-link" to={planLink}>이번 주 계획하기 ▶</Link>,
+      onClose: dismissPlan,
+    }
+  } else if (reviewDue && journalWritten === false) {
+    alert = {
+      text: '한 주가 끝나가요. 이번 주를 돌아보고 다음 주에 바꿀 한 가지를 정해요.',
+      action: <Link className="button-link" to={planLink}>이번 주 돌아보기</Link>,
+    }
+  } else if (nowMinutesSeoul() >= SHUTDOWN_HOUR * 60 && !logSaved) {
+    alert = {
+      text: '저녁 9시가 지났어요. 오늘을 마무리하고 내일을 가볍게 시작해요.',
+      action: (
+        <button onClick={onShutdown}>
+          하루 마무리
+        </button>
+      ),
+    }
+  }
+  if (!alert) return null
+
   return (
     <p className="focus-banner plan-banner">
-      <span>한 주가 끝나가요. 이번 주를 돌아보고 다음 주에 바꿀 한 가지를 정해요.</span>
-      <Link className="button-link" to={`/plan?level=week&date=${monday}`}>
-        이번 주 돌아보기
-      </Link>
+      <span>{alert.text}</span>
+      <span className="row-actions">
+        {alert.action}
+        {alert.onClose && (
+          <button className="icon" onClick={alert.onClose} aria-label="이번 주는 닫기">
+            ×
+          </button>
+        )}
+      </span>
+    </p>
+  )
+}
+
+/** 하루 마무리를 안내하는 시각 */
+const SHUTDOWN_HOUR = 21
+
+/** 오늘 시간 잡은 양과 남은 시간(지금~자정). 남은 일정이 남은 시간보다 많으면 경고(Sunsama의 과부하 경고 참고) */
+function Workload({ blocks, goals }: { blocks: TimeBlock[]; goals: DailyGoal[] }) {
+  const today = todaySeoul()
+  const now = nowMinutesSeoul()
+  const spans = blocks.map((b) => ({ start: minutesOfDay(b.startAt, today), end: minutesOfDay(b.endAt, today), goalId: b.dailyGoalId }))
+  const planned = spans.reduce((sum, x) => sum + x.end - x.start, 0)
+  const ahead = spans.reduce((sum, x) => sum + Math.max(0, x.end - Math.max(x.start, now)), 0)
+  const left = Math.max(0, 1440 - now)
+  const unscheduled = goals.filter((g) => g.status === 'TODO' && !spans.some((x) => x.goalId === g.id)).length
+  const over = ahead > left
+  const hm = (m: number) => formatDuration(m * 60)
+
+  return (
+    <div className={over ? 'workload over' : 'workload'}>
+      <span className="small">
+        시간 잡음 <strong>{hm(planned)}</strong> · 남은 일정 {hm(ahead)} / 자정까지 {hm(left)}
+      </span>
+      <span className="workload-track">
+        <span className="workload-fill" style={{ width: `${Math.min(100, left ? (ahead / left) * 100 : 100)}%` }} />
+      </span>
+      {over && <span className="small">남은 시간보다 잡은 일이 많아요. 내일로 넘길 것을 골라요.</span>}
+      {!over && unscheduled > 0 && <span className="muted small">시간 안 잡은 할 일 {unscheduled}개</span>}
+    </div>
+  )
+}
+
+/** 서버 연결이 실패할 때만 알린다 */
+function ServerAlert() {
+  const [down, setDown] = useState(false)
+  useEffect(() => {
+    getHealth()
+      .then((h) => setDown(h.status !== 'UP' || h.database !== 'UP'))
+      .catch(() => setDown(true))
+  }, [])
+  if (!down) return null
+  return (
+    <p className="error-banner" role="alert">
+      서버나 DB에 연결할 수 없어요. 백엔드와 docker compose가 켜져 있는지 확인해 주세요.
     </p>
   )
 }

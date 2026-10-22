@@ -16,6 +16,8 @@ export type DailySummary = {
 
 export type DailyLog = {
   date: string
+  /** 그날 완료한 하루 목표 */
+  doneGoals: string[]
   /** 아직 저장하지 않았으면 false */
   saved: boolean
   memo: string | null
@@ -39,3 +41,6 @@ export const getDailyLog = (date: string) => api.get<DailyLog>(`/api/daily-logs/
 
 export const saveDailyLog = (date: string, input: { memo: string | null; condition: number | null }) =>
   api.put<DailyLog>(`/api/daily-logs/${date}`, input)
+
+/** 기록 페이지: 기록이나 공부가 있는 날(최신순, 최대 62일) */
+export const getDailyLogs = (from: string, to: string) => api.get<DailyLog[]>(`/api/daily-logs?from=${from}&to=${to}`)
