@@ -53,7 +53,6 @@ export default function DailyGoalPanel({
   onStartFocus,
 }: Props) {
   const [notice, setNotice] = useState<string | null>(null)
-  const [adding, setAdding] = useState(false)
   const core = goals.filter((g) => g.type === 'CORE')
   const extra = goals.filter((g) => g.type === 'EXTRA')
 
@@ -108,22 +107,14 @@ export default function DailyGoalPanel({
 
       {weeklyGoals.length === 0 ? (
         <p className="muted small">이 주의 주간 목표가 없어요. 먼저 주간 목표를 추가해야 하루 목표를 연결할 수 있어요.</p>
-      ) : adding ? (
+      ) : (
         <NewDailyGoalForm
+          key={date}
           date={date}
           weeklyGoals={weeklyGoals}
           categories={categories}
-          onSubmit={(input) =>
-            run(() => createDailyGoal(input)).then((ok) => {
-              if (ok) setAdding(false)
-            })
-          }
-          onCancel={() => setAdding(false)}
+          onSubmit={(input) => run(() => createDailyGoal(input))}
         />
-      ) : (
-        <button className="ghost add" onClick={() => setAdding(true)}>
-          + 하루 목표
-        </button>
       )}
     </div>
   )
@@ -354,69 +345,106 @@ type NewFormProps = {
   date: string
   weeklyGoals: WeeklyGoal[]
   categories: Category[]
-  onSubmit: (input: Parameters<typeof createDailyGoal>[0]) => void
-  onCancel: () => void
+  /** 성공하면 true. 입력란을 비우고 다음 것을 바로 쓸 수 있게 한다 */
+  onSubmit: (input: Parameters<typeof createDailyGoal>[0]) => Promise<boolean>
 }
 
-function NewDailyGoalForm({ date, weeklyGoals, categories, onSubmit, onCancel }: NewFormProps) {
+/**
+ * 한 줄 빠른 추가(Todoist 빠른 추가 참고). 내용만 쓰고 Enter를 누르면
+ * 첫 번째 주간 목표에 연결하고, 분류는 주간 목표에서 물려받고, 핵심 자리가 있으면 핵심으로 넣는다.
+ * '자세히'를 누르면 첫 행동·주간 목표·분류·유형을 고를 수 있다.
+ */
+function NewDailyGoalForm({ date, weeklyGoals, categories, onSubmit }: NewFormProps) {
   const [weeklyGoalId, setWeeklyGoalId] = useState(weeklyGoals[0].id)
   const [content, setContent] = useState('')
   const [firstAction, setFirstAction] = useState('')
   const [categoryId, setCategoryId] = useState<number | null>(null)
   const [type, setType] = useState<DailyGoalType | null>(null)
+  const [detailed, setDetailed] = useState(false)
   const inherited = weeklyGoals.find((w) => w.id === weeklyGoalId)?.category
+
+  const reset = () => {
+    setContent('')
+    setFirstAction('')
+    setCategoryId(null)
+    setType(null)
+    setDetailed(false)
+  }
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    onSubmit({ weeklyGoalId, date, content, firstAction: firstAction.trim() || null, categoryId, type })
+    if (!content.trim()) return
+    onSubmit({ weeklyGoalId, date, content, firstAction: firstAction.trim() || null, categoryId, type }).then(
+      (ok) => ok && reset(),
+    )
   }
 
   return (
-    <form className="stack-form daily-form" onSubmit={submit}>
-      <div className="inline-form">
+    <form
+      className={detailed ? 'quick-add detailed' : 'quick-add'}
+      onSubmit={submit}
+      onKeyDown={(e) => e.key === 'Escape' && reset()}
+    >
+      <div className="quick-add-row">
+        <span className="quick-add-plus" aria-hidden="true">
+          +
+        </span>
         <input
           className="grow"
-          placeholder="예: 경력 1번 프로젝트 성과 정리"
+          placeholder="하루 목표 추가 후 Enter"
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          required
+          maxLength={500}
+          aria-label="하루 목표 내용"
         />
-        <input
-          className="grow"
-          placeholder="첫 행동 (예: 노션 열고 제목만 쓰기)"
-          value={firstAction}
-          onChange={(e) => setFirstAction(e.target.value)}
-        />
+        <button type="button" className="ghost quick-add-more" onClick={() => setDetailed(!detailed)} aria-expanded={detailed}>
+          {detailed ? '간단히' : '자세히'}
+        </button>
+        {(detailed || content) && <button type="submit">추가</button>}
       </div>
-      <div className="inline-form">
-        <select
-          value={weeklyGoalId}
-          onChange={(e) => setWeeklyGoalId(Number(e.target.value))}
-          aria-label="연결할 주간 목표"
-        >
-          {weeklyGoals.map((w) => (
-            <option key={w.id} value={w.id}>
-              주간: {w.content}
-            </option>
-          ))}
-        </select>
-        <CategorySelect
-          categories={categories}
-          value={categoryId}
-          onChange={setCategoryId}
-          emptyLabel={inherited ? `주간 목표 분류 (${inherited.name})` : '주간 목표 분류 (미분류)'}
-        />
-        <select
-          value={type ?? ''}
-          onChange={(e) => setType(e.target.value === '' ? null : (e.target.value as DailyGoalType))}
-          aria-label="유형"
-        >
-          <option value="">자동 (핵심 자리가 있으면 핵심)</option>
-          <option value="CORE">핵심</option>
-          <option value="EXTRA">추가</option>
-        </select>
-        <FormButtons submitLabel="추가" onCancel={onCancel} />
-      </div>
+      {detailed && (
+        <div className="stack-form quick-add-detail">
+          <input
+            placeholder="첫 행동 (예: 노션 열고 제목만 쓰기)"
+            value={firstAction}
+            onChange={(e) => setFirstAction(e.target.value)}
+            maxLength={500}
+          />
+          <div className="inline-form">
+            <select
+              value={weeklyGoalId}
+              onChange={(e) => setWeeklyGoalId(Number(e.target.value))}
+              aria-label="연결할 주간 목표"
+            >
+              {weeklyGoals.map((w) => (
+                <option key={w.id} value={w.id}>
+                  주간: {w.content}
+                </option>
+              ))}
+            </select>
+            <CategorySelect
+              categories={categories}
+              value={categoryId}
+              onChange={setCategoryId}
+              emptyLabel={inherited ? `주간 목표 분류 (${inherited.name})` : '주간 목표 분류 (미분류)'}
+            />
+            <select
+              value={type ?? ''}
+              onChange={(e) => setType(e.target.value === '' ? null : (e.target.value as DailyGoalType))}
+              aria-label="유형"
+            >
+              <option value="">자동 (핵심 자리가 있으면 핵심)</option>
+              <option value="CORE">핵심</option>
+              <option value="EXTRA">추가</option>
+            </select>
+          </div>
+        </div>
+      )}
+      {!detailed && content && (
+        <p className="muted small quick-add-hint">
+          주간 “{weeklyGoals.find((w) => w.id === weeklyGoalId)?.content}”에 연결 · 분류 {inherited?.name ?? '미분류'} · 핵심 자리가 있으면 핵심
+        </p>
+      )}
     </form>
   )
 }

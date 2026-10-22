@@ -744,3 +744,11 @@ button.schedule-date:hover { background: color-mix(in srgb, var(--accent) 8%, tr
 button.schedule-date.today { color: var(--down); }
 button.schedule-date.selected { background: color-mix(in srgb, var(--accent) 16%, transparent); box-shadow: inset 0 -2px 0 var(--accent); }
 .workload.other-day { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+/* 하루 목표 한 줄 빠른 추가 */
+.quick-add { display: grid; gap: 0.35rem; margin-top: 0.5rem; }
+.quick-add-row { display: flex; align-items: center; gap: 0.4rem; }
+.quick-add-row input { flex: 1; }
+.quick-add-plus { color: var(--muted); font-weight: 700; width: 1rem; text-align: center; }
+.quick-add-more { padding: 0.25rem 0.5rem; font-size: 0.8rem; }
+.quick-add-detail { padding-left: 1.4rem; }
+.quick-add-hint { margin: 0; padding-left: 1.4rem; }
