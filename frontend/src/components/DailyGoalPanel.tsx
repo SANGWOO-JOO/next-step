@@ -17,6 +17,7 @@ import { createTimeBlock, type TimeBlock } from '../api/timeBlocks'
 import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, shiftDate, todaySeoul } from '../utils/date'
 import CategoryBadge from './CategoryBadge'
 import FormButtons from './FormButtons'
+import { GOAL_DRAG_TYPE } from './ScheduleView'
 import TimeBlockForm from './TimeBlockForm'
 
 /** 변경 요청을 실행하고 화면 데이터를 다시 불러온다. 성공 여부를 돌려준다. */
@@ -199,7 +200,12 @@ function DailyGoalItem({
   }
 
   return (
-    <div className="daily-item">
+    <div
+      className="daily-item"
+      draggable={!!blocks && !done}
+      onDragStart={(e) => e.dataTransfer.setData(GOAL_DRAG_TYPE, String(goal.id))}
+      title={blocks && !done ? '시간표로 끌어다 놓으면 1시간 블록이 생겨요' : undefined}
+    >
       <div className="daily-row">
         <input type="checkbox" checked={done} onChange={toggleDone} aria-label="완료" />
         {onStartFocus && !done && (

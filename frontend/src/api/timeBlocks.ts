@@ -24,3 +24,6 @@ export const updateTimeBlock = (id: number, input: TimeBlockInput) =>
   api.put<TimeBlock>(`/api/time-blocks/${id}`, input)
 
 export const deleteTimeBlock = (id: number) => api.delete<void>(`/api/time-blocks/${id}`)
+
+export const getTimeBlocksBetween = (from: string, to: string) =>
+  api.get<TimeBlock[]>(`/api/time-blocks?from=${from}&to=${to}`)

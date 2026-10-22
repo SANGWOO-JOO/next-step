@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { getCategories, type Category } from '../api/categories'
 import { errorMessage } from '../api/client'
 import {
-  getDailyGoals,
+  getDailyGoalsBetween,
   getUnfinishedDailyGoals,
   moveDailyGoal,
   type DailyGoal,
@@ -22,23 +22,32 @@ import {
 import { getHealth, type Health } from '../api/health'
 import { getDailyLog, getManualLogs, type DailyLog, type ManualStudyLog } from '../api/records'
 import { getWeeklyPlansOfDate, type WeeklyPlan } from '../api/weeklyPlans'
-import { getTimeBlocks, type TimeBlock } from '../api/timeBlocks'
+import { getTimeBlocksBetween, type TimeBlock } from '../api/timeBlocks'
 import CategoryBadge from '../components/CategoryBadge'
 import DailyGoalPanel from '../components/DailyGoalPanel'
 import DailyLogCard from '../components/DailyLogCard'
 import WeeklyPlanItem from '../components/WeeklyPlanItem'
-import TimeBlockTimeline from '../components/TimeBlockTimeline'
-import { dayLabel, mondayOf, todaySeoul } from '../utils/date'
+import ScheduleView from '../components/ScheduleView'
+import { dayLabel, mondayOf, todaySeoul, weekDates } from '../utils/date'
 
 export default function TodayPage() {
   const today = todaySeoul()
   const thisMonday = mondayOf(today)
-  const [goals, setGoals] = useState<DailyGoal[]>([])
+  const sunday = weekDates(thisMonday)[6]
+  /** 이번 주 하루 목표·블록·세션. 일 보기는 그중 오늘 것만 쓴다 */
+  const [weekGoals, setWeekGoals] = useState<DailyGoal[]>([])
+  const [weekSessions, setWeekSessions] = useState<FocusSession[]>([])
+  const [view, setView] = useState<'day' | 'week'>(() => {
+    try {
+      return localStorage.getItem('today.view') === 'week' ? 'week' : 'day'
+    } catch {
+      return 'day'
+    }
+  })
   const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[]>([])
   const [unfinished, setUnfinished] = useState<DailyGoal[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [blocks, setBlocks] = useState<TimeBlock[]>([])
-  const [sessions, setSessions] = useState<FocusSession[]>([])
   const [current, setCurrent] = useState<FocusSession | null>(null)
   const [uncheckedNotes, setUncheckedNotes] = useState(0)
   const [plans, setPlans] = useState<WeeklyPlan[]>([])
@@ -49,12 +58,12 @@ export default function TodayPage() {
 
   const load = useCallback(() => {
     Promise.all([
-      getDailyGoals(today),
+      getDailyGoalsBetween(thisMonday, sunday),
       getWeeklyGoalsOfWeek(thisMonday),
       getUnfinishedDailyGoals(today),
       getCategories(),
-      getTimeBlocks(today),
-      getFocusSessions(today),
+      getTimeBlocksBetween(thisMonday, sunday),
+      Promise.all(weekDates(thisMonday).filter((d) => d <= today).map(getFocusSessions)).then((all) => all.flat()),
       getCurrentFocus(),
       getDistractionNotes(false),
       getWeeklyPlansOfDate(today),
@@ -65,17 +74,17 @@ export default function TodayPage() {
         setPlans(p)
         setDailyLog(log)
         setManualLogs(manual)
-        setSessions(f)
+        setWeekSessions(f)
         setCurrent(cur ?? null)
         setUncheckedNotes(notes.length)
-        setGoals(d)
+        setWeekGoals(d)
         setWeeklyGoals(w)
         setUnfinished(u)
         setCategories(c)
         setBlocks(b)
       })
       .catch((e) => setError(errorMessage(e)))
-  }, [today, thisMonday])
+  }, [today, thisMonday, sunday])
 
   useEffect(load, [load])
 
@@ -103,6 +112,17 @@ export default function TodayPage() {
       }),
     )
     if (ok) navigate('/focus')
+  }
+
+  const goals = weekGoals.filter((g) => g.date === today)
+  const sessions = weekSessions.filter((s) => s.date === today)
+  const changeView = (v: 'day' | 'week') => {
+    setView(v)
+    try {
+      localStorage.setItem('today.view', v)
+    } catch {
+      // 저장 못 해도 화면은 그대로 쓸 수 있다
+    }
   }
 
   // 진행 중 세션은 서버가 응답 시각까지 계산한 값이다
@@ -159,7 +179,7 @@ export default function TodayPage() {
         </div>
       )}
 
-      <div className="today-grid">
+      <div className="today-grid today-layout">
         <div className="card">
           <DailyGoalPanel
             key={today}
@@ -169,7 +189,7 @@ export default function TodayPage() {
             weeklyGoals={weeklyGoals}
             categories={categories}
             run={run}
-            timeBlocks={blocks}
+            timeBlocks={blocks.filter((b) => b.date === today)}
             onStartFocus={current ? undefined : startFocusFor}
           />
           {weeklyGoals.length === 0 && (
@@ -178,10 +198,29 @@ export default function TodayPage() {
             </p>
           )}
         </div>
-        <div className="card">
-          <h3 className="timeline-title">타임라인</h3>
-          <p className="muted small">빈 칸을 누르면 시간을 잡고, 블록을 누르면 고칠 수 있어요.</p>
-          <TimeBlockTimeline date={today} blocks={blocks} goals={goals} run={run} />
+        <div className="card schedule-card">
+          <div className="goal-header">
+            <h3 className="timeline-title goal-title">시간표</h3>
+            <span className="segmented">
+              {(['day', 'week'] as const).map((v) => (
+                <button key={v} className={view === v ? 'active' : ''} onClick={() => changeView(v)}>
+                  {v === 'day' ? '일' : '주'}
+                </button>
+              ))}
+            </span>
+          </div>
+          <p className="muted small">
+            빈 칸을 끌어 시간을 잡고, 블록을 끌어 옮기거나 아래 끝을 끌어 늘여요. 왼쪽 목표를 끌어다 놓아도 돼요.
+            초록 막대는 실제 집중한 시간이에요.
+          </p>
+          <ScheduleView
+            dates={view === 'day' ? [today] : weekDates(thisMonday)}
+            blocks={blocks}
+            goals={weekGoals}
+            sessions={weekSessions}
+            run={run}
+            onStartFocus={current ? undefined : startFocusFor}
+          />
         </div>
       </div>
 
