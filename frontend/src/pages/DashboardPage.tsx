@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { errorMessage } from '../api/client'
 import { formatDuration } from '../api/focus'
-import { getStatsByCategory, getStatsSummary, type CategoryStat, type StatsSummary } from '../api/stats'
+import { getStatsByCategory, getStatsSummary, unitFor, type CategoryStat, type StatsSummary } from '../api/stats'
+import { FocusHeatmap, FocusVsDistraction, TrendChart } from '../components/DashboardCharts'
 import { addMonths, mondayOf, shiftDate, todaySeoul } from '../utils/date'
 
 type Period = 'today' | 'week' | 'month' | 'custom'
@@ -126,6 +127,16 @@ export default function DashboardPage() {
         )}
         {selected && <PeriodSummary summary={selected} />}
         <CategoryBars stats={categories} />
+      </div>
+
+      <div className="card">
+        <TrendChart from={range.from} to={range.to} unit={period === 'month' ? 'week' : unitFor(range.from, range.to)} />
+      </div>
+      <div className="dashboard-grid">
+        <div className="card">
+          <FocusHeatmap from={range.from} to={range.to} />
+        </div>
+        <div className="card">{selected && <FocusVsDistraction summary={selected} />}</div>
       </div>
     </section>
   )

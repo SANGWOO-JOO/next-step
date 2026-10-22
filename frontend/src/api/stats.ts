@@ -46,3 +46,10 @@ export const getTimeseries = (from: string, to: string, unit: StatsUnit) =>
   api.get<Timeseries>(`/api/stats/timeseries?${range(from, to)}&unit=${unit}`)
 
 export const getHeatmap = (from: string, to: string) => api.get<Heatmap>(`/api/stats/heatmap?${range(from, to)}`)
+
+/** 기간 길이로 추이 단위를 고른다(docs/design.md 1-4b) */
+export function unitFor(from: string, to: string): StatsUnit {
+  const days = (Date.parse(to) - Date.parse(from)) / 86_400_000 + 1
+  if (days <= 31) return 'day'
+  return days <= 180 ? 'week' : 'month'
+}

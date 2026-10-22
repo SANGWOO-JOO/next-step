@@ -360,3 +360,21 @@ button.start-focus { padding: 0.05rem 0.45rem; font-size: 0.75rem; }
   .category-bar-value { grid-column: 2; }
 }
 .segmented { flex-wrap: wrap; max-width: 100%; }
+.chart-box { display: grid; gap: 0.5rem; min-width: 0; }
+.dashboard-grid { display: grid; grid-template-columns: minmax(0, 1fr) 17rem; gap: 1rem; align-items: start; }
+@media (max-width: 860px) {
+  .dashboard-grid { grid-template-columns: 1fr; }
+}
+.heatmap-scroll { overflow-x: auto; }
+.heatmap { display: grid; grid-template-columns: 1.5rem repeat(24, minmax(0.9rem, 1fr)); gap: 2px; min-width: 26rem; font-size: 0.7rem; }
+.heatmap-row { display: contents; }
+.heatmap-hour { color: var(--muted); text-align: left; }
+.heatmap-day { color: var(--muted); }
+.heatmap-cell { aspect-ratio: 1; border-radius: 3px; background: color-mix(in srgb, var(--border) 60%, transparent); }
+.donut { position: relative; display: grid; }
+.donut-center { position: absolute; top: 90px; left: 50%; transform: translate(-50%, -50%); display: grid; justify-items: center; line-height: 1.1; }
+.donut-center strong { font-size: 1.3rem; }
+.donut-legend { margin: 0; text-align: center; }
+.checklist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 0.75rem; }
+.checklist-grid > .card { margin-top: 0.75rem; }
+.checklist-group { display: grid; gap: 0.5rem; align-content: start; }
