@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: job-scheduler-db
+    environment:
+      POSTGRES_DB: jobscheduler
+      POSTGRES_USER: jobscheduler
+      POSTGRES_PASSWORD: jobscheduler
+      TZ: Asia/Seoul
+      PGTZ: Asia/Seoul
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobscheduler -d jobscheduler"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
