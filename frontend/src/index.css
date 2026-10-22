@@ -781,3 +781,39 @@ body.resizing { cursor: col-resize; user-select: none; }
 }
 /* 시간표 머리는 스크롤 영역 안에서 위에 고정(열 맞춤) */
 .schedule-scroll > .schedule-head { position: sticky; top: 0; z-index: 4; }
+
+/* 기록 페이지 (1-4d 다듬기) */
+.log-list { max-width: 52rem; }
+.log-summary > .card { margin-top: 0.5rem; }
+.log-view-toggle { justify-self: start; margin-top: 0.75rem; }
+.log-card.timeline { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: 1rem; align-items: start; }
+.log-card.focused { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent); }
+.log-date { display: grid; justify-items: center; gap: 0.1rem; padding-right: 0.75rem; border-right: 1px solid var(--border); }
+.log-day { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+.log-condition { font-size: 1.3rem; }
+.log-body { display: grid; gap: 0.4rem; min-width: 0; }
+.log-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.log-chip { padding: 0.05rem 0.5rem; border: 1px solid var(--border); border-radius: 999px; font-size: 0.8rem; color: var(--muted); }
+.log-chip.strong { color: var(--text); border-color: color-mix(in srgb, var(--up) 45%, var(--border)); }
+.log-cta { justify-self: start; }
+.log-calendar { display: grid; gap: 0.5rem; }
+.log-cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.log-cal-head { text-align: center; }
+.log-cal-cell {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 0.1rem;
+  min-height: 3.6rem;
+  padding: 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+}
+.log-cal-cell:disabled { cursor: default; opacity: 1; color: var(--muted); }
+.log-cal-cell.outside { opacity: 0.35; }
+.log-cal-cell.today { border-color: var(--down); }
+.log-cal-cell.has:hover { border-color: var(--accent); }
+.log-cal-date { font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.log-cal-mood { font-size: 1.1rem; min-height: 1.3rem; }
