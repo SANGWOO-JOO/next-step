@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { getCategories, type Category } from '../api/categories'
 import { errorMessage } from '../api/client'
+import { getDailyGoalsBetween, type DailyGoal } from '../api/dailyGoals'
 import {
   GOAL_STATUS_LABEL,
   createGoal,
@@ -27,7 +28,7 @@ import FormButtons from '../components/FormButtons'
 import GoalCalendar from '../components/GoalCalendar'
 import ProgressBar from '../components/ProgressBar'
 import WeeklyGoalForm from '../components/WeeklyGoalForm'
-import { currentMonthSeoul, monthLabel, todaySeoul, weekLabel } from '../utils/date'
+import { currentMonthSeoul, mondaysOfMonth, monthLabel, shiftDate, todaySeoul, weekLabel } from '../utils/date'
 
 /** 변경 요청을 실행하고 목록을 다시 불러온다. 성공 여부를 돌려준다. */
 type Run = (action: () => Promise<unknown>) => Promise<boolean>
@@ -38,23 +39,34 @@ const toTextOrNull = (value: string) => (value.trim() === '' ? null : value)
 export default function GoalsPage() {
   const [goals, setGoals] = useState<Goal[] | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
+  const [dailyGoals, setDailyGoals] = useState<DailyGoal[]>([])
   const [error, setError] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
   // 보기 방식과 캘린더 달은 주소에 남겨 새로고침해도 유지한다
   const [params, setParams] = useSearchParams()
   const view = params.get('view') === 'calendar' ? 'calendar' : 'tree'
   const calendarMonth = params.get('month') ?? currentMonthSeoul()
+  const selectedDate = params.get('date')
   const setView = (next: 'tree' | 'calendar') =>
     setParams(next === 'calendar' ? { view: next, month: calendarMonth } : {}, { replace: true })
+  const setCalendar = (month: string, date: string | null) =>
+    setParams(date ? { view: 'calendar', month, date } : { view: 'calendar', month }, { replace: true })
 
   const load = useCallback(() => {
-    Promise.all([getGoals(), getCategories()])
-      .then(([g, c]) => {
+    // 캘린더에 보이는 주(첫 주 월요일 ~ 마지막 주 일요일)의 하루 목표도 함께 불러온다
+    const mondays = mondaysOfMonth(calendarMonth)
+    const daily =
+      view === 'calendar'
+        ? getDailyGoalsBetween(mondays[0], shiftDate(mondays[mondays.length - 1], 6))
+        : Promise.resolve([])
+    Promise.all([getGoals(), getCategories(), daily])
+      .then(([g, c, d]) => {
         setGoals(g)
         setCategories(c)
+        setDailyGoals(d)
       })
       .catch((e) => setError(errorMessage(e)))
-  }, [])
+  }, [view, calendarMonth])
 
   useEffect(load, [load])
 
@@ -86,7 +98,7 @@ export default function GoalsPage() {
           {!adding && <button onClick={() => setAdding(true)}>+ 최종 목표</button>}
         </span>
       </div>
-      <p className="muted">최종 목표 → 월간 목표 → 주간 목표 순으로 연결해요. 진행률은 하위 목표 달성 비율로 자동 계산돼요.</p>
+      <p className="muted">최종 목표 → 월간 목표 → 주간 목표 → 하루 목표 순으로 연결해요. 캘린더에서 날짜를 누르면 하루 목표를 넣을 수 있어요. 진행률은 하위 목표 달성 비율로 자동 계산돼요.</p>
       {error && (
         <p className="error-banner" role="alert">
           {error}
@@ -115,10 +127,14 @@ export default function GoalsPage() {
           goals={goals}
           categories={categories}
           month={calendarMonth}
-          onMonthChange={(month) => setParams({ view: 'calendar', month }, { replace: true })}
+          onMonthChange={(month) => setCalendar(month, null)}
           onToggleMonthly={(m) => run(() => updateMonthlyGoal(m.id, { ...monthlyInput(m), achieved: !m.achieved }))}
           onToggleWeekly={(w) => run(() => updateWeeklyGoal(w.id, { ...toWeeklyInput(w), achieved: !w.achieved }))}
           onAddWeekly={(monthlyGoalId, input) => run(() => createWeeklyGoal(monthlyGoalId, input))}
+          dailyGoals={dailyGoals}
+          selectedDate={selectedDate}
+          onSelectDate={(date) => setCalendar(calendarMonth, date)}
+          run={run}
         />
       )}
     </section>

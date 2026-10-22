@@ -56,3 +56,14 @@ export function addMonths(month: string, delta: number) {
 
 /** 월요일부터 일요일까지 7일 */
 export const weekDates = (monday: string) => Array.from({ length: 7 }, (_, i) => format(addDays(parse(monday), i)))
+
+/** 날짜 문자열에 days일을 더한다 */
+export const shiftDate = (date: string, days: number) => format(addDays(parse(date), days))
+
+const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
+
+/** '2026-10-22' → '10월 22일 (목)' */
+export function dayLabel(date: string) {
+  const d = parse(date)
+  return `${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일 (${WEEKDAY_LABELS[d.getUTCDay()]})`
+}
