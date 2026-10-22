@@ -120,7 +120,7 @@
 ## 10. 단계
 - 1단계: 목표 구조, 오늘/집중 모드, 딴짓 기록, 회고 3종, 분류·수동 기록, 시간 집계 API, 시간 대시보드(차트), 설정, 텔레그램(알림·명령·/stats)
   - 1-0 프로젝트 기본 틀 (완료)
-  - 1-1 분류와 목표 구조: Category, Goal, MonthlyGoal, WeeklyGoal + 목표 트리 화면(`/goals`) + 설정의 분류 관리
+  - 1-1 분류와 목표 구조 (완료): Category, Goal, MonthlyGoal, WeeklyGoal + 목표 트리·캘린더 화면(`/goals`) + 설정의 분류 관리
   - 1-2 오늘 화면과 집중 모드: DailyGoal, TimeBlock 포함
   - 1-3 기록과 회고: WeeklyPlan(요일별 계획) 포함
   - 범위 조정(2026-10-22): DailyGoal은 오늘 화면, WeeklyPlan은 주간 화면과 함께 만들어야 화면에서 바로 확인할 수 있어서 1-1에서 각각 1-2, 1-3으로 옮김
