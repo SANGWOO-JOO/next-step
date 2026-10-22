@@ -231,3 +231,40 @@ button.add { justify-self: start; padding: 0.2rem 0.6rem; font-size: 0.85rem; }
 .unfinished-list { list-style: none; padding: 0; margin: 0.5rem 0 0; display: grid; gap: 0.35rem; }
 .unfinished-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .server-status { margin-top: 1.5rem; }
+
+.today-grid { display: grid; grid-template-columns: minmax(0, 1fr) 19rem; gap: 1rem; align-items: start; }
+.today-grid > .card { margin-top: 1rem; }
+@media (max-width: 860px) {
+  .today-grid { grid-template-columns: 1fr; }
+}
+.timeline-title { margin: 0; font-size: 1.05rem; }
+.block-chip { padding: 0 0.4rem; border: 1px solid var(--border); border-radius: 6px; font-variant-numeric: tabular-nums; }
+.block-form { margin: 0.25rem 0; }
+.block-form input[type='time'] { width: 8.5rem; }
+
+.timeline-wrap { display: grid; gap: 0.5rem; }
+.timeline { position: relative; margin-top: 0.25rem; }
+.timeline-hour { position: absolute; left: 0; right: 0; display: grid; border-top: 1px solid var(--border); padding-left: 2rem; }
+.timeline-label { position: absolute; left: 0; top: -0.55rem; font-size: 0.7rem; color: var(--muted); background: var(--surface); padding-right: 0.25rem; font-variant-numeric: tabular-nums; }
+.timeline-slot { display: block; width: 100%; border: none; border-radius: 0; background: transparent; padding: 0; }
+.timeline-slot:not(:disabled):hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.timeline-slot + .timeline-slot { border-top: 1px dashed color-mix(in srgb, var(--border) 60%, transparent); }
+.timeline-block {
+  position: absolute;
+  left: 2.2rem;
+  right: 0.2rem;
+  overflow: hidden;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--muted);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.8rem;
+  text-align: left;
+  white-space: normal;
+  line-height: 1.25;
+}
+.timeline-block.done { opacity: 0.55; text-decoration: line-through; }
+.timeline-block-time { font-weight: 600; font-variant-numeric: tabular-nums; }
+.timeline-now { position: absolute; left: 1.8rem; right: 0; height: 2px; background: var(--down); pointer-events: none; }
+.timeline-now::before { content: ''; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--down); }

@@ -13,9 +13,11 @@ import {
   type DailyGoalType,
 } from '../api/dailyGoals'
 import { getWeeklyGoalsOfWeek, type WeeklyGoal } from '../api/goals'
-import { dayLabel, mondayOf, shiftDate } from '../utils/date'
+import { createTimeBlock, type TimeBlock } from '../api/timeBlocks'
+import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, shiftDate, todaySeoul } from '../utils/date'
 import CategoryBadge from './CategoryBadge'
 import FormButtons from './FormButtons'
+import TimeBlockForm from './TimeBlockForm'
 
 /** 변경 요청을 실행하고 화면 데이터를 다시 불러온다. 성공 여부를 돌려준다. */
 type Run = (action: () => Promise<unknown>) => Promise<boolean>
@@ -30,10 +32,21 @@ type Props = {
   run: Run
   title?: string
   onClose?: () => void
+  /** 넘기면 하루 목표마다 시간 블록을 보여주고 '+ 시간'으로 블록을 만든다 */
+  timeBlocks?: TimeBlock[]
 }
 
 /** 하루의 핵심(최대 3개)·추가 목표를 보여주고 추가·완료·넘기기·전환을 한다. */
-export default function DailyGoalPanel({ date, goals, weeklyGoals, categories, run, title, onClose }: Props) {
+export default function DailyGoalPanel({
+  date,
+  goals,
+  weeklyGoals,
+  categories,
+  run,
+  title,
+  onClose,
+  timeBlocks,
+}: Props) {
   const [notice, setNotice] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
   const core = goals.filter((g) => g.type === 'CORE')
@@ -50,6 +63,8 @@ export default function DailyGoalPanel({ date, goals, weeklyGoals, categories, r
         categories={categories}
         run={run}
         onNotice={setNotice}
+        blocks={timeBlocks?.filter((b) => b.dailyGoalId === goal.id)}
+        nextBlockStart={nextBlockStart(date, timeBlocks)}
       />
     ))
 
@@ -108,6 +123,13 @@ export default function DailyGoalPanel({ date, goals, weeklyGoals, categories, r
   )
 }
 
+/** 새 블록의 기본 시작: 오늘이면 지금 이후 30분 단위, 아니면 09:00. 그날 마지막 블록 뒤로 밀어준다. */
+function nextBlockStart(date: string, blocks: TimeBlock[] | undefined) {
+  const base = date === todaySeoul() ? Math.ceil(nowMinutesSeoul() / 30) * 30 : 9 * 60
+  const lastEnd = Math.max(0, ...(blocks ?? []).map((b) => minutesOfDay(b.endAt, date)))
+  return Math.min(Math.max(base, lastEnd), 1410)
+}
+
 type ItemProps = {
   goal: DailyGoal
   canBeCore: boolean
@@ -116,10 +138,23 @@ type ItemProps = {
   categories: Category[]
   run: Run
   onNotice: (message: string | null) => void
+  /** undefined면 시간 블록 기능을 숨긴다 */
+  blocks?: TimeBlock[]
+  nextBlockStart: number
 }
 
-function DailyGoalItem({ goal, canBeCore, onMoveUp, onMoveDown, categories, run, onNotice }: ItemProps) {
-  const [mode, setMode] = useState<'view' | 'edit' | 'move'>('view')
+function DailyGoalItem({
+  goal,
+  canBeCore,
+  onMoveUp,
+  onMoveDown,
+  categories,
+  run,
+  onNotice,
+  blocks,
+  nextBlockStart,
+}: ItemProps) {
+  const [mode, setMode] = useState<'view' | 'edit' | 'move' | 'block'>('view')
   const done = goal.status === 'DONE'
   const tomorrow = shiftDate(goal.date, 1)
 
@@ -129,11 +164,13 @@ function DailyGoalItem({ goal, canBeCore, onMoveUp, onMoveDown, categories, run,
   const move = (date: string, weeklyGoalId: number | null) =>
     run(async () => {
       const result = await moveDailyGoal(goal.id, date, weeklyGoalId)
-      onNotice(
+      const messages = [
         result.downgradedToExtra
           ? `${dayLabel(date)}은 핵심이 이미 ${MAX_CORE}개라 '${goal.content}'을(를) 추가 목록에 넣었어요.`
           : `'${goal.content}'을(를) ${dayLabel(date)}로 넘겼어요.`,
-      )
+      ]
+      if (result.removedTimeBlocks > 0) messages.push(`잡아 둔 시간 블록 ${result.removedTimeBlocks}개는 지웠어요.`)
+      onNotice(messages.join(' '))
     })
 
   // 같은 주의 내일이면 바로 넘기고, 다음 주로 넘어가면 주간 목표를 고르게 한다
@@ -203,6 +240,11 @@ function DailyGoalItem({ goal, canBeCore, onMoveUp, onMoveDown, categories, run,
               옮기기
             </button>
           )}
+          {blocks && !done && (
+            <button className="ghost" onClick={() => setMode('block')}>
+              + 시간
+            </button>
+          )}
           <button className="ghost" onClick={() => setMode('edit')}>
             수정
           </button>
@@ -214,7 +256,24 @@ function DailyGoalItem({ goal, canBeCore, onMoveUp, onMoveDown, categories, run,
       <div className="daily-meta muted small">
         {goal.firstAction && <span>→ 첫 행동: {goal.firstAction}</span>}
         <span>주간: {goal.weeklyGoalContent}</span>
+        {blocks?.map((b) => (
+          <span key={b.id} className="block-chip">
+            🕘 {formatMinutes(minutesOfDay(b.startAt, goal.date))}~{formatMinutes(minutesOfDay(b.endAt, goal.date))}
+          </span>
+        ))}
       </div>
+      {mode === 'block' && (
+        <TimeBlockForm
+          date={goal.date}
+          goals={[goal]}
+          dailyGoalId={goal.id}
+          startMinutes={nextBlockStart}
+          endMinutes={Math.min(nextBlockStart + 60, 1440)}
+          submitLabel="시간 잡기"
+          onSubmit={(input) => run(() => createTimeBlock(input)).then((ok) => ok && setMode('view'))}
+          onCancel={() => setMode('view')}
+        />
+      )}
       {mode === 'move' && (
         <MoveForm
           goal={goal}

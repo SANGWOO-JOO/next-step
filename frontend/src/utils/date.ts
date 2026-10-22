@@ -67,3 +67,47 @@ export function dayLabel(date: string) {
   const d = parse(date)
   return `${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일 (${WEEKDAY_LABELS[d.getUTCDay()]})`
 }
+
+// ---- 시각 (서울 기준) ----
+
+const seoulFormatter = new Intl.DateTimeFormat('sv-SE', {
+  timeZone: 'Asia/Seoul',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+})
+
+/** ISO 시각 → 서울 기준 'YYYY-MM-DD HH:mm' */
+const seoulParts = (iso: string | Date) => seoulFormatter.format(typeof iso === 'string' ? new Date(iso) : iso)
+
+/** 지금 서울 시각을 그날 0시부터의 분으로 */
+export const nowMinutesSeoul = () => {
+  const [h, m] = seoulParts(new Date()).slice(11, 16).split(':').map(Number)
+  return h * 60 + m
+}
+
+/** date 0시부터의 분(다음 날 0시는 1440) */
+export function minutesOfDay(iso: string, date: string) {
+  const parts = seoulParts(iso)
+  const [h, m] = parts.slice(11, 16).split(':').map(Number)
+  return (parts.slice(0, 10) === date ? 0 : 1440) + h * 60 + m
+}
+
+/** 분 → 'HH:mm' (1440은 '24:00') */
+export const formatMinutes = (minutes: number) =>
+  `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
+
+/** 'HH:mm' → 분 */
+export const parseTime = (time: string) => {
+  const [h, m] = time.split(':').map(Number)
+  return h * 60 + m
+}
+
+/** date의 0시부터 minutes분 뒤를 서울 오프셋 ISO 문자열로 (1440이면 다음 날 00:00) */
+export const seoulIso = (date: string, minutes: number) =>
+  minutes >= 1440
+    ? `${shiftDate(date, 1)}T${formatMinutes(minutes - 1440)}:00+09:00`
+    : `${date}T${formatMinutes(minutes)}:00+09:00`

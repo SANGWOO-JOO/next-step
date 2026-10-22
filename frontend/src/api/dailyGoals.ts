@@ -38,7 +38,7 @@ export type DailyGoalUpdateInput = {
   status: DailyGoalStatus
 }
 
-export type DailyGoalMoveResult = { dailyGoal: DailyGoal; downgradedToExtra: boolean }
+export type DailyGoalMoveResult = { dailyGoal: DailyGoal; downgradedToExtra: boolean; removedTimeBlocks: number }
 
 export const toDailyGoalUpdateInput = (d: DailyGoal): DailyGoalUpdateInput => ({
   content: d.content,

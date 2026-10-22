@@ -10,8 +10,10 @@ import {
 } from '../api/dailyGoals'
 import { getWeeklyGoalsOfWeek, type WeeklyGoal } from '../api/goals'
 import { getHealth, type Health } from '../api/health'
+import { getTimeBlocks, type TimeBlock } from '../api/timeBlocks'
 import CategoryBadge from '../components/CategoryBadge'
 import DailyGoalPanel from '../components/DailyGoalPanel'
+import TimeBlockTimeline from '../components/TimeBlockTimeline'
 import { dayLabel, mondayOf, todaySeoul } from '../utils/date'
 
 export default function TodayPage() {
@@ -21,15 +23,23 @@ export default function TodayPage() {
   const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[]>([])
   const [unfinished, setUnfinished] = useState<DailyGoal[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [blocks, setBlocks] = useState<TimeBlock[]>([])
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(() => {
-    Promise.all([getDailyGoals(today), getWeeklyGoalsOfWeek(thisMonday), getUnfinishedDailyGoals(today), getCategories()])
-      .then(([d, w, u, c]) => {
+    Promise.all([
+      getDailyGoals(today),
+      getWeeklyGoalsOfWeek(thisMonday),
+      getUnfinishedDailyGoals(today),
+      getCategories(),
+      getTimeBlocks(today),
+    ])
+      .then(([d, w, u, c, b]) => {
         setGoals(d)
         setWeeklyGoals(w)
         setUnfinished(u)
         setCategories(c)
+        setBlocks(b)
       })
       .catch((e) => setError(errorMessage(e)))
   }, [today, thisMonday])
@@ -52,7 +62,7 @@ export default function TodayPage() {
   return (
     <section>
       <h1>오늘</h1>
-      <p className="muted">{dayLabel(today)} · 핵심 3개부터 시작해요. 시작 버튼과 시간 블록은 1-2b에서 들어와요.</p>
+      <p className="muted">{dayLabel(today)} · 핵심 3개를 정하고, 언제 할지 시간을 잡아요.</p>
       {error && (
         <p className="error-banner" role="alert">
           {error}
@@ -66,21 +76,29 @@ export default function TodayPage() {
         <UnfinishedCard goals={unfinished} today={today} weeklyGoals={weeklyGoals} run={run} />
       )}
 
-      <div className="card">
-        <DailyGoalPanel
-          key={today}
-          date={today}
-          title="오늘 할 일"
-          goals={goals}
-          weeklyGoals={weeklyGoals}
-          categories={categories}
-          run={run}
-        />
-        {weeklyGoals.length === 0 && (
-          <p className="small">
-            <Link to="/goals?view=calendar">최종 목표 캘린더</Link>에서 이번 주 주간 목표를 먼저 만들어 주세요.
-          </p>
-        )}
+      <div className="today-grid">
+        <div className="card">
+          <DailyGoalPanel
+            key={today}
+            date={today}
+            title="오늘 할 일"
+            goals={goals}
+            weeklyGoals={weeklyGoals}
+            categories={categories}
+            run={run}
+            timeBlocks={blocks}
+          />
+          {weeklyGoals.length === 0 && (
+            <p className="small">
+              <Link to="/goals?view=calendar">최종 목표 캘린더</Link>에서 이번 주 주간 목표를 먼저 만들어 주세요.
+            </p>
+          )}
+        </div>
+        <div className="card">
+          <h3 className="timeline-title">타임라인</h3>
+          <p className="muted small">빈 칸을 누르면 시간을 잡고, 블록을 누르면 고칠 수 있어요.</p>
+          <TimeBlockTimeline date={today} blocks={blocks} goals={goals} run={run} />
+        </div>
       </div>
 
       <ServerStatus />
