@@ -779,3 +779,5 @@ body.resizing { cursor: col-resize; user-select: none; }
   .today-layout { grid-template-columns: 1fr; }
   .layout-splitter { display: none; }
 }
+/* 시간표 머리는 스크롤 영역 안에서 위에 고정(열 맞춤) */
+.schedule-scroll > .schedule-head { position: sticky; top: 0; z-index: 4; }

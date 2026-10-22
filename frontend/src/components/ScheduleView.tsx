@@ -158,6 +158,8 @@ export default function ScheduleView({ dates, blocks, goals, sessions, run, onSt
           </button>
         </p>
       )}
+      {/* 머리(날짜·목표 줄)도 같은 스크롤 영역 안에 둬야 세로 스크롤바 폭만큼 열이 어긋나지 않는다 */}
+      <div className="schedule-scroll" ref={scroller}>
       <div className="schedule-head" style={{ gridTemplateColumns: `3rem repeat(${dates.length}, minmax(0, 1fr))` }}>
         <span />
         {dates.map((d) =>
@@ -198,7 +200,6 @@ export default function ScheduleView({ dates, blocks, goals, sessions, run, onSt
         ))}
       </div>
 
-      <div className="schedule-scroll" ref={scroller}>
         <div
           className="schedule-body"
           style={{ gridTemplateColumns: `3rem repeat(${dates.length}, minmax(0, 1fr))`, height: toPx(DAY) }}
