@@ -69,6 +69,13 @@ export type WeeklyGoalInput = {
   achieved: boolean
 }
 
+export const toWeeklyInput = (w: WeeklyGoal): WeeklyGoalInput => ({
+  weekStart: w.weekStart,
+  content: w.content,
+  categoryId: w.category?.id ?? null,
+  achieved: w.achieved,
+})
+
 export const getGoals = () => api.get<Goal[]>('/api/goals')
 export const createGoal = (input: GoalInput) => api.post<Goal>('/api/goals', input)
 export const updateGoal = (id: number, input: GoalInput) => api.put<Goal>(`/api/goals/${id}`, input)

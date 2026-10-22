@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { getCategories, type Category } from '../api/categories'
 import { errorMessage } from '../api/client'
 import {
@@ -19,11 +20,14 @@ import {
   type MonthlyGoal,
   type MonthlyGoalInput,
   type WeeklyGoal,
-  type WeeklyGoalInput,
+  toWeeklyInput,
 } from '../api/goals'
 import CategoryBadge from '../components/CategoryBadge'
+import FormButtons from '../components/FormButtons'
+import GoalCalendar from '../components/GoalCalendar'
 import ProgressBar from '../components/ProgressBar'
-import { currentMonthSeoul, mondayOf, mondaysOfMonth, monthLabel, todaySeoul, weekLabel } from '../utils/date'
+import WeeklyGoalForm from '../components/WeeklyGoalForm'
+import { currentMonthSeoul, monthLabel, todaySeoul, weekLabel } from '../utils/date'
 
 /** 변경 요청을 실행하고 목록을 다시 불러온다. 성공 여부를 돌려준다. */
 type Run = (action: () => Promise<unknown>) => Promise<boolean>
@@ -36,6 +40,12 @@ export default function GoalsPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [error, setError] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
+  // 보기 방식과 캘린더 달은 주소에 남겨 새로고침해도 유지한다
+  const [params, setParams] = useSearchParams()
+  const view = params.get('view') === 'calendar' ? 'calendar' : 'tree'
+  const calendarMonth = params.get('month') ?? currentMonthSeoul()
+  const setView = (next: 'tree' | 'calendar') =>
+    setParams(next === 'calendar' ? { view: next, month: calendarMonth } : {}, { replace: true })
 
   const load = useCallback(() => {
     Promise.all([getGoals(), getCategories()])
@@ -64,7 +74,17 @@ export default function GoalsPage() {
     <section>
       <div className="page-title">
         <h1>최종 목표</h1>
-        {!adding && <button onClick={() => setAdding(true)}>+ 최종 목표</button>}
+        <span className="row-actions">
+          <span className="segmented" role="group" aria-label="보기 방식">
+            <button className={view === 'tree' ? 'active' : ''} onClick={() => setView('tree')}>
+              트리
+            </button>
+            <button className={view === 'calendar' ? 'active' : ''} onClick={() => setView('calendar')}>
+              캘린더
+            </button>
+          </span>
+          {!adding && <button onClick={() => setAdding(true)}>+ 최종 목표</button>}
+        </span>
       </div>
       <p className="muted">최종 목표 → 월간 목표 → 주간 목표 순으로 연결해요. 진행률은 하위 목표 달성 비율로 자동 계산돼요.</p>
       {error && (
@@ -88,9 +108,19 @@ export default function GoalsPage() {
       )}
 
       {goals?.length === 0 && !adding && <p className="card muted">아직 최종 목표가 없어요. 이직 목표부터 적어보세요.</p>}
-      {goals?.map((goal) => (
-        <GoalCard key={goal.id} goal={goal} categories={categories} run={run} />
-      ))}
+      {view === 'tree' &&
+        goals?.map((goal) => <GoalCard key={goal.id} goal={goal} categories={categories} run={run} />)}
+      {view === 'calendar' && goals && goals.length > 0 && (
+        <GoalCalendar
+          goals={goals}
+          categories={categories}
+          month={calendarMonth}
+          onMonthChange={(month) => setParams({ view: 'calendar', month }, { replace: true })}
+          onToggleMonthly={(m) => run(() => updateMonthlyGoal(m.id, { ...monthlyInput(m), achieved: !m.achieved }))}
+          onToggleWeekly={(w) => run(() => updateWeeklyGoal(w.id, { ...toWeeklyInput(w), achieved: !w.achieved }))}
+          onAddWeekly={(monthlyGoalId, input) => run(() => createWeeklyGoal(monthlyGoalId, input))}
+        />
+      )}
     </section>
   )
 }
@@ -387,7 +417,7 @@ function WeeklyGoalItem({ weekly, month, categories, run }: WeeklyItemProps) {
   const [editing, setEditing] = useState(false)
 
   const toggleAchieved = () =>
-    run(() => updateWeeklyGoal(weekly.id, { ...weeklyInput(weekly), achieved: !weekly.achieved }))
+    run(() => updateWeeklyGoal(weekly.id, { ...toWeeklyInput(weekly), achieved: !weekly.achieved }))
 
   const remove = () => {
     if (confirm(`'${weekly.content}' 주간 목표를 삭제할까요?`)) run(() => deleteWeeklyGoal(weekly.id))
@@ -428,82 +458,3 @@ function WeeklyGoalItem({ weekly, month, categories, run }: WeeklyItemProps) {
   )
 }
 
-const weeklyInput = (w: WeeklyGoal): WeeklyGoalInput => ({
-  weekStart: w.weekStart,
-  content: w.content,
-  categoryId: w.category?.id ?? null,
-  achieved: w.achieved,
-})
-
-type WeeklyFormProps = {
-  month: string
-  categories: Category[]
-  initial?: WeeklyGoal
-  submitLabel: string
-  onSubmit: (input: WeeklyGoalInput) => void
-  onCancel: () => void
-}
-
-function WeeklyGoalForm({ month, categories, initial, submitLabel, onSubmit, onCancel }: WeeklyFormProps) {
-  const mondays = mondaysOfMonth(month)
-  const thisMonday = mondayOf(todaySeoul())
-  const [weekStart, setWeekStart] = useState(
-    initial?.weekStart ?? (mondays.includes(thisMonday) ? thisMonday : mondays[0]),
-  )
-  const [content, setContent] = useState(initial?.content ?? '')
-  const [categoryId, setCategoryId] = useState<number | null>(initial?.category?.id ?? null)
-
-  // 이미 지정된 비활성 분류는 선택지에 남겨 둔다
-  const options = [...categories]
-  if (initial?.category && !categories.some((c) => c.id === initial.category?.id)) {
-    options.push({ ...initial.category, sortOrder: 0, targetRatio: null, weeklyTargetMinutes: null })
-  }
-
-  const submit = (e: FormEvent) => {
-    e.preventDefault()
-    onSubmit({ weekStart, content, categoryId, achieved: initial?.achieved ?? false })
-  }
-
-  return (
-    <form className="inline-form tree-form" onSubmit={submit}>
-      <select value={weekStart} onChange={(e) => setWeekStart(e.target.value)} aria-label="주">
-        {mondays.map((m) => (
-          <option key={m} value={m}>
-            {weekLabel(m)}
-          </option>
-        ))}
-      </select>
-      <input
-        className="grow"
-        placeholder="예: 경력기술서 초안 작성"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        required
-      />
-      <select
-        value={categoryId ?? ''}
-        onChange={(e) => setCategoryId(toNumberOrNull(e.target.value))}
-        aria-label="분류"
-      >
-        <option value="">미분류</option>
-        {options.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.active ? c.name : `${c.name} (비활성)`}
-          </option>
-        ))}
-      </select>
-      <FormButtons submitLabel={submitLabel} onCancel={onCancel} />
-    </form>
-  )
-}
-
-function FormButtons({ submitLabel, onCancel }: { submitLabel: string; onCancel: () => void }) {
-  return (
-    <span className="row-actions">
-      <button type="submit">{submitLabel}</button>
-      <button type="button" className="ghost" onClick={onCancel}>
-        취소
-      </button>
-    </span>
-  )
-}

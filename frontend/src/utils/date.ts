@@ -47,3 +47,12 @@ export function weekLabel(weekStart: string) {
 
 /** '2026-10' → '2026년 10월' */
 export const monthLabel = (month: string) => `${month.slice(0, 4)}년 ${Number(month.slice(5, 7))}월`
+
+/** '2026-10' + 1 → '2026-11' */
+export function addMonths(month: string, delta: number) {
+  const [y, m] = month.split('-').map(Number)
+  return new Date(Date.UTC(y, m - 1 + delta, 1)).toISOString().slice(0, 7)
+}
+
+/** 월요일부터 일요일까지 7일 */
+export const weekDates = (monday: string) => Array.from({ length: 7 }, (_, i) => format(addDays(parse(monday), i)))
