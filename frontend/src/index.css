@@ -848,3 +848,13 @@ body.resizing { cursor: col-resize; user-select: none; }
   .log-summary { max-width: 52rem; }
 }
 .log-list > .log-summary { margin-top: 0; }
+/* 기록: 넓은 화면에서 목록이 남는 폭을 다 쓰고 달력은 오른쪽 고정 폭, 메모 글줄만 읽기 좋게 */
+.log-pane-list { max-width: none; }
+.log-memo { max-width: 70ch; }
+@media (min-width: 1200px) {
+  .log-day-layout { grid-template-columns: minmax(0, 1fr) 30rem; }
+  .log-summary { max-width: none; }
+}
+@media (max-width: 1199px) {
+  .log-summary { max-width: none; }
+}
