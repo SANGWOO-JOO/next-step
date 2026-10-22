@@ -831,3 +831,20 @@ body.resizing { cursor: col-resize; user-select: none; }
   .log-pane-calendar { position: sticky; top: 1rem; }
   .log-pane-calendar .log-calendar { margin-top: 1rem; }
 }
+
+/* 대시보드·기록 공통 맞춤 (요약 카드, 정렬, 히트맵) */
+.stat-cards { grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.75rem; margin-top: 0.75rem; }
+.stat-cards > .card, .log-summary > .card { margin-top: 0; }
+.stat-card { min-height: 6.5rem; }
+.heatmap-cell { aspect-ratio: auto; height: 1.4rem; }
+.log-day-layout { margin-top: 0.75rem; }
+.log-pane-list > .card:first-child { margin-top: 0; }
+.log-pane-calendar .log-calendar, .log-calendar { margin-top: 0; }
+@media (min-width: 1200px) {
+  .log-day-layout { grid-template-columns: minmax(0, 52rem) 30rem; }
+  .log-summary { max-width: calc(52rem + 1rem + 30rem); }
+}
+@media (max-width: 1199px) {
+  .log-summary { max-width: 52rem; }
+}
+.log-list > .log-summary { margin-top: 0; }
