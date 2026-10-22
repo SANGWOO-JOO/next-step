@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { getCategories, type Category } from '../../api/categories'
 import { errorMessage } from '../../api/client'
 import { getGoals, type Goal } from '../../api/goals'
-import { addMonths, mondayOf, mondaysOfMonth, monthLabel, shiftDate, todaySeoul, weekLabel } from '../../utils/date'
+import { addMonths, currentMonthSeoul, mondayOf, mondaysOfMonth, monthLabel, shiftDate, todaySeoul, weekLabel } from '../../utils/date'
 import GoalLevel from './GoalLevel'
 import MonthLevel from './MonthLevel'
 import { activeGoal, anchorOf, firstMondayOf, weeklyGoalsOf, type Level, type Run } from './planData'
@@ -22,7 +22,6 @@ export default function PlanPage() {
   const [goals, setGoals] = useState<Goal[] | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
   const [error, setError] = useState<string | null>(null)
-  const [drawer, setDrawer] = useState(false)
 
   const go = (next: Level, date: string = monday) => setParams({ level: next, date })
 
@@ -54,15 +53,23 @@ export default function PlanPage() {
     level === 'week' ? go('week', shiftDate(monday, delta * 7)) : go('month', firstMondayOf(addMonths(month, delta)))
 
   const goal = goals ? activeGoal(goals) : null
-  const monthly = goals?.flatMap((g) => g.monthlyGoals).filter((m) => m.month === month) ?? []
+  // 경로 드롭다운의 달: 진행 중 최종 목표의 기간(없으면 이번 달 앞뒤 6개월), 지금 보는 달은 꼭 포함
+  const pathMonths = (() => {
+    const from = goal ? goal.startDate.slice(0, 7) : addMonths(currentMonthSeoul(), -6)
+    const to = goal ? goal.targetDate.slice(0, 7) : addMonths(currentMonthSeoul(), 6)
+    const list: string[] = []
+    for (let m = from; m <= to && list.length < 120; m = addMonths(m, 1)) list.push(m)
+    return list.includes(month) ? list : [...list, month].sort()
+  })()
+  const monthlyTitle = (m: string) => {
+    const first = goals?.flatMap((g) => g.monthlyGoals).find((x) => x.month === m)
+    return first ? ` · ${first.content}` : ''
+  }
   const openMonth = (m: string) => go('month', mondaysOfMonth(m).includes(mondayOf(todaySeoul())) ? mondayOf(todaySeoul()) : firstMondayOf(m))
 
   return (
     <section>
       <div className="plan-header">
-        <button className="icon" onClick={() => setDrawer(!drawer)} aria-label="목표 트리" aria-expanded={drawer}>
-          ☰
-        </button>
         <nav className="plan-path" aria-label="경로">
           <button className="ghost" onClick={() => go('goal')}>
             {goal?.title ?? '최종 목표'}
@@ -70,15 +77,31 @@ export default function PlanPage() {
           {level !== 'goal' && (
             <>
               ›
-              <button className="ghost" onClick={() => go('month')}>
-                {monthLabel(month).slice(6)}
-                {monthly[0] && `: ${monthly[0].content}`}
-              </button>
+              <select
+                className="path-select"
+                value={month}
+                onChange={(e) => openMonth(e.target.value)}
+                aria-label="달 고르기"
+              >
+                {pathMonths.map((m) => (
+                  <option key={m} value={m}>
+                    {monthLabel(m)}
+                    {monthlyTitle(m)}
+                  </option>
+                ))}
+              </select>
             </>
           )}
           {level === 'week' && (
             <>
-              › <strong>{weekLabel(monday)} 주</strong>
+              ›
+              <select className="path-select" value={monday} onChange={(e) => go('week', e.target.value)} aria-label="주 고르기">
+                {mondaysOfMonth(month).map((m) => (
+                  <option key={m} value={m}>
+                    {weekLabel(m)} 주{weeklyGoalsOf(goals ?? [], m).length ? ` · ${weeklyGoalsOf(goals ?? [], m)[0].content}` : ''}
+                  </option>
+                ))}
+              </select>
             </>
           )}
         </nav>
@@ -112,16 +135,6 @@ export default function PlanPage() {
         </p>
       )}
 
-      {drawer && goals && (
-        <TreeDrawer
-          goals={goals}
-          onPick={(l, date) => {
-            go(l, date)
-            setDrawer(false)
-          }}
-          onClose={() => setDrawer(false)}
-        />
-      )}
 
       {!goals ? (
         <p className="muted">불러오는 중…</p>
@@ -140,40 +153,5 @@ export default function PlanPage() {
         <WeekLevel monday={monday} goals={goals} categories={categories} run={run} />
       )}
     </section>
-  )
-}
-
-type DrawerProps = { goals: Goal[]; onPick: (level: Level, date: string) => void; onClose: () => void }
-
-/** 최종 → 월 → 주 지도. 누르면 그 레벨로 이동한다 */
-function TreeDrawer({ goals, onPick, onClose }: DrawerProps) {
-  return (
-    <div className="wizard-backdrop drawer-backdrop" onClick={onClose}>
-      <nav className="card plan-drawer" onClick={(e) => e.stopPropagation()} aria-label="목표 트리">
-        {goals.map((g) => (
-          <div key={g.id} className="drawer-goal">
-            <button className="ghost drawer-node" onClick={() => onPick('goal', todaySeoul())}>
-              <strong>{g.title}</strong> <span className="muted small">{g.progress.percent}%</span>
-            </button>
-            {[...new Set(g.monthlyGoals.map((m) => m.month))].sort().map((month) => (
-              <div key={month} className="drawer-month">
-                <button className="ghost drawer-node" onClick={() => onPick('month', firstMondayOf(month))}>
-                  {monthLabel(month)} · {g.monthlyGoals.filter((m) => m.month === month).map((m) => m.content).join(', ')}
-                </button>
-                {mondaysOfMonth(month).map((monday) => {
-                  const weekly = weeklyGoalsOf([g], monday)
-                  return (
-                    <button key={monday} className="ghost drawer-node drawer-week" onClick={() => onPick('week', monday)}>
-                      {weekLabel(monday)}
-                      {weekly.length > 0 && <span className="muted small"> · {weekly.map((w) => (w.achieved ? '✓ ' : '') + w.content).join(', ')}</span>}
-                    </button>
-                  )
-                })}
-              </div>
-            ))}
-          </div>
-        ))}
-      </nav>
-    </div>
   )
 }

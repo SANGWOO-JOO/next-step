@@ -3,7 +3,16 @@ import type { Category } from '../../api/categories'
 import { errorMessage } from '../../api/client'
 import { getDailyGoalsBetween, type DailyGoal } from '../../api/dailyGoals'
 import { formatDuration } from '../../api/focus'
-import { toMonthlyInput, toWeeklyInput, updateMonthlyGoal, updateWeeklyGoal, createWeeklyGoal, type Goal } from '../../api/goals'
+import {
+  createMonthlyGoal,
+  createWeeklyGoal,
+  deleteMonthlyGoal,
+  toMonthlyInput,
+  toWeeklyInput,
+  updateMonthlyGoal,
+  updateWeeklyGoal,
+  type Goal,
+} from '../../api/goals'
 import {
   getMonthlyReview,
   getWeeklyJournals,
@@ -13,12 +22,14 @@ import {
   type WeeklyJournalBrief,
 } from '../../api/reviews'
 import GoalCalendar from '../../components/GoalCalendar'
+import { MonthlyGoalForm } from '../../components/GoalTree'
+import MoreMenu from '../../components/MoreMenu'
 import HealthDot from '../../components/HealthDot'
 import ProgressBar from '../../components/ProgressBar'
 import ReviewCard from '../../components/ReviewCard'
 import { addMonths, mondaysOfMonth, monthLabel, shiftDate, todaySeoul, weekLabel } from '../../utils/date'
 import { healthOf, monthRange } from '../../utils/health'
-import { allMonthlyGoals, monthlyPercent, reviewDue, type Run } from './planData'
+import { activeGoal, allMonthlyGoals, monthlyPercent, reviewDue, type Run } from './planData'
 
 type Props = {
   month: string
@@ -36,6 +47,8 @@ export default function MonthLevel({ month, goals, categories, run: parentRun, o
   const [dailyGoals, setDailyGoals] = useState<DailyGoal[]>([])
   const [journals, setJournals] = useState<WeeklyJournalBrief[]>([])
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [adding, setAdding] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const today = todaySeoul()
   const { from, to } = monthRange(month)
@@ -61,6 +74,7 @@ export default function MonthLevel({ month, goals, categories, run: parentRun, o
 
   const run: Run = (action) => parentRun(action).finally(load)
   const monthlyGoals = allMonthlyGoals(goals).filter((m) => m.month === month)
+  const goal = activeGoal(goals)
   const totals = review?.weeks.reduce(
     (sum, w) => ({ study: sum.study + studySeconds(w), done: sum.done + w.goalsDone, all: sum.all + w.goalsTotal }),
     { study: 0, done: 0, all: 0 },
@@ -74,39 +88,82 @@ export default function MonthLevel({ month, goals, categories, run: parentRun, o
           <div className="card">
             <div className="goal-header">
               <h2 className="goal-title">{monthLabel(month)} 월간 목표</h2>
-              <button className="ghost" onClick={onOpenGoalLevel}>
-                월간 목표 추가·수정은 [최종]에서 ›
-              </button>
+              {goal && !adding && (
+                <button className="ghost" onClick={() => setAdding(true)}>
+                  + 월간 목표
+                </button>
+              )}
             </div>
-            {monthlyGoals.length === 0 ? (
-              <p className="muted small">이 달의 월간 목표가 없어요.</p>
-            ) : (
+            {monthlyGoals.length === 0 && !adding && (
+              <div className="empty-cta">
+                <p className="muted small">이 달의 월간 목표가 없어요. 이 달에 이룰 한두 가지를 정해요.</p>
+                {goal ? (
+                  <button onClick={() => setAdding(true)}>{monthLabel(month).slice(6)} 월간 목표 만들기</button>
+                ) : (
+                  <button onClick={onOpenGoalLevel}>최종 목표부터 만들기</button>
+                )}
+              </div>
+            )}
+            {adding && goal && (
+              <MonthlyGoalForm
+                goal={goal}
+                defaultMonth={month}
+                submitLabel="추가"
+                onSubmit={(input) => run(() => createMonthlyGoal(goal.id, input)).then((ok) => ok && setAdding(false))}
+                onCancel={() => setAdding(false)}
+              />
+            )}
+            {monthlyGoals.length > 0 && (
               <ul className="monthly-cards">
-                {monthlyGoals.map((m) => (
-                  <li key={m.id} className="monthly-card">
-                    <span className="inline-form monthly-card-head">
-                      <input
-                        type="checkbox"
-                        checked={m.achieved}
-                        onChange={() => run(() => updateMonthlyGoal(m.id, { ...toMonthlyInput(m), achieved: !m.achieved }))}
-                        aria-label="달성"
+                {monthlyGoals.map((m) =>
+                  editingId === m.id ? (
+                    <li key={m.id} className="monthly-card">
+                      <MonthlyGoalForm
+                        goal={goals.find((g) => g.id === m.goalId)!}
+                        initial={m}
+                        submitLabel="저장"
+                        onSubmit={(input) => run(() => updateMonthlyGoal(m.id, input)).then((ok) => ok && setEditingId(null))}
+                        onCancel={() => setEditingId(null)}
                       />
-                      <HealthDot health={healthOf(monthlyPercent(m), from, to, today, m.achieved)} label />
-                      <strong className={m.achieved ? 'done' : undefined}>{m.content}</strong>
-                    </span>
-                    <span className="monthly-card-metrics">
-                      <span className="muted small">주간 목표</span>
-                      <ProgressBar progress={m.progress} />
-                      {m.targetValue !== null && (
-                        <span className="small">
-                          <span className="muted">수치 </span>
-                          {m.currentValue ?? 0}/{m.targetValue}
-                          {m.unit ?? ''}
-                        </span>
-                      )}
-                    </span>
-                  </li>
-                ))}
+                    </li>
+                  ) : (
+                    <li key={m.id} className="monthly-card">
+                      <span className="inline-form monthly-card-head">
+                        <input
+                          type="checkbox"
+                          checked={m.achieved}
+                          onChange={() => run(() => updateMonthlyGoal(m.id, { ...toMonthlyInput(m), achieved: !m.achieved }))}
+                          aria-label="달성"
+                        />
+                        <HealthDot health={healthOf(monthlyPercent(m), from, to, today, m.achieved)} label />
+                        <strong className={m.achieved ? 'done' : undefined}>{m.content}</strong>
+                        <MoreMenu
+                          label="월간 목표 동작"
+                          items={[
+                            { label: '수정', onClick: () => setEditingId(m.id) },
+                            {
+                              label: '삭제',
+                              danger: true,
+                              onClick: () =>
+                                confirm(`'${m.content}' 월간 목표를 삭제할까요?`) && run(() => deleteMonthlyGoal(m.id)),
+                            },
+                          ]}
+                        />
+                      </span>
+                      <span className="monthly-card-metrics">
+                        <span className="muted small">주간 목표</span>
+                        <ProgressBar progress={m.progress} />
+                        {m.targetValue !== null && (
+                          <span className="small">
+                            <span className="muted">수치 </span>
+                            {m.currentValue ?? 0}/{m.targetValue}
+                            {m.unit ?? ''}
+                          </span>
+                        )}
+                      </span>
+                    </li>
+                  ),
+                )}
               </ul>
             )}
           </div>

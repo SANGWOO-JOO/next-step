@@ -23,6 +23,7 @@ import {
 import { currentMonthSeoul, monthLabel, todaySeoul, weekLabel } from '../utils/date'
 import CategoryBadge from './CategoryBadge'
 import FormButtons from './FormButtons'
+import MoreMenu from './MoreMenu'
 import ProgressBar from './ProgressBar'
 import WeeklyGoalForm from './WeeklyGoalForm'
 
@@ -93,14 +94,12 @@ function GoalCard({ goal, categories, run }: { goal: Goal; categories: Category[
             </span>
           </div>
           <ProgressBar progress={goal.progress} />
-          <span className="row-actions">
-            <button className="ghost" onClick={() => setEditing(true)}>
-              수정
-            </button>
-            <button className="danger" onClick={remove}>
-              삭제
-            </button>
-          </span>
+          <MoreMenu
+            items={[
+              { label: '수정', onClick: () => setEditing(true) },
+              { label: '삭제', onClick: remove, danger: true },
+            ]}
+          />
         </div>
       )}
       {!editing && goal.description && <p className="muted goal-description">{goal.description}</p>}
@@ -227,14 +226,12 @@ function MonthlyGoalItem({ monthly, goal, categories, run }: MonthlyItemProps) {
             )}
           </span>
           <ProgressBar progress={monthly.progress} />
-          <span className="row-actions">
-            <button className="ghost" onClick={() => setEditing(true)}>
-              수정
-            </button>
-            <button className="danger" onClick={remove}>
-              삭제
-            </button>
-          </span>
+          <MoreMenu
+            items={[
+              { label: '수정', onClick: () => setEditing(true) },
+              { label: '삭제', onClick: remove, danger: true },
+            ]}
+          />
         </div>
       )}
 
@@ -265,18 +262,20 @@ function MonthlyGoalItem({ monthly, goal, categories, run }: MonthlyItemProps) {
 type MonthlyFormProps = {
   goal: Goal
   initial?: MonthlyGoal
+  /** 새로 추가할 때 미리 골라 둘 달 */
+  defaultMonth?: string
   submitLabel: string
   onSubmit: (input: MonthlyGoalInput) => void
   onCancel: () => void
 }
 
-function MonthlyGoalForm({ goal, initial, submitLabel, onSubmit, onCancel }: MonthlyFormProps) {
+export function MonthlyGoalForm({ goal, initial, defaultMonth, submitLabel, onSubmit, onCancel }: MonthlyFormProps) {
   const minMonth = goal.startDate.slice(0, 7)
   const maxMonth = goal.targetDate.slice(0, 7)
   const thisMonth = currentMonthSeoul()
-  const defaultMonth = thisMonth < minMonth ? minMonth : thisMonth > maxMonth ? maxMonth : thisMonth
+  const clamped = thisMonth < minMonth ? minMonth : thisMonth > maxMonth ? maxMonth : thisMonth
 
-  const [month, setMonth] = useState(initial?.month ?? defaultMonth)
+  const [month, setMonth] = useState(initial?.month ?? defaultMonth ?? clamped)
   const [content, setContent] = useState(initial?.content ?? '')
   const [currentValue, setCurrentValue] = useState(initial?.currentValue?.toString() ?? '')
   const [targetValue, setTargetValue] = useState(initial?.targetValue?.toString() ?? '')
@@ -376,14 +375,12 @@ function WeeklyGoalItem({ weekly, month, categories, run }: WeeklyItemProps) {
       ) : (
         <span className="muted small">미분류</span>
       )}
-      <span className="row-actions">
-        <button className="ghost" onClick={() => setEditing(true)}>
-          수정
-        </button>
-        <button className="danger" onClick={remove}>
-          삭제
-        </button>
-      </span>
+      <MoreMenu
+        items={[
+          { label: '수정', onClick: () => setEditing(true) },
+          { label: '삭제', onClick: remove, danger: true },
+        ]}
+      />
     </div>
   )
 }

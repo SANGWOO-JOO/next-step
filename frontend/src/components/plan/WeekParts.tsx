@@ -17,8 +17,9 @@ import { dayLabel, todaySeoul } from '../../utils/date'
 import { healthOf, weekRange } from '../../utils/health'
 import CategoryBadge from '../CategoryBadge'
 import HealthDot from '../HealthDot'
+import MoreMenu from '../MoreMenu'
 import WeeklyGoalForm from '../WeeklyGoalForm'
-import WeeklyPlanItem from '../WeeklyPlanItem'
+import WeeklyPlanItem, { PLAN_DRAG_TYPE } from '../WeeklyPlanItem'
 
 type Run = (action: () => Promise<unknown>) => Promise<boolean>
 
@@ -134,10 +135,25 @@ type DayProps = {
   dailyGoals: DailyGoal[]
   weeklyGoals: WeeklyGoal[]
   weekDates: string[]
-  run: (action: () => Promise<unknown>) => Promise<boolean>
+  run: Run
+  /** 강조 중인 주간 목표. 다른 목표의 계획은 흐리게 */
+  highlightGoalId?: number | null
+  /** 다른 요일의 계획 카드를 이 날로 끌어 놓았을 때 */
+  onDropPlan?: (planId: number, date: string) => void
 }
 
-export function DayColumn({ date, today, plans, dailyGoals, weeklyGoals, weekDates, run }: DayProps) {
+export function DayColumn({
+  date,
+  today,
+  plans,
+  dailyGoals,
+  weeklyGoals,
+  weekDates,
+  run,
+  highlightGoalId,
+  onDropPlan,
+}: DayProps) {
+  const [over, setOver] = useState(false)
   const [adding, setAdding] = useState(false)
   const [content, setContent] = useState('')
   const [pickedId, setPickedId] = useState<number | null>(null)
@@ -155,11 +171,27 @@ export function DayColumn({ date, today, plans, dailyGoals, weeklyGoals, weekDat
   }
 
   return (
-    <div className={today ? 'card day-column today' : 'card day-column'}>
+    <div
+      className={['card day-column', today ? 'today' : '', over ? 'drop-over' : ''].join(' ')}
+      onDragOver={(e) => {
+        if (!onDropPlan || !e.dataTransfer.types.includes(PLAN_DRAG_TYPE)) return
+        e.preventDefault()
+        setOver(true)
+      }}
+      onDragLeave={() => setOver(false)}
+      onDrop={(e) => {
+        setOver(false)
+        const id = Number(e.dataTransfer.getData(PLAN_DRAG_TYPE))
+        if (id && onDropPlan) {
+          e.preventDefault()
+          onDropPlan(id, date)
+        }
+      }}
+    >
       <div className="daily-panel-head">
-        <strong>{dayLabel(date).replace(/^\d+월 /, '')}</strong>
-        <span className="muted small">
-          하루 목표 {dailyGoals.filter((d) => d.status === 'DONE').length}/{dailyGoals.length}
+        <strong className={today ? 'day-today' : undefined}>{dayLabel(date).replace(/^\d+월 /, '')}</strong>
+        <span className="muted small" title="하루 목표 완료/전체">
+          {dailyGoals.filter((d) => d.status === 'DONE').length}/{dailyGoals.length}
         </span>
       </div>
       <ul className="plan-list">
@@ -170,6 +202,7 @@ export function DayColumn({ date, today, plans, dailyGoals, weeklyGoals, weekDat
             hasDailyGoal={dailyGoals.some((d) => d.content === p.content)}
             run={run}
             weekDates={weekDates}
+            dimmed={highlightGoalId != null && p.weeklyGoalId !== highlightGoalId}
           />
         ))}
       </ul>
@@ -244,6 +277,129 @@ export function WeekSummary({ journal }: { journal: WeeklyJournal }) {
           )
         })}
       </ul>
+    </div>
+  )
+}
+
+type ChipsProps = GoalListProps & {
+  plans: WeeklyPlan[]
+  /** 강조 중인 주간 목표 */
+  selectedId: number | null
+  onSelect: (id: number | null) => void
+}
+
+/**
+ * 주간 목표 칩 줄(Sunsama 주간 목표 패널 참고). 칩을 누르면 그 목표의 계획만 보드에서 강조한다.
+ * 진행은 연결된 하루 목표 완료/전체, 동작은 ⋯ 메뉴.
+ */
+export function WeekGoalChips({
+  monday,
+  weeklyGoals,
+  monthlyGoals,
+  dailyGoals,
+  plans,
+  categories,
+  run,
+  selectedId,
+  onSelect,
+}: ChipsProps) {
+  const [adding, setAdding] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [pickedId, setPickedId] = useState<number | null>(null)
+  const monthlyGoalId = monthlyGoals.find((m) => m.id === pickedId)?.id ?? monthlyGoals[0]?.id
+  const today = todaySeoul()
+  const { from, to } = weekRange(monday)
+  const editing = weeklyGoals.find((w) => w.id === editingId)
+
+  return (
+    <div className="week-chips">
+      <span className="muted small">이번 주 목표</span>
+      {weeklyGoals.map((w) => {
+        const linked = dailyGoals.filter((d) => d.weeklyGoalId === w.id)
+        const done = linked.filter((d) => d.status === 'DONE').length
+        const percent = linked.length ? Math.round((done / linked.length) * 100) : 0
+        const planCount = plans.filter((p) => p.weeklyGoalId === w.id).length
+        return (
+          <span
+            key={w.id}
+            className={['week-chip', selectedId === w.id ? 'selected' : '', w.achieved ? 'achieved' : ''].join(' ')}
+          >
+            <button
+              type="button"
+              className="week-chip-main"
+              onClick={() => onSelect(selectedId === w.id ? null : w.id)}
+              aria-pressed={selectedId === w.id}
+              title="누르면 이 목표의 계획만 강조해요"
+            >
+              <HealthDot health={healthOf(percent, from, to, today, w.achieved)} />
+              <span className="badge-dot" style={{ background: w.category?.color ?? 'var(--muted)' }} />
+              <span className={w.achieved ? 'done' : undefined}>{w.content}</span>
+              <span className="muted small">
+                {done}/{linked.length} · 계획 {planCount}
+              </span>
+              {w.carriedOver && <span className="carry">→ 다음 주</span>}
+            </button>
+            <MoreMenu
+              label="주간 목표 동작"
+              items={[
+                {
+                  label: w.achieved ? '달성 취소' : '달성',
+                  onClick: () => run(() => updateWeeklyGoal(w.id, { ...toWeeklyInput(w), achieved: !w.achieved })),
+                },
+                { label: '수정', onClick: () => setEditingId(w.id) },
+                {
+                  label: '삭제',
+                  danger: true,
+                  onClick: () => confirm(`'${w.content}' 주간 목표를 삭제할까요?`) && run(() => deleteWeeklyGoal(w.id)),
+                },
+              ]}
+            />
+          </span>
+        )
+      })}
+      {monthlyGoals.length > 0 ? (
+        <button className="ghost week-chip-add" onClick={() => setAdding(true)}>
+          + 주간 목표
+        </button>
+      ) : (
+        <span className="muted small">이 주가 속한 달의 월간 목표가 먼저 있어야 해요.</span>
+      )}
+
+      {editing && (
+        <div className="week-chip-form">
+          <WeeklyGoalForm
+            month={monthlyGoals.find((m) => m.id === editing.monthlyGoalId)?.month ?? monday.slice(0, 7)}
+            categories={categories}
+            initial={editing}
+            showWeek={false}
+            submitLabel="저장"
+            onSubmit={(input) => run(() => updateWeeklyGoal(editing.id, input)).then((ok) => ok && setEditingId(null))}
+            onCancel={() => setEditingId(null)}
+          />
+        </div>
+      )}
+      {adding && monthlyGoalId !== undefined && (
+        <div className="week-chip-form">
+          {monthlyGoals.length > 1 && (
+            <select value={monthlyGoalId} onChange={(e) => setPickedId(Number(e.target.value))} aria-label="연결할 월간 목표">
+              {monthlyGoals.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.content}
+                </option>
+              ))}
+            </select>
+          )}
+          <WeeklyGoalForm
+            month={monthlyGoals.find((m) => m.id === monthlyGoalId)!.month}
+            categories={categories}
+            defaultWeekStart={monday}
+            showWeek={false}
+            submitLabel="추가"
+            onSubmit={(input) => run(() => createWeeklyGoal(monthlyGoalId, input)).then((ok) => ok && setAdding(false))}
+            onCancel={() => setAdding(false)}
+          />
+        </div>
+      )}
     </div>
   )
 }

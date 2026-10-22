@@ -4,7 +4,6 @@ import type { Goal } from '../../api/goals'
 import { getMonthlyReviews, type MonthlyReviewBrief } from '../../api/reviews'
 import GoalTree from '../../components/GoalTree'
 import HealthDot from '../../components/HealthDot'
-import ProgressBar from '../../components/ProgressBar'
 import { addMonths, currentMonthSeoul, monthLabel, todaySeoul } from '../../utils/date'
 import { elapsedPercent, healthOf, monthRange } from '../../utils/health'
 import { monthlyPercent, type Run } from './planData'
@@ -49,40 +48,40 @@ export default function GoalLevel({ goals, categories, run, onOpenMonth }: Props
           const hidden = allMonths.length - months.length
           return (
             <div key={goal.id} className="card">
-              <div className="goal-header">
+              <div className="goal-summary">
                 <HealthDot health={healthOf(goal.progress.percent, goal.startDate, goal.targetDate, today)} label />
                 <h2 className="goal-title">{goal.title}</h2>
-                <span className="muted small">
-                  {goal.startDate} ~ {goal.targetDate} · 기간 {elapsedPercent(goal.startDate, goal.targetDate, today)}% 지남
+                <span className="goal-summary-line muted small">
+                  {goal.startDate} 시작 · 목표일 {goal.targetDate} · 기간 {elapsedPercent(goal.startDate, goal.targetDate, today)}% 지남 ·
+                  월간 목표 {goal.progress.achieved}/{goal.progress.total} 달성
                 </span>
-                <span className="muted small">월간 목표</span>
-                <ProgressBar progress={goal.progress} />
               </div>
-              <div className="roadmap" style={{ gridTemplateColumns: `repeat(${months.length}, minmax(7.5rem, 1fr))` }}>
+              <div className="roadmap-strip" style={{ gridTemplateColumns: `repeat(${months.length}, minmax(5.5rem, 1fr))` }}>
                 {months.map((month) => {
                   const monthly = goal.monthlyGoals.filter((m) => m.month === month)
                   const { from, to } = monthRange(month)
+                  const percent = monthly.length
+                    ? Math.round(monthly.reduce((sum, m) => sum + monthlyPercent(m), 0) / monthly.length)
+                    : 0
+                  const health = monthly.length
+                    ? healthOf(percent, from, to, today, monthly.every((m) => m.achieved))
+                    : null
                   return (
                     <button
                       key={month}
                       type="button"
-                      className={month === currentMonthSeoul() ? 'roadmap-month current' : 'roadmap-month'}
+                      className={['roadmap-cell', month === currentMonthSeoul() ? 'current' : '', monthly.length ? '' : 'empty'].join(' ')}
                       onClick={() => onOpenMonth(month)}
+                      title={monthly.map((m) => m.content).join(', ') || '월간 목표 없음 · 눌러서 만들기'}
                     >
                       <span className="roadmap-label">
                         {monthLabel(month).slice(6)}
-                        {month === currentMonthSeoul() && <span className="roadmap-now">지금</span>}
+                        {health && <HealthDot health={health} />}
                       </span>
-                      {monthly.length === 0 && <span className="muted small">월간 목표 없음</span>}
-                      {monthly.map((m) => (
-                        <span key={m.id} className="roadmap-item">
-                          <HealthDot health={healthOf(monthlyPercent(m), from, to, today, m.achieved)} />
-                          <span className={m.achieved ? 'done' : undefined}>{m.content}</span>
-                          <span className="muted small">
-                            주간 {m.progress.achieved}/{m.progress.total}
-                          </span>
-                        </span>
-                      ))}
+                      <span className="roadmap-bar">
+                        <span className="roadmap-bar-fill" style={{ width: `${percent}%` }} />
+                      </span>
+                      <span className="roadmap-text small">{monthly[0]?.content ?? ''}</span>
                     </button>
                   )
                 })}
@@ -103,7 +102,12 @@ export default function GoalLevel({ goals, categories, run, onOpenMonth }: Props
         <div className="card">
           <h3 className="timeline-title">월간 회고 모음</h3>
           {reviews.length === 0 ? (
-            <p className="muted small">아직 쓴 월간 회고가 없어요. [월] 보기에서 쓸 수 있어요.</p>
+            <div className="empty-cta">
+              <p className="muted small">아직 쓴 월간 회고가 없어요. 달의 마지막 주에 [월] 보기에서 써요.</p>
+              <button className="ghost" onClick={() => onOpenMonth(currentMonthSeoul())}>
+                {monthLabel(currentMonthSeoul()).slice(6)} 보기로 가기
+              </button>
+            </div>
           ) : (
             <ul className="review-list">
               {reviews.map((r) => (

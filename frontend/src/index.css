@@ -668,3 +668,74 @@ body.immersive .app-main { padding-top: 2rem; }
   .drawer-scrim { display: block; position: fixed; inset: 0; z-index: 25; background: rgb(0 0 0 / 0.4); }
   .app-main { padding: 1rem 0.85rem; }
 }
+
+/* 계획 [주] 보드 (1-4d) */
+.week-goals-bar { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.75rem; }
+.week-plan-button { margin-left: auto; }
+.week-chips { flex: 1 1 30rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.week-chip { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: 999px; padding-right: 0.15rem; background: var(--bg); }
+.week-chip.selected { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.week-chip-main { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.4rem 0.25rem 0.65rem; border: none; background: transparent; color: var(--text); }
+.week-chip .more-menu { margin-left: 0; }
+.week-chip:hover .more-trigger, .week-chip .more-menu.open .more-trigger { opacity: 1; }
+.week-chip-add { border-style: dashed; border-radius: 999px; }
+.week-chip-form { flex-basis: 100%; display: grid; gap: 0.4rem; }
+.week-board { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.5rem; margin-top: 0.75rem; overflow-x: auto; }
+.week-board > .card { margin-top: 0; min-height: 14rem; }
+@media (max-width: 900px) {
+  .week-board { grid-template-columns: repeat(7, minmax(9rem, 1fr)); }
+}
+.day-column.drop-over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.day-today { color: var(--down); }
+.plan-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 0.3rem 0.2rem 0.3rem 0.45rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--muted);
+  border-radius: 0 6px 6px 0;
+  background: var(--bg);
+  font-size: 0.85rem;
+  cursor: grab;
+  transition: opacity 0.12s;
+}
+.plan-card.dimmed { opacity: 0.3; }
+.plan-card .plan-content { flex: 1; word-break: keep-all; }
+.plan-card:hover .more-trigger, .plan-card .more-menu.open .more-trigger { opacity: 1; }
+.plan-done { color: var(--up); }
+.board-hint { margin: 0.4rem 0 0; }
+.week-bottom { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 0 1rem; align-items: start; }
+.path-select { border: none; background: transparent; color: var(--accent); font-weight: 500; padding: 0.15rem 0.25rem; cursor: pointer; max-width: 22rem; }
+.path-select:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+/* [월] 주 줄의 버튼은 마우스를 올릴 때만 */
+.calendar-embedded .calendar-row .calendar-goals .row-actions { opacity: 0; transition: opacity 0.12s; }
+.calendar-embedded .calendar-row:hover .calendar-goals .row-actions,
+.calendar-embedded .calendar-row:focus-within .calendar-goals .row-actions { opacity: 1; }
+@media (hover: none) {
+  .calendar-embedded .calendar-row .calendar-goals .row-actions { opacity: 1; }
+}
+.monthly-card:hover .more-trigger, .monthly-card .more-menu.open .more-trigger,
+.tree-row:hover .more-trigger, .tree-row .more-menu.open .more-trigger,
+.goal-header:hover .more-trigger, .goal-header .more-menu.open .more-trigger { opacity: 1; }
+.empty-cta { display: grid; justify-items: start; gap: 0.4rem; padding: 0.5rem 0; }
+.goal-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.75rem; }
+.goal-summary-line { flex-basis: 100%; }
+.roadmap-strip { display: grid; gap: 4px; margin-top: 0.75rem; overflow-x: auto; }
+.roadmap-cell {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.4rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  white-space: normal;
+}
+.roadmap-cell:hover { border-color: var(--accent); }
+.roadmap-cell.current { border-color: var(--down); }
+.roadmap-cell.empty { color: var(--muted); border-style: dashed; }
+.roadmap-bar { height: 0.35rem; background: var(--border); border-radius: 999px; overflow: hidden; }
+.roadmap-bar-fill { display: block; height: 100%; background: var(--up); }
+.roadmap-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); min-height: 1em; }

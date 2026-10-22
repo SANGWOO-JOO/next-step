@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { errorMessage } from '../api/client'
 import { formatDuration } from '../api/focus'
 import { CONDITION_LABELS, getDailyLogs, type DailyLog } from '../api/records'
@@ -74,13 +74,18 @@ export default function LogPage() {
       {list === null ? (
         <p className="muted">불러오는 중…</p>
       ) : list.length === 0 ? (
-        <p className="card muted">
-          {kind === 'day'
-            ? '이 달에는 기록이 없어요. 일정 화면의 하루 마무리로 남겨요.'
-            : kind === 'week'
-              ? '이 달에는 주간 일지가 없어요. 계획 화면의 [주]에서 써요.'
-              : '이 해에는 월간 회고가 없어요. 계획 화면의 [월]에서 써요.'}
-        </p>
+        <div className="card empty-cta">
+          <p className="muted">
+            {kind === 'day'
+              ? '이 달에는 기록이 없어요. 하루를 마무리하면 여기에 쌓여요.'
+              : kind === 'week'
+                ? '이 달에는 주간 일지가 없어요.'
+                : '이 해에는 월간 회고가 없어요.'}
+          </p>
+          <Link className="button-link" to={kind === 'day' ? '/' : kind === 'week' ? '/plan?level=week' : '/plan?level=month'}>
+            {kind === 'day' ? '일정에서 하루 마무리하기' : kind === 'week' ? '이번 주 일지 쓰러 가기' : '이번 달 회고 쓰러 가기'}
+          </Link>
+        </div>
       ) : (
         <div className="log-list">
           {kind === 'day' && days?.map((d) => <DayCard key={d.date} log={d} />)}
