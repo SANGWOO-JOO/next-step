@@ -4,14 +4,21 @@ import { errorMessage } from '../../api/client'
 import { getDailyGoalsBetween, type DailyGoal } from '../../api/dailyGoals'
 import { formatDuration } from '../../api/focus'
 import { toMonthlyInput, toWeeklyInput, updateMonthlyGoal, updateWeeklyGoal, createWeeklyGoal, type Goal } from '../../api/goals'
-import { getMonthlyReview, saveMonthlyReview, studySeconds, type MonthlyReview } from '../../api/reviews'
+import {
+  getMonthlyReview,
+  getWeeklyJournals,
+  saveMonthlyReview,
+  studySeconds,
+  type MonthlyReview,
+  type WeeklyJournalBrief,
+} from '../../api/reviews'
 import GoalCalendar from '../../components/GoalCalendar'
 import HealthDot from '../../components/HealthDot'
 import ProgressBar from '../../components/ProgressBar'
-import ReviewFields from '../../components/ReviewFields'
-import { addMonths, mondaysOfMonth, monthLabel, shiftDate, todaySeoul } from '../../utils/date'
+import ReviewCard from '../../components/ReviewCard'
+import { addMonths, mondaysOfMonth, monthLabel, shiftDate, todaySeoul, weekLabel } from '../../utils/date'
 import { healthOf, monthRange } from '../../utils/health'
-import { allMonthlyGoals, monthlyPercent, type Run } from './planData'
+import { allMonthlyGoals, monthlyPercent, reviewDue, type Run } from './planData'
 
 type Props = {
   month: string
@@ -27,6 +34,7 @@ export default function MonthLevel({ month, goals, categories, run: parentRun, o
   const [review, setReview] = useState<MonthlyReview | null>(null)
   const [lastReview, setLastReview] = useState<MonthlyReview | null>(null)
   const [dailyGoals, setDailyGoals] = useState<DailyGoal[]>([])
+  const [journals, setJournals] = useState<WeeklyJournalBrief[]>([])
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const today = todaySeoul()
@@ -38,8 +46,10 @@ export default function MonthLevel({ month, goals, categories, run: parentRun, o
       getMonthlyReview(month),
       getMonthlyReview(addMonths(month, -1)),
       getDailyGoalsBetween(mondays[0], shiftDate(mondays[mondays.length - 1], 6)),
+      getWeeklyJournals(mondays[0], mondays[mondays.length - 1]),
     ])
-      .then(([r, last, d]) => {
+      .then(([r, last, d, j]) => {
+        setJournals(j)
         setReview(r)
         setLastReview(last)
         setDailyGoals(d)
@@ -164,18 +174,37 @@ export default function MonthLevel({ month, goals, categories, run: parentRun, o
             </div>
           )}
           {review && (
+            <ReviewCard
+              key={`${month}|${review.saved}`}
+              title="월간 회고"
+              fields={[
+                { key: 'review', label: '회고', placeholder: '이번 달에 무엇을 했고 어땠나요?', rows: 5 },
+                { key: 'nextDirection', label: '다음 달 방향', placeholder: '다음 달에 집중할 것' },
+              ]}
+              values={{ review: review.review, nextDirection: review.nextDirection }}
+              version={`${month}|${review.updatedAt}`}
+              aiSummary={review.aiSummary}
+              saved={review.saved}
+              due={reviewDue(month, today)}
+              prompt={month === today.slice(0, 7) ? '이 달의 마지막 주예요. 한 달을 돌아보고 다음 달 방향을 정해요.' : undefined}
+              onSave={(v) => run(() => saveMonthlyReview(month, { review: v.review, nextDirection: v.nextDirection }))}
+            />
+          )}
+          {journals.length > 0 && (
             <div className="card">
-              <h3 className="timeline-title">월간 회고</h3>
-              <ReviewFields
-                fields={[
-                  { key: 'review', label: '회고', placeholder: '이번 달에 무엇을 했고 어땠나요?', rows: 5 },
-                  { key: 'nextDirection', label: '다음 달 방향', placeholder: '다음 달에 집중할 것' },
-                ]}
-                values={{ review: review.review, nextDirection: review.nextDirection }}
-                version={`${month}|${review.updatedAt}`}
-                aiSummary={review.aiSummary}
-                onSave={(v) => run(() => saveMonthlyReview(month, { review: v.review, nextDirection: v.nextDirection }))}
-              />
+              <h3 className="timeline-title">이 달 주간 일지 모음</h3>
+              <ul className="review-list">
+                {journals.map((j) => (
+                  <li key={j.weekStart}>
+                    <button className="ghost" onClick={() => onOpenWeek(j.weekStart)}>
+                      {weekLabel(j.weekStart)}
+                    </button>
+                    {j.good && <p className="small">잘한 점: {j.good}</p>}
+                    {j.bad && <p className="small">아쉬운 점: {j.bad}</p>}
+                    {j.nextAction && <p className="small muted">→ 다음 주: {j.nextAction}</p>}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </aside>

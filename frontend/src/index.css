@@ -588,3 +588,6 @@ body.immersive .app-header { display: none; }
 body.immersive .app-main { padding-top: 2rem; }
 .focus-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
 .focus-head h1 { margin: 0; }
+.review-collapsed { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.review-read { margin: 0.25rem 0 0; display: grid; gap: 0.5rem; }
+.review-read dd { margin: 0.1rem 0 0; white-space: pre-wrap; }

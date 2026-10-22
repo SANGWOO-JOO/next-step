@@ -21,6 +21,7 @@ import {
 } from '../api/focus'
 import { getHealth, type Health } from '../api/health'
 import { getDailyLog, getManualLogs, type DailyLog, type ManualStudyLog } from '../api/records'
+import { getWeeklyJournals } from '../api/reviews'
 import { getWeeklyPlansOfDate, type WeeklyPlan } from '../api/weeklyPlans'
 import { getTimeBlocksBetween, type TimeBlock } from '../api/timeBlocks'
 import CategoryBadge from '../components/CategoryBadge'
@@ -29,7 +30,7 @@ import DailyLogCard from '../components/DailyLogCard'
 import WeeklyPlanItem from '../components/WeeklyPlanItem'
 import ScheduleView from '../components/ScheduleView'
 import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, todaySeoul, weekDates } from '../utils/date'
-import { plannedKey } from './plan/planData'
+import { journalDue, plannedKey } from './plan/planData'
 
 export default function TodayPage() {
   const today = todaySeoul()
@@ -163,6 +164,7 @@ export default function TodayPage() {
       )}
 
       {weeklyGoals && <WeekPlanBanner today={today} monday={thisMonday} hasWeeklyGoals={weeklyGoals.length > 0} />}
+      <WeekReviewBanner today={today} monday={thisMonday} />
 
       {unfinished.length > 0 && (
         <UnfinishedCard goals={unfinished} today={today} weeklyGoals={weeklyGoals ?? []} run={run} />
@@ -360,7 +362,7 @@ function WeekPlanBanner({ today, monday, hasWeeklyGoals }: { today: string; mond
     <p className="focus-banner plan-banner">
       <span>{hasWeeklyGoals ? '새로운 한 주예요. 지난주를 돌아보고 이번 주를 계획해요.' : '이번 주 주간 목표가 아직 없어요.'}</span>
       <span className="row-actions">
-        <Link to={`/plan?level=week&date=${monday}`}>이번 주 계획하기 ▶</Link>
+        <Link className="button-link" to={`/plan?level=week&date=${monday}`}>이번 주 계획하기 ▶</Link>
         {hasWeeklyGoals && (
           <button className="icon" onClick={dismiss} aria-label="이번 주는 닫기">
             ×
@@ -402,4 +404,27 @@ function NowNext({ blocks }: { blocks: TimeBlock[] }) {
     )
   }
   return <span className="muted">오늘 남은 시간 블록이 없어요.</span>
+}
+
+/** 금~일요일에 이번 주 일지를 아직 안 썼으면 '이번 주 돌아보기'를 띄운다(docs/design.md 1-4c 회고 위치) */
+function WeekReviewBanner({ today, monday }: { today: string; monday: string }) {
+  const [written, setWritten] = useState<boolean | null>(null)
+  const due = journalDue(monday, today)
+
+  useEffect(() => {
+    if (!due) return
+    getWeeklyJournals(monday, monday)
+      .then((list) => setWritten(list.length > 0))
+      .catch(() => setWritten(null))
+  }, [due, monday])
+
+  if (!due || written !== false) return null
+  return (
+    <p className="focus-banner plan-banner">
+      <span>한 주가 끝나가요. 이번 주를 돌아보고 다음 주에 바꿀 한 가지를 정해요.</span>
+      <Link className="button-link" to={`/plan?level=week&date=${monday}`}>
+        이번 주 돌아보기
+      </Link>
+    </p>
+  )
 }

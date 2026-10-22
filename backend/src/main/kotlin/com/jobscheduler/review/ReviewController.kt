@@ -3,6 +3,7 @@ package com.jobscheduler.review
 import com.jobscheduler.review.dto.MonthlyReviewBrief
 import com.jobscheduler.review.dto.MonthlyReviewRequest
 import com.jobscheduler.review.dto.MonthlyReviewResponse
+import com.jobscheduler.review.dto.WeeklyJournalBrief
 import com.jobscheduler.review.dto.WeeklyJournalRequest
 import com.jobscheduler.review.dto.WeeklyJournalResponse
 import jakarta.validation.Valid
@@ -21,6 +22,13 @@ import java.time.YearMonth
 @RestController
 @RequestMapping("/api/weekly-journals")
 class WeeklyJournalController(private val reviewService: ReviewService) {
+    /** 저장된 일지 목록 (예: ?from=2026-09-28&to=2026-10-26) */
+    @GetMapping
+    fun list(
+        @RequestParam @DateTimeFormat(iso = ISO.DATE) from: LocalDate,
+        @RequestParam @DateTimeFormat(iso = ISO.DATE) to: LocalDate,
+    ): List<WeeklyJournalBrief> = reviewService.listJournals(from, to)
+
     /** 저장한 일지가 없어도 그 주의 요약을 돌려준다. */
     @GetMapping("/{weekStart}")
     fun get(@PathVariable @DateTimeFormat(iso = ISO.DATE) weekStart: LocalDate): WeeklyJournalResponse =

@@ -6,10 +6,10 @@ import type { Goal } from '../../api/goals'
 import { getWeeklyJournal, saveWeeklyJournal, type WeeklyJournal } from '../../api/reviews'
 import { getWeeklyPlans, type WeeklyPlan } from '../../api/weeklyPlans'
 import { DayColumn, WeekGoalList, WeekSummary } from '../../components/plan/WeekParts'
-import ReviewFields from '../../components/ReviewFields'
-import { shiftDate, todaySeoul, weekDates } from '../../utils/date'
+import ReviewCard from '../../components/ReviewCard'
+import { mondayOf, shiftDate, todaySeoul, weekDates } from '../../utils/date'
 import WeeklyPlanningWizard from './WeeklyPlanningWizard'
-import { monthlyGoalsOfWeek, weeklyGoalsOf, type Run } from './planData'
+import { journalDue, monthlyGoalsOfWeek, weeklyGoalsOf, type Run } from './planData'
 
 type Props = { monday: string; goals: Goal[]; categories: Category[]; run: Run }
 
@@ -91,20 +91,22 @@ export default function WeekLevel({ monday, goals, categories, run: parentRun }:
           )}
           {journal && <WeekSummary journal={journal} />}
           {journal && (
-            <div className="card">
-              <h3 className="timeline-title">주간 일지</h3>
-              <ReviewFields
-                fields={[
-                  { key: 'good', label: '잘한 점', placeholder: '이번 주에 잘된 것' },
-                  { key: 'bad', label: '아쉬운 점', placeholder: '막혔던 것, 딴짓한 때' },
-                  { key: 'nextAction', label: '다음 주 반영', placeholder: '다음 주에 바꿀 한 가지' },
-                ]}
-                values={{ good: journal.good, bad: journal.bad, nextAction: journal.nextAction }}
-                version={`${monday}|${journal.updatedAt}`}
-                aiSummary={journal.aiSummary}
-                onSave={(v) => run(() => saveWeeklyJournal(monday, { good: v.good, bad: v.bad, nextAction: v.nextAction }))}
-              />
-            </div>
+            <ReviewCard
+              key={`${monday}|${journal.saved}`}
+              title="주간 일지"
+              fields={[
+                { key: 'good', label: '잘한 점', placeholder: '이번 주에 잘된 것' },
+                { key: 'bad', label: '아쉬운 점', placeholder: '막혔던 것, 딴짓한 때' },
+                { key: 'nextAction', label: '다음 주 반영', placeholder: '다음 주에 바꿀 한 가지' },
+              ]}
+              values={{ good: journal.good, bad: journal.bad, nextAction: journal.nextAction }}
+              version={`${monday}|${journal.updatedAt}`}
+              aiSummary={journal.aiSummary}
+              saved={journal.saved}
+              due={journalDue(monday, today)}
+              prompt={monday === mondayOf(today) ? '한 주를 마무리할 때예요. 돌아보고 다음 주에 바꿀 한 가지를 정해요.' : undefined}
+              onSave={(v) => run(() => saveWeeklyJournal(monday, { good: v.good, bad: v.bad, nextAction: v.nextAction }))}
+            />
           )}
         </aside>
       </div>

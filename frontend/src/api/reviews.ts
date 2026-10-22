@@ -65,3 +65,15 @@ export type MonthlyReviewBrief = {
 /** 저장된 월간 회고 목록 */
 export const getMonthlyReviews = (from: string, to: string) =>
   api.get<MonthlyReviewBrief[]>(`/api/monthly-reviews?from=${from}&to=${to}`)
+
+export type WeeklyJournalBrief = {
+  weekStart: string
+  good: string | null
+  bad: string | null
+  nextAction: string | null
+  updatedAt: string
+}
+
+/** 저장된 주간 일지 목록(from~to는 월요일) */
+export const getWeeklyJournals = (from: string, to: string) =>
+  api.get<WeeklyJournalBrief[]>(`/api/weekly-journals?from=${from}&to=${to}`)

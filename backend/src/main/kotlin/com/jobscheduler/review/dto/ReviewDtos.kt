@@ -70,3 +70,12 @@ data class MonthlyReviewBrief(
     val aiSummary: String?,
     val updatedAt: OffsetDateTime,
 )
+
+/** 일지 모음용 요약(집계 없이 저장한 글만) */
+data class WeeklyJournalBrief(
+    val weekStart: LocalDate,
+    val good: String?,
+    val bad: String?,
+    val nextAction: String?,
+    val updatedAt: OffsetDateTime,
+)

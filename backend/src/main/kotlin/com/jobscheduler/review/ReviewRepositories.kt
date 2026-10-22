@@ -6,6 +6,7 @@ import java.time.LocalDate
 interface WeeklyJournalRepository : JpaRepository<WeeklyJournal, Long> {
     fun findByWeekStart(weekStart: LocalDate): WeeklyJournal?
     fun findAllByWeekStartIn(weekStarts: Collection<LocalDate>): List<WeeklyJournal>
+    fun findAllByWeekStartBetweenOrderByWeekStartAsc(from: LocalDate, to: LocalDate): List<WeeklyJournal>
 }
 
 interface MonthlyReviewRepository : JpaRepository<MonthlyReview, Long> {

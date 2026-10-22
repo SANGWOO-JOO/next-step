@@ -114,4 +114,12 @@ class ReviewServiceTest(
         assertEquals(listOf("10월", "11월"), list.map { it.review })
         assertEquals("면접", list[0].nextDirection)
     }
+
+    @Test
+    fun `저장된 주간 일지만 주 순서로 모아 준다`() {
+        reviewService.saveJournal(monday, WeeklyJournalRequest(good = "둘째"))
+        reviewService.saveJournal(monday.minusWeeks(1), WeeklyJournalRequest(good = "첫째"))
+        val list = reviewService.listJournals(monday.minusWeeks(3), monday)
+        assertEquals(listOf("첫째", "둘째"), list.map { it.good })
+    }
 }

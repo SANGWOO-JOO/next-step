@@ -10,6 +10,7 @@ import com.jobscheduler.review.dto.MonthlyReviewBrief
 import com.jobscheduler.review.dto.MonthlyReviewRequest
 import com.jobscheduler.review.dto.MonthlyReviewResponse
 import com.jobscheduler.review.dto.WeekStats
+import com.jobscheduler.review.dto.WeeklyJournalBrief
 import com.jobscheduler.review.dto.WeeklyJournalRequest
 import com.jobscheduler.review.dto.WeeklyJournalResponse
 import org.springframework.stereotype.Service
@@ -32,6 +33,16 @@ class ReviewService(
     fun getJournal(weekStart: LocalDate): WeeklyJournalResponse {
         requireMonday(weekStart)
         return toResponse(weekStart, journalRepository.findByWeekStart(weekStart))
+    }
+
+    /** from~to(월요일)의 저장된 주간 일지(최대 1년) */
+    @Transactional(readOnly = true)
+    fun listJournals(from: LocalDate, to: LocalDate): List<WeeklyJournalBrief> {
+        if (to.isBefore(from) || from.plusYears(1).isBefore(to)) {
+            throw BusinessRuleException("조회 기간은 1년 이내여야 해요.", "INVALID_RANGE")
+        }
+        return journalRepository.findAllByWeekStartBetweenOrderByWeekStartAsc(from, to)
+            .map { WeeklyJournalBrief(it.weekStart, it.good, it.bad, it.nextAction, it.updatedAt) }
     }
 
     /** 주당 1개라 없으면 만들고 있으면 고친다. */
