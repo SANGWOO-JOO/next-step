@@ -20,9 +20,13 @@ import {
   type FocusSession,
 } from '../api/focus'
 import { getHealth, type Health } from '../api/health'
+import { getDailyLog, getManualLogs, type DailyLog, type ManualStudyLog } from '../api/records'
+import { getWeeklyPlansOfDate, type WeeklyPlan } from '../api/weeklyPlans'
 import { getTimeBlocks, type TimeBlock } from '../api/timeBlocks'
 import CategoryBadge from '../components/CategoryBadge'
 import DailyGoalPanel from '../components/DailyGoalPanel'
+import DailyLogCard from '../components/DailyLogCard'
+import WeeklyPlanItem from '../components/WeeklyPlanItem'
 import TimeBlockTimeline from '../components/TimeBlockTimeline'
 import { dayLabel, mondayOf, todaySeoul } from '../utils/date'
 
@@ -37,6 +41,9 @@ export default function TodayPage() {
   const [sessions, setSessions] = useState<FocusSession[]>([])
   const [current, setCurrent] = useState<FocusSession | null>(null)
   const [uncheckedNotes, setUncheckedNotes] = useState(0)
+  const [plans, setPlans] = useState<WeeklyPlan[]>([])
+  const [dailyLog, setDailyLog] = useState<DailyLog | null>(null)
+  const [manualLogs, setManualLogs] = useState<ManualStudyLog[]>([])
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
 
@@ -50,8 +57,14 @@ export default function TodayPage() {
       getFocusSessions(today),
       getCurrentFocus(),
       getDistractionNotes(false),
+      getWeeklyPlansOfDate(today),
+      getDailyLog(today),
+      getManualLogs(today),
     ])
-      .then(([d, w, u, c, b, f, cur, notes]) => {
+      .then(([d, w, u, c, b, f, cur, notes, p, log, manual]) => {
+        setPlans(p)
+        setDailyLog(log)
+        setManualLogs(manual)
         setSessions(f)
         setCurrent(cur ?? null)
         setUncheckedNotes(notes.length)
@@ -130,6 +143,22 @@ export default function TodayPage() {
         <UnfinishedCard goals={unfinished} today={today} weeklyGoals={weeklyGoals} run={run} />
       )}
 
+      {plans.length > 0 && (
+        <div className="card">
+          <h3 className="timeline-title">이번 주 계획 중 오늘 할 것</h3>
+          <ul className="plan-list today-plans">
+            {plans.map((p) => (
+              <WeeklyPlanItem
+                key={p.id}
+                plan={p}
+                hasDailyGoal={goals.some((g) => g.content === p.content)}
+                run={run}
+              />
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="today-grid">
         <div className="card">
           <DailyGoalPanel
@@ -155,6 +184,8 @@ export default function TodayPage() {
           <TimeBlockTimeline date={today} blocks={blocks} goals={goals} run={run} />
         </div>
       </div>
+
+      <DailyLogCard date={today} log={dailyLog} manualLogs={manualLogs} categories={categories} run={run} />
 
       <ServerStatus />
     </section>

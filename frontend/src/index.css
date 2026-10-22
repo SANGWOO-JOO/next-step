@@ -306,3 +306,21 @@ button.start-focus { padding: 0.05rem 0.45rem; font-size: 0.75rem; }
 .result-stats { display: grid; grid-template-columns: auto 1fr; gap: 0.25rem 0.75rem; margin: 0; }
 .result-stats dt { color: var(--muted); }
 .result-stats dd { margin: 0; font-weight: 600; }
+
+/* 주간 계획 */
+.week-title { margin: 0; min-width: 9rem; text-align: center; font-size: 1.4rem; }
+.week-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr)); gap: 0.75rem; }
+.week-grid > .card { margin-top: 0.75rem; }
+.day-column { display: grid; gap: 0.5rem; align-content: start; padding: 0.75rem; }
+.day-column.today { border-color: var(--accent); }
+.plan-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
+.plan-item { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
+.plan-content { flex: 1 1 6rem; }
+.plan-form { margin: 0; }
+.today-plans { margin-top: 0.5rem; }
+.daily-log { display: grid; gap: 0.75rem; }
+.log-stats { grid-template-columns: repeat(auto-fill, minmax(5rem, auto) minmax(7rem, 1fr)); }
+.log-subtitle { margin: 0.25rem 0 0; font-weight: 600; }
+.condition-picker { margin-top: 0; }
+.condition-picker button.icon { font-size: 1.15rem; padding: 0.1rem 0.4rem; opacity: 0.55; }
+.condition-picker button.icon.selected { opacity: 1; border-color: var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); }
