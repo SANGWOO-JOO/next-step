@@ -48,6 +48,9 @@ data class MonthlyGoalUpdateRequest(
     val achieved: Boolean = false,
 )
 
+/** 다음 주가 다른 달이면 그 달의 월간 목표가 필요하다 */
+data class WeeklyGoalCarryRequest(val monthlyGoalId: Long? = null)
+
 data class WeeklyGoalCreateRequest(
     val monthlyGoalId: Long,
     val weekStart: LocalDate,
@@ -92,6 +95,7 @@ data class WeeklyGoalResponse(
     val content: String,
     val category: CategoryRef?,
     val achieved: Boolean,
+    val carriedOver: Boolean,
 ) {
     companion object {
         fun from(w: WeeklyGoal) = WeeklyGoalResponse(
@@ -101,6 +105,7 @@ data class WeeklyGoalResponse(
             content = w.content,
             category = w.category?.let(CategoryRef::from),
             achieved = w.achieved,
+            carriedOver = w.carriedOver,
         )
     }
 }

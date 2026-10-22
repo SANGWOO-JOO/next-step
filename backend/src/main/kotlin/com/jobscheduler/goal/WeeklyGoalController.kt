@@ -1,5 +1,6 @@
 package com.jobscheduler.goal
 
+import com.jobscheduler.goal.dto.WeeklyGoalCarryRequest
 import com.jobscheduler.goal.dto.WeeklyGoalCreateRequest
 import com.jobscheduler.goal.dto.WeeklyGoalResponse
 import com.jobscheduler.goal.dto.WeeklyGoalUpdateRequest
@@ -37,6 +38,12 @@ class WeeklyGoalController(private val weeklyGoalService: WeeklyGoalService) {
     @PutMapping("/{id}")
     fun update(@PathVariable id: Long, @Valid @RequestBody req: WeeklyGoalUpdateRequest): WeeklyGoalResponse =
         weeklyGoalService.update(id, req)
+
+    /** 못 끝낸 주간 목표를 다음 주로 이어간다. 새로 만든 다음 주 목표를 돌려준다. */
+    @PostMapping("/{id}/carry-over")
+    @ResponseStatus(HttpStatus.CREATED)
+    fun carryOver(@PathVariable id: Long, @RequestBody(required = false) req: WeeklyGoalCarryRequest?): WeeklyGoalResponse =
+        weeklyGoalService.carryOver(id, req?.monthlyGoalId)
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)

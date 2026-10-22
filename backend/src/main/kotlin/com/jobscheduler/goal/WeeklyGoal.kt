@@ -26,6 +26,8 @@ class WeeklyGoal(
     @JoinColumn(name = "category_id")
     var category: Category? = null,
     var achieved: Boolean = false,
+    /** 다음 주로 이어갔는지 */
+    var carriedOver: Boolean = false,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

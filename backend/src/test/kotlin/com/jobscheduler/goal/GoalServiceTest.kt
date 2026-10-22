@@ -143,4 +143,24 @@ class GoalServiceTest(
         val e = assertThrows<BusinessRuleException> { createWeekly(oct.id, LocalDate.of(2026, 10, 26), category.id) }
         assertEquals("CATEGORY_INACTIVE", e.code)
     }
+
+    @Test
+    fun `못 끝낸 주간 목표를 다음 주로 이어가고 달이 바뀌면 월간 목표를 골라야 한다`() {
+        val goal = createGoal()
+        val oct = createMonthly(goal.id, october)
+        val nov = createMonthly(goal.id, november)
+        val w = createWeekly(oct.id, LocalDate.of(2026, 10, 19))
+
+        val next = weeklyGoalService.carryOver(w.id, null)
+        assertEquals(LocalDate.of(2026, 10, 26), next.weekStart)
+        assertEquals("경력기술서", next.content)
+        val again = assertThrows<BusinessRuleException> { weeklyGoalService.carryOver(w.id, null) }
+        assertEquals("ALREADY_CARRIED", again.code)
+
+        // 10/26 주의 다음 주(11/2)는 11월이라 11월 월간 목표가 필요하다
+        val e = assertThrows<BusinessRuleException> { weeklyGoalService.carryOver(next.id, null) }
+        assertEquals("MONTHLY_GOAL_REQUIRED", e.code)
+        assertEquals(nov.id, weeklyGoalService.carryOver(next.id, nov.id).monthlyGoalId)
+        assertEquals(true, weeklyGoalService.list(oct.id, null).first { it.id == w.id }.carriedOver)
+    }
 }

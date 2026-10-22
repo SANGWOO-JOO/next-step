@@ -71,6 +71,34 @@ class WeeklyGoalService(
         return WeeklyGoalResponse.from(weeklyGoal)
     }
 
+    /**
+     * 못 끝낸 주간 목표를 다음 주에 같은 내용·분류로 새로 만들고 원래 목표에 이어감 표시를 한다.
+     * 다음 주가 다른 달이면 그 달의 월간 목표(monthlyGoalId)가 필요하다.
+     */
+    fun carryOver(id: Long, monthlyGoalId: Long?): WeeklyGoalResponse {
+        val weeklyGoal = getEntity(id)
+        if (weeklyGoal.achieved) throw BusinessRuleException("달성한 주간 목표는 이어갈 수 없어요.", "ALREADY_ACHIEVED")
+        if (weeklyGoal.carriedOver) throw BusinessRuleException("이미 다음 주로 이어간 목표예요.", "ALREADY_CARRIED")
+
+        val nextWeek = weeklyGoal.weekStart.plusWeeks(1)
+        val monthlyGoal = when {
+            monthlyGoalId != null -> monthlyGoalRepository.findByIdOrNull(monthlyGoalId)
+                ?: throw NotFoundException("월간 목표를 찾을 수 없어요: $monthlyGoalId")
+            GoalRules.isoMonthOf(nextWeek) == weeklyGoal.monthlyGoal.month -> weeklyGoal.monthlyGoal
+            else -> throw BusinessRuleException(
+                "다음 주는 ${GoalRules.isoMonthOf(nextWeek)}에 속해서 그 달의 월간 목표를 골라야 해요.",
+                "MONTHLY_GOAL_REQUIRED",
+            )
+        }
+        GoalRules.requireWeekInMonth(nextWeek, monthlyGoal.month)
+
+        weeklyGoal.carriedOver = true
+        val next = weeklyGoalRepository.save(
+            WeeklyGoal(monthlyGoal = monthlyGoal, weekStart = nextWeek, content = weeklyGoal.content, category = weeklyGoal.category),
+        )
+        return WeeklyGoalResponse.from(next)
+    }
+
     /** 요일별 계획은 함께 지운다. 하루 목표가 있으면 지울 수 없다. */
     fun delete(id: Long) {
         val weeklyGoal = getEntity(id)
