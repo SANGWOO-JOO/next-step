@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
 import TodayPage from './pages/TodayPage'
 import GoalsPage from './pages/GoalsPage'
+import FocusPage from './pages/FocusPage'
 import PlaceholderPage from './pages/PlaceholderPage'
 import SettingsPage from './pages/SettingsPage'
 
@@ -11,6 +12,7 @@ export default function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<TodayPage />} />
+          <Route path="focus" element={<FocusPage />} />
           <Route path="weekly" element={<PlaceholderPage title="주간" stage="1-3단계" />} />
           <Route path="monthly" element={<PlaceholderPage title="월간" stage="1-3단계" />} />
           <Route path="goals" element={<GoalsPage />} />

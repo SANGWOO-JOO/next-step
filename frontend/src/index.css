@@ -268,3 +268,41 @@ button.add { justify-self: start; padding: 0.2rem 0.6rem; font-size: 0.85rem; }
 .timeline-block-time { font-weight: 600; font-variant-numeric: tabular-nums; }
 .timeline-now { position: absolute; left: 1.8rem; right: 0; height: 2px; background: var(--down); pointer-events: none; }
 .timeline-now::before { content: ''; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--down); }
+
+/* 집중 모드 */
+button.start-focus { padding: 0.05rem 0.45rem; font-size: 0.75rem; }
+.focus-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  font-weight: 600;
+}
+.focus-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-top: 0.75rem; }
+.focus-layout { display: grid; grid-template-columns: minmax(0, 1fr) 19rem; gap: 1rem; align-items: start; }
+.focus-layout > .card { margin-top: 1rem; }
+@media (max-width: 860px) {
+  .focus-layout { grid-template-columns: 1fr; }
+}
+.focus-main { display: grid; justify-items: center; gap: 0.75rem; padding: 2rem 1.25rem; text-align: center; }
+.focus-main.paused { border-color: color-mix(in srgb, #f59e0b 60%, var(--border)); }
+.focus-goal { display: grid; justify-items: center; gap: 0.35rem; }
+.focus-goal-title { font-size: 1.25rem; }
+.focus-timer { font-size: clamp(3.5rem, 14vw, 6.5rem); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.focus-main.paused .focus-timer { opacity: 0.45; }
+.focus-timer.over { color: var(--up); }
+.focus-sub { margin: 0; }
+.focus-actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.5rem; }
+.interruption-box { display: grid; gap: 0.5rem; justify-items: center; width: min(100%, 28rem); }
+.interruption-box input { width: 100%; }
+.interruption-title { margin: 0; font-weight: 600; }
+.note-list { margin: 0.5rem 0 0; padding-left: 1.1rem; display: grid; gap: 0.25rem; }
+.result-card { display: grid; gap: 0.5rem; justify-items: start; }
+.result-stats { display: grid; grid-template-columns: auto 1fr; gap: 0.25rem 0.75rem; margin: 0; }
+.result-stats dt { color: var(--muted); }
+.result-stats dd { margin: 0; font-weight: 600; }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { getCategories, type Category } from '../api/categories'
 import { errorMessage } from '../api/client'
 import {
@@ -9,6 +9,16 @@ import {
   type DailyGoal,
 } from '../api/dailyGoals'
 import { getWeeklyGoalsOfWeek, type WeeklyGoal } from '../api/goals'
+import {
+  DEFAULT_BREAK_MINUTES,
+  DEFAULT_FOCUS_MINUTES,
+  formatDuration,
+  getCurrentFocus,
+  getDistractionNotes,
+  getFocusSessions,
+  startFocus,
+  type FocusSession,
+} from '../api/focus'
 import { getHealth, type Health } from '../api/health'
 import { getTimeBlocks, type TimeBlock } from '../api/timeBlocks'
 import CategoryBadge from '../components/CategoryBadge'
@@ -24,6 +34,10 @@ export default function TodayPage() {
   const [unfinished, setUnfinished] = useState<DailyGoal[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [blocks, setBlocks] = useState<TimeBlock[]>([])
+  const [sessions, setSessions] = useState<FocusSession[]>([])
+  const [current, setCurrent] = useState<FocusSession | null>(null)
+  const [uncheckedNotes, setUncheckedNotes] = useState(0)
+  const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(() => {
@@ -33,8 +47,14 @@ export default function TodayPage() {
       getUnfinishedDailyGoals(today),
       getCategories(),
       getTimeBlocks(today),
+      getFocusSessions(today),
+      getCurrentFocus(),
+      getDistractionNotes(false),
     ])
-      .then(([d, w, u, c, b]) => {
+      .then(([d, w, u, c, b, f, cur, notes]) => {
+        setSessions(f)
+        setCurrent(cur ?? null)
+        setUncheckedNotes(notes.length)
         setGoals(d)
         setWeeklyGoals(w)
         setUnfinished(u)
@@ -59,6 +79,22 @@ export default function TodayPage() {
     }
   }
 
+  const startFocusFor = async (goal: DailyGoal) => {
+    const ok = await run(() =>
+      startFocus({
+        dailyGoalId: goal.id,
+        categoryId: null,
+        focusMinutes: DEFAULT_FOCUS_MINUTES,
+        breakMinutes: DEFAULT_BREAK_MINUTES,
+        source: 'TODAY',
+      }),
+    )
+    if (ok) navigate('/focus')
+  }
+
+  // 진행 중 세션은 서버가 응답 시각까지 계산한 값이다
+  const focusTotal = sessions.reduce((sum, s) => sum + s.focusSeconds, 0)
+
   return (
     <section>
       <h1>오늘</h1>
@@ -71,6 +107,24 @@ export default function TodayPage() {
           </button>
         </p>
       )}
+
+      {current && (
+        <p className="focus-banner">
+          <span>
+            {current.interruptions.some((i) => !i.endedAt) ? '⏸ 중단 중' : '▶ 집중 중'} ·{' '}
+            {current.dailyGoal?.content ?? current.category?.name ?? '분류 없음'}
+          </span>
+          <Link to="/focus">돌아가기</Link>
+        </p>
+      )}
+
+      <div className="focus-summary">
+        <span>
+          오늘 집중 <strong>{formatDuration(focusTotal)}</strong> ({sessions.length}회)
+        </span>
+        {uncheckedNotes > 0 && <Link to="/focus#notes">확인 안 한 메모 {uncheckedNotes}개</Link>}
+        {!current && <Link to="/focus">분류만으로 집중하기</Link>}
+      </div>
 
       {unfinished.length > 0 && (
         <UnfinishedCard goals={unfinished} today={today} weeklyGoals={weeklyGoals} run={run} />
@@ -87,6 +141,7 @@ export default function TodayPage() {
             categories={categories}
             run={run}
             timeBlocks={blocks}
+            onStartFocus={current ? undefined : startFocusFor}
           />
           {weeklyGoals.length === 0 && (
             <p className="small">
