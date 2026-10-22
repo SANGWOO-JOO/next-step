@@ -39,14 +39,17 @@ cd backend && ./gradlew test
 job-scheduler/
 ├── backend/            # Spring Boot (Kotlin)
 │   └── src/main/kotlin/com/jobscheduler
+│       ├── category/   # 활동 분류
 │       ├── common/     # 공통 예외·에러 응답
 │       ├── config/     # CORS 등 설정
+│       ├── goal/       # 최종·월간·주간 목표
 │       └── health/     # 연결 확인 API
 ├── frontend/           # React + TS
 │   └── src
 │       ├── api/        # API 클라이언트
-│       ├── components/ # 공통 레이아웃
-│       └── pages/      # 화면
+│       ├── components/ # 공통 레이아웃·컴포넌트
+│       ├── pages/      # 화면
+│       └── utils/      # 날짜 등 유틸
 └── docker-compose.yml  # PostgreSQL
 ```
 
