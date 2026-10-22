@@ -18,6 +18,14 @@ export class ApiError extends Error {
   }
 }
 
+/** 화면에 보여줄 에러 문구. 검증 오류면 필드별 메시지를 이어 붙인다. */
+export function errorMessage(e: unknown): string {
+  if (e instanceof ApiError && e.body?.fieldErrors.length) {
+    return e.body.fieldErrors.map((f) => f.message).join(' ')
+  }
+  return e instanceof Error ? e.message : String(e)
+}
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
