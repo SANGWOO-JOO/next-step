@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 
 const MENUS = [
-  { to: '/', label: '오늘', end: true },
+  { to: '/', label: '일정', end: true },
   { to: '/focus', label: '집중' },
   { to: '/plan', label: '계획' },
   { to: '/dashboard', label: '대시보드' },

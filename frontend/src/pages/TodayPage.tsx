@@ -131,8 +131,8 @@ export default function TodayPage() {
 
   return (
     <section>
-      <h1>오늘</h1>
-      <p className="muted">{dayLabel(today)} · 핵심 3개를 정하고, 언제 할지 시간을 잡아요.</p>
+      <h1>일정</h1>
+      <p className="muted">오늘 {dayLabel(today)} · 오늘 할 일을 정하고, 하루·한 주 시간표를 짜요.</p>
       {error && (
         <p className="error-banner" role="alert">
           {error}
