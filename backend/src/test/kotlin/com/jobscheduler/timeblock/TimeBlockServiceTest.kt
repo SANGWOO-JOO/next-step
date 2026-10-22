@@ -24,6 +24,7 @@ import java.time.OffsetDateTime
 import java.time.YearMonth
 import java.time.ZoneOffset
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -55,7 +56,7 @@ class TimeBlockServiceTest(
     }
 
     private fun block(goal: DailyGoalResponse, start: OffsetDateTime, end: OffsetDateTime) =
-        timeBlockService.create(TimeBlockRequest(goal.id, start, end))
+        timeBlockService.create(TimeBlockRequest(goal.id, startAt = start, endAt = end))
 
     @Test
     fun `시간 블록을 만들고 시작 시각 순으로 조회한다`() {
@@ -95,7 +96,7 @@ class TimeBlockServiceTest(
 
         assertDoesNotThrow { block(cs, at(10), at(11)) }
         // 자기 자신과는 겹침 검사를 하지 않는다
-        assertDoesNotThrow { timeBlockService.update(first.id, TimeBlockRequest(resume.id, at(8, 30), at(10))) }
+        assertDoesNotThrow { timeBlockService.update(first.id, TimeBlockRequest(resume.id, startAt = at(8, 30), endAt = at(10))) }
     }
 
     @Test
@@ -109,5 +110,27 @@ class TimeBlockServiceTest(
 
         dailyGoalService.delete(cs.id)
         assertEquals(0, timeBlockService.list(thursday, thursday.plusDays(1)).size)
+    }
+
+    @Test
+    fun `목표가 아닌 일정도 제목과 날짜로 넣을 수 있고 겹침 규칙은 같다`() {
+        val lunch = timeBlockService.create(TimeBlockRequest(title = " 점심 ", date = thursday, startAt = at(12), endAt = at(13)))
+        assertEquals("점심", lunch.label)
+        assertEquals(null, lunch.dailyGoalId)
+
+        val e = assertThrows<BusinessRuleException> { block(resume, at(12, 30), at(13, 30)) }
+        assertEquals("BLOCK_OVERLAP", e.code)
+        assertTrue(e.message!!.contains("점심"))
+
+        val noTitle = assertThrows<BusinessRuleException> {
+            timeBlockService.create(TimeBlockRequest(title = " ", date = thursday, startAt = at(14), endAt = at(15)))
+        }
+        assertEquals("GOAL_OR_TITLE_REQUIRED", noTitle.code)
+
+        // 목표 블록을 일정으로 바꿀 수도 있다
+        val b = block(resume, at(15), at(16))
+        val changed = timeBlockService.update(b.id, TimeBlockRequest(title = "산책", date = thursday, startAt = at(15), endAt = at(16)))
+        assertEquals("산책", changed.label)
+        assertEquals(null, changed.dailyGoalId)
     }
 }

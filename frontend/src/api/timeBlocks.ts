@@ -4,17 +4,37 @@ import type { CategoryRef } from './goals'
 
 export type TimeBlock = {
   id: number
-  dailyGoalId: number
-  dailyGoalContent: string
-  dailyGoalType: DailyGoalType
-  dailyGoalStatus: DailyGoalStatus
+  /** null이면 목표가 아닌 일정(밥 먹기, 산책 등) */
+  dailyGoalId: number | null
+  dailyGoalContent: string | null
+  dailyGoalType: DailyGoalType | null
+  dailyGoalStatus: DailyGoalStatus | null
+  title: string | null
+  /** 화면에 보여줄 이름: 하루 목표 내용 또는 제목 */
+  label: string
   category: CategoryRef | null
   date: string
   startAt: string
   endAt: string
 }
 
-export type TimeBlockInput = { dailyGoalId: number; startAt: string; endAt: string }
+/** 하루 목표가 없으면 title과 date를 보낸다 */
+export type TimeBlockInput = {
+  dailyGoalId: number | null
+  title?: string | null
+  date?: string
+  startAt: string
+  endAt: string
+}
+
+/** 블록의 시각만 바꿔 보낼 때 */
+export const toTimeBlockInput = (b: TimeBlock, startAt: string, endAt: string): TimeBlockInput => ({
+  dailyGoalId: b.dailyGoalId,
+  title: b.title,
+  date: b.date,
+  startAt,
+  endAt,
+})
 
 export const getTimeBlocks = (date: string) => api.get<TimeBlock[]>(`/api/time-blocks?date=${date}`)
 

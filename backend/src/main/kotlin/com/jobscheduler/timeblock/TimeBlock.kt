@@ -16,9 +16,11 @@ import java.time.OffsetDateTime
 @Entity
 @Table(name = "time_block")
 class TimeBlock(
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    /** 없으면 목표가 아닌 일정(밥 먹기, 산책 등)이고 title을 쓴다 */
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "daily_goal_id")
-    var dailyGoal: DailyGoal,
+    var dailyGoal: DailyGoal?,
+    var title: String?,
     /** 시작 시각의 서울 기준 날짜 */
     @Column(name = "block_date")
     var date: LocalDate,
@@ -31,4 +33,7 @@ class TimeBlock(
 
     @Column(updatable = false)
     val createdAt: OffsetDateTime = OffsetDateTime.now()
+
+    /** 화면에 보여줄 이름: 하루 목표 내용 또는 제목 */
+    val label: String get() = dailyGoal?.content ?: title.orEmpty()
 }

@@ -3,6 +3,7 @@ package com.jobscheduler.timeblock
 import com.jobscheduler.common.BusinessRuleException
 import com.jobscheduler.timeblock.dto.TimeBlockRequest
 import com.jobscheduler.timeblock.dto.TimeBlockResponse
+import jakarta.validation.Valid
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.format.annotation.DateTimeFormat.ISO
 import org.springframework.http.HttpStatus
@@ -35,10 +36,10 @@ class TimeBlockController(private val timeBlockService: TimeBlockService) {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun create(@RequestBody req: TimeBlockRequest): TimeBlockResponse = timeBlockService.create(req)
+    fun create(@Valid @RequestBody req: TimeBlockRequest): TimeBlockResponse = timeBlockService.create(req)
 
     @PutMapping("/{id}")
-    fun update(@PathVariable id: Long, @RequestBody req: TimeBlockRequest): TimeBlockResponse =
+    fun update(@PathVariable id: Long, @Valid @RequestBody req: TimeBlockRequest): TimeBlockResponse =
         timeBlockService.update(id, req)
 
     @DeleteMapping("/{id}")

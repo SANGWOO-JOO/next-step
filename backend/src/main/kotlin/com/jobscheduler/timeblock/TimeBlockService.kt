@@ -37,23 +37,38 @@ class TimeBlockService(
     }
 
     fun create(req: TimeBlockRequest): TimeBlockResponse {
-        val dailyGoal = getDailyGoal(req.dailyGoalId)
-        validate(dailyGoal, req.startAt, req.endAt, excludeId = null)
+        val target = resolve(req, current = null)
+        validate(target.date, req.startAt, req.endAt, excludeId = null)
         val block = timeBlockRepository.save(
-            TimeBlock(dailyGoal = dailyGoal, date = dailyGoal.date, startAt = req.startAt, endAt = req.endAt),
+            TimeBlock(target.dailyGoal, target.title, target.date, req.startAt, req.endAt),
         )
         return TimeBlockResponse.from(block)
     }
 
     fun update(id: Long, req: TimeBlockRequest): TimeBlockResponse {
         val block = getEntity(id)
-        val dailyGoal = if (req.dailyGoalId == block.dailyGoal.id) block.dailyGoal else getDailyGoal(req.dailyGoalId)
-        validate(dailyGoal, req.startAt, req.endAt, excludeId = id)
-        block.dailyGoal = dailyGoal
-        block.date = dailyGoal.date
+        val target = resolve(req, current = block)
+        validate(target.date, req.startAt, req.endAt, excludeId = id)
+        block.dailyGoal = target.dailyGoal
+        block.title = target.title
+        block.date = target.date
         block.startAt = req.startAt
         block.endAt = req.endAt
         return TimeBlockResponse.from(block)
+    }
+
+    private data class Target(val dailyGoal: DailyGoal?, val title: String?, val date: LocalDate)
+
+    /** 하루 목표가 있으면 그 날짜를, 없으면(밥 먹기 같은 일정) 제목과 날짜를 받는다. */
+    private fun resolve(req: TimeBlockRequest, current: TimeBlock?): Target {
+        if (req.dailyGoalId != null) {
+            val goal = current?.dailyGoal?.takeIf { it.id == req.dailyGoalId } ?: getDailyGoal(req.dailyGoalId)
+            return Target(goal, null, goal.date)
+        }
+        val title = req.title?.trim()?.ifEmpty { null }
+            ?: throw BusinessRuleException("하루 목표를 고르거나 제목을 입력해주세요.", "GOAL_OR_TITLE_REQUIRED")
+        val date = req.date ?: throw BusinessRuleException("날짜가 필요해요.", "DATE_REQUIRED")
+        return Target(null, title, date)
     }
 
     fun delete(id: Long) {
@@ -61,26 +76,26 @@ class TimeBlockService(
     }
 
     /**
-     * 블록은 하루 목표의 날짜 안(00:00 ~ 다음 날 00:00)에 있어야 하고, 같은 날 다른 블록과 겹치면 안 된다.
+     * 블록은 그 날짜 안(00:00 ~ 다음 날 00:00)에 있어야 하고, 같은 날 다른 블록과 겹치면 안 된다.
      */
-    private fun validate(dailyGoal: DailyGoal, startAt: OffsetDateTime, endAt: OffsetDateTime, excludeId: Long?) {
+    private fun validate(date: LocalDate, startAt: OffsetDateTime, endAt: OffsetDateTime, excludeId: Long?) {
         if (!endAt.isAfter(startAt)) {
             throw BusinessRuleException("종료 시각은 시작 시각보다 늦어야 해요.", "INVALID_PERIOD")
         }
-        val dayStart = dailyGoal.date.atStartOfDay(ZONE).toOffsetDateTime()
+        val dayStart = date.atStartOfDay(ZONE).toOffsetDateTime()
         val dayEnd = dayStart.plusDays(1)
         if (startAt.isBefore(dayStart) || endAt.isAfter(dayEnd)) {
             throw BusinessRuleException(
-                "시간 블록은 하루 목표의 날짜(${dailyGoal.date}) 안에서만 잡을 수 있어요.",
+                "시간 블록은 그 날짜($date) 안에서만 잡을 수 있어요.",
                 "BLOCK_OUT_OF_DAY",
             )
         }
-        val overlapped = timeBlockRepository.findAllByDate(dailyGoal.date)
+        val overlapped = timeBlockRepository.findAllByDate(date)
             .firstOrNull { it.id != excludeId && it.startAt.isBefore(endAt) && it.endAt.isAfter(startAt) }
         if (overlapped != null) {
             val time = { t: OffsetDateTime -> t.atZoneSameInstant(ZONE).toLocalTime().toString() }
             throw BusinessRuleException(
-                "${time(overlapped.startAt)}~${time(overlapped.endAt)} '${overlapped.dailyGoal.content}' 블록과 겹쳐요.",
+                "${time(overlapped.startAt)}~${time(overlapped.endAt)} '${overlapped.label}' 블록과 겹쳐요.",
                 "BLOCK_OVERLAP",
             )
         }

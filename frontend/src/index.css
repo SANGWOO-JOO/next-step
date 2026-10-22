@@ -460,3 +460,4 @@ button.start-focus { padding: 0.05rem 0.45rem; font-size: 0.75rem; }
 .schedule-popover .block-form { margin: 0; }
 .schedule.week .schedule-block { font-size: 0.72rem; right: 7px; }
 .schedule.week .schedule-date { font-size: 0.85rem; }
+.schedule-block.free { border-left-style: dashed; background: color-mix(in srgb, var(--border) 55%, var(--surface)) !important; }

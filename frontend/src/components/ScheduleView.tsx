@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type DragEvent, type PointerEvent } from 'react'
 import type { DailyGoal } from '../api/dailyGoals'
 import { formatDuration, type FocusSession } from '../api/focus'
-import { createTimeBlock, deleteTimeBlock, updateTimeBlock, type TimeBlock } from '../api/timeBlocks'
+import { createTimeBlock, deleteTimeBlock, toTimeBlockInput, updateTimeBlock, type TimeBlock } from '../api/timeBlocks'
 import { dayLabel, formatMinutes, minutesOfDay, nowMinutesSeoul, seoulIso, todaySeoul } from '../utils/date'
 import TimeBlockForm from './TimeBlockForm'
 
@@ -119,11 +119,10 @@ export default function ScheduleView({ dates, blocks, goals, sessions, run, onSt
       return
     }
     run(() =>
-      updateTimeBlock(drag.block.id, {
-        dailyGoalId: drag.block.dailyGoalId,
-        startAt: seoulIso(drag.date, drag.start),
-        endAt: seoulIso(drag.date, drag.end),
-      }),
+      updateTimeBlock(
+        drag.block.id,
+        toTimeBlockInput(drag.block, seoulIso(drag.date, drag.start), seoulIso(drag.date, drag.end)),
+      ),
     )
   }
 
@@ -227,6 +226,7 @@ export default function ScheduleView({ dates, blocks, goals, sessions, run, onSt
                   const dragging = drag && drag.kind !== 'create' && drag.block.id === b.id ? drag : null
                   const start = dragging?.start ?? minutesOfDay(b.startAt, date)
                   const end = dragging?.end ?? minutesOfDay(b.endAt, date)
+                  // 목표 아닌 일정은 회색 점선 테두리로 구분한다
                   const color = b.category?.color ?? 'var(--muted)'
                   const short = end - start <= 30
                   return (
@@ -235,6 +235,7 @@ export default function ScheduleView({ dates, blocks, goals, sessions, run, onSt
                       className={[
                         'schedule-block',
                         b.dailyGoalStatus === 'DONE' ? 'done' : '',
+                        b.dailyGoalId === null ? 'free' : '',
                         dragging ? 'dragging' : '',
                         short ? 'short' : '',
                       ].join(' ')}
@@ -247,7 +248,7 @@ export default function ScheduleView({ dates, blocks, goals, sessions, run, onSt
                       onPointerDown={(e) => onBlockPointerDown(e, b, date)}
                       title="끌어서 옮기기 · 눌러서 고치기"
                     >
-                      <span className="schedule-block-title">{b.dailyGoalContent}</span>
+                      <span className="schedule-block-title">{b.label}</span>
                       <span className="schedule-block-time">
                         {formatMinutes(start)}~{formatMinutes(end)}
                       </span>
@@ -312,35 +313,36 @@ function SchedulePopover({ popover, goals, run, onClose, onStartFocus }: Popover
     >
       <div className="daily-panel-head">
         <strong className="small">
-          {popover.kind === 'new' ? '새 시간 블록' : popover.block.dailyGoalContent} · {dayLabel(date)}
+          {popover.kind === 'new' ? '새 시간 블록' : popover.block.label} · {dayLabel(date)}
         </strong>
         <button className="icon" onClick={onClose} aria-label="닫기">
           ×
         </button>
       </div>
-      {choosable.length === 0 ? (
-        <p className="muted small">이 날의 할 일 목표가 없어요. 하루 목표를 먼저 추가해 주세요.</p>
-      ) : (
-        <TimeBlockForm
-          date={date}
-          goals={choosable}
-          dailyGoalId={popover.kind === 'edit' ? popover.block.dailyGoalId : choosable[0].id}
-          startMinutes={start}
-          endMinutes={end}
-          submitLabel={popover.kind === 'new' ? '추가' : '저장'}
-          onSubmit={(input) =>
-            run(() => (popover.kind === 'new' ? createTimeBlock(input) : updateTimeBlock(popover.block.id, input))).then(
-              (ok) => ok && onClose(),
-            )
-          }
-          onCancel={onClose}
-          onDelete={
-            popover.kind === 'edit'
-              ? () => run(() => deleteTimeBlock(popover.block.id)).then((ok) => ok && onClose())
-              : undefined
-          }
-        />
+      {choosable.length === 0 && popover.kind === 'new' && (
+        <p className="muted small">이 날의 할 일 목표가 없어서 목표 아닌 일정만 넣을 수 있어요.</p>
       )}
+      <TimeBlockForm
+        date={date}
+        goals={choosable}
+        allowFree
+        dailyGoalId={popover.kind === 'edit' ? popover.block.dailyGoalId : (choosable[0]?.id ?? null)}
+        title={popover.kind === 'edit' ? popover.block.title : null}
+        startMinutes={start}
+        endMinutes={end}
+        submitLabel={popover.kind === 'new' ? '추가' : '저장'}
+        onSubmit={(input) =>
+          run(() => (popover.kind === 'new' ? createTimeBlock(input) : updateTimeBlock(popover.block.id, input))).then(
+            (ok) => ok && onClose(),
+          )
+        }
+        onCancel={onClose}
+        onDelete={
+          popover.kind === 'edit'
+            ? () => run(() => deleteTimeBlock(popover.block.id)).then((ok) => ok && onClose())
+            : undefined
+        }
+      />
       {goal && goal.status === 'TODO' && onStartFocus && (
         <button className="start-focus" onClick={() => onStartFocus(goal)}>
           ▶ 지금 집중 시작
