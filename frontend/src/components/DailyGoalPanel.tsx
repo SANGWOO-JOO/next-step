@@ -17,6 +17,7 @@ import { createTimeBlock, type TimeBlock } from '../api/timeBlocks'
 import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, shiftDate, todaySeoul } from '../utils/date'
 import CategoryBadge from './CategoryBadge'
 import FormButtons from './FormButtons'
+import MoreMenu from './MoreMenu'
 import { GOAL_DRAG_TYPE } from './ScheduleView'
 import TimeBlockForm from './TimeBlockForm'
 
@@ -226,49 +227,26 @@ function DailyGoalItem({
         ) : (
           <span className="muted small">미분류</span>
         )}
-        <span className="row-actions daily-actions">
-          <button className="icon" disabled={!onMoveUp} onClick={onMoveUp} aria-label="위로">
-            ↑
-          </button>
-          <button className="icon" disabled={!onMoveDown} onClick={onMoveDown} aria-label="아래로">
-            ↓
-          </button>
-          {!done && (
-            <button className="ghost" onClick={moveTomorrow}>
-              내일로
-            </button>
-          )}
-          {goal.type === 'EXTRA' ? (
-            <button
-              className="ghost"
-              disabled={!canBeCore}
-              title={canBeCore ? undefined : `핵심은 ${MAX_CORE}개까지예요`}
-              onClick={() => run(() => changeDailyGoalType(goal.id, 'CORE'))}
-            >
-              핵심으로
-            </button>
-          ) : (
-            <button className="ghost" onClick={() => run(() => changeDailyGoalType(goal.id, 'EXTRA'))}>
-              추가로
-            </button>
-          )}
-          {!done && (
-            <button className="ghost" onClick={() => setMode('move')}>
-              옮기기
-            </button>
-          )}
-          {blocks && !done && (
-            <button className="ghost" onClick={() => setMode('block')}>
-              + 시간
-            </button>
-          )}
-          <button className="ghost" onClick={() => setMode('edit')}>
-            수정
-          </button>
-          <button className="danger" onClick={remove}>
-            삭제
-          </button>
-        </span>
+        <MoreMenu
+          label="목표 동작"
+          items={[
+            { label: '+ 시간 잡기', onClick: () => setMode('block'), show: !!blocks && !done },
+            { label: '내일로', onClick: moveTomorrow, show: !done },
+            { label: '다른 날로 옮기기', onClick: () => setMode('move'), show: !done },
+            goal.type === 'EXTRA'
+              ? {
+                  label: '핵심으로',
+                  onClick: () => run(() => changeDailyGoalType(goal.id, 'CORE')),
+                  disabled: !canBeCore,
+                  title: canBeCore ? undefined : `핵심은 ${MAX_CORE}개까지예요`,
+                }
+              : { label: '추가로', onClick: () => run(() => changeDailyGoalType(goal.id, 'EXTRA')) },
+            { label: '위로', onClick: () => onMoveUp?.(), disabled: !onMoveUp },
+            { label: '아래로', onClick: () => onMoveDown?.(), disabled: !onMoveDown },
+            { label: '수정', onClick: () => setMode('edit') },
+            { label: '삭제', onClick: remove, danger: true },
+          ]}
+        />
       </div>
       <div className="daily-meta muted small">
         {goal.firstAction && <span>→ 첫 행동: {goal.firstAction}</span>}

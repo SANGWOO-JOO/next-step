@@ -28,7 +28,7 @@ import DailyGoalPanel from '../components/DailyGoalPanel'
 import DailyLogCard from '../components/DailyLogCard'
 import WeeklyPlanItem from '../components/WeeklyPlanItem'
 import ScheduleView from '../components/ScheduleView'
-import { dayLabel, mondayOf, todaySeoul, weekDates } from '../utils/date'
+import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, todaySeoul, weekDates } from '../utils/date'
 import { plannedKey } from './plan/planData'
 
 export default function TodayPage() {
@@ -131,8 +131,28 @@ export default function TodayPage() {
 
   return (
     <section>
-      <h1>일정</h1>
-      <p className="muted">오늘 {dayLabel(today)} · 오늘 할 일을 정하고, 하루·한 주 시간표를 짜요.</p>
+      <div className="page-head">
+        <h1>
+          일정 <span className="page-date muted">{dayLabel(today)}</span>
+        </h1>
+        <div className="status-bar">
+          {current ? (
+            <span className="status-focus">
+              {current.interruptions.some((i) => !i.endedAt) ? '⏸ 중단 중' : '▶ 집중 중'} ·{' '}
+              {current.dailyGoal?.content ?? current.category?.name ?? '분류 없음'}
+              <Link className="button-link" to="/focus">
+                돌아가기
+              </Link>
+            </span>
+          ) : null}
+          <NowNext blocks={blocks.filter((b) => b.date === today)} />
+          <span className="muted">
+            오늘 집중 <strong className="status-strong">{formatDuration(focusTotal)}</strong> ({sessions.length}회)
+          </span>
+          {uncheckedNotes > 0 && <Link to="/focus#notes">확인 안 한 메모 {uncheckedNotes}개</Link>}
+          {!current && <Link to="/focus">분류만으로 집중하기</Link>}
+        </div>
+      </div>
       {error && (
         <p className="error-banner" role="alert">
           {error}
@@ -141,24 +161,6 @@ export default function TodayPage() {
           </button>
         </p>
       )}
-
-      {current && (
-        <p className="focus-banner">
-          <span>
-            {current.interruptions.some((i) => !i.endedAt) ? '⏸ 중단 중' : '▶ 집중 중'} ·{' '}
-            {current.dailyGoal?.content ?? current.category?.name ?? '분류 없음'}
-          </span>
-          <Link to="/focus">돌아가기</Link>
-        </p>
-      )}
-
-      <div className="focus-summary">
-        <span>
-          오늘 집중 <strong>{formatDuration(focusTotal)}</strong> ({sessions.length}회)
-        </span>
-        {uncheckedNotes > 0 && <Link to="/focus#notes">확인 안 한 메모 {uncheckedNotes}개</Link>}
-        {!current && <Link to="/focus">분류만으로 집중하기</Link>}
-      </div>
 
       {weeklyGoals && <WeekPlanBanner today={today} monday={thisMonday} hasWeeklyGoals={weeklyGoals.length > 0} />}
 
@@ -367,4 +369,37 @@ function WeekPlanBanner({ today, monday, hasWeeklyGoals }: { today: string; mond
       </span>
     </p>
   )
+}
+
+/** 지금 걸친 시간 블록, 없으면 다음 블록을 한 줄로 알려준다(Structured의 지금/다음 강조 참고) */
+function NowNext({ blocks }: { blocks: TimeBlock[] }) {
+  const [now, setNow] = useState(nowMinutesSeoul)
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(nowMinutesSeoul()), 30_000)
+    return () => window.clearInterval(timer)
+  }, [])
+  const today = todaySeoul()
+  const spans = blocks
+    .map((b) => ({ b, start: minutesOfDay(b.startAt, today), end: minutesOfDay(b.endAt, today) }))
+    .sort((a, c) => a.start - c.start)
+  const current = spans.find((x) => x.start <= now && now < x.end)
+  const next = spans.find((x) => x.start > now)
+
+  if (current) {
+    return (
+      <span className="status-now">
+        지금 <strong>{current.b.label}</strong> · {formatMinutes(current.end)}까지 ({current.end - now}분 남음)
+      </span>
+    )
+  }
+  if (next) {
+    const gap = next.start - now
+    return (
+      <span className="status-next">
+        다음 <strong>{formatMinutes(next.start)} {next.b.label}</strong> ·{' '}
+        {gap >= 60 ? `${Math.floor(gap / 60)}시간 ${gap % 60}분` : `${gap}분`} 뒤
+      </span>
+    )
+  }
+  return <span className="muted">오늘 남은 시간 블록이 없어요.</span>
 }

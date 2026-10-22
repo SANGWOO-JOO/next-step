@@ -51,6 +51,19 @@ export default function FocusPage() {
   const [error, setError] = useState<string | null>(null)
   /** 탭 이탈로 기록한 중단의 돌아온 시각 */
   const [returnedAt, setReturnedAt] = useState<string | null>(null)
+  /** 집중 중에는 위쪽 메뉴를 숨겨 타이머만 보이게 한다 */
+  const [immersive, setImmersive] = useState(true)
+  const hideMenu = !!session && immersive
+
+  useEffect(() => {
+    document.body.classList.toggle('immersive', hideMenu)
+    return () => document.body.classList.remove('immersive')
+  }, [hideMenu])
+
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => undefined)
+    else document.documentElement.requestFullscreen().catch(() => undefined)
+  }
 
   const apply = useCallback((s: FocusSession | null | undefined) => {
     setSession(s ?? null)
@@ -101,7 +114,19 @@ export default function FocusPage() {
 
   return (
     <section className="focus-page">
-      <h1>집중 모드</h1>
+      <div className="focus-head">
+        <h1>집중 모드</h1>
+        {session && (
+          <span className="row-actions">
+            <button className="ghost" onClick={() => setImmersive(!immersive)}>
+              {immersive ? '☰ 메뉴 보기' : '메뉴 숨기기'}
+            </button>
+            <button className="ghost" onClick={toggleFullscreen}>
+              ⛶ 전체 화면
+            </button>
+          </span>
+        )}
+      </div>
       {error && (
         <p className="error-banner" role="alert">
           {error}

@@ -527,3 +527,64 @@ button.goal-add { margin-top: 0.75rem; }
 .drawer-week { padding-left: 1.5rem; font-size: 0.85rem; }
 .plan-banner { background: color-mix(in srgb, #f59e0b 14%, var(--surface)); border-color: color-mix(in srgb, #f59e0b 45%, transparent); }
 .plan-main > *, .plan-side > * { min-width: 0; }
+
+/* UI 다듬기 (시중 서비스 비교 후) */
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+a.button-link {
+  display: inline-block;
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  white-space: nowrap;
+}
+a.button-link:hover { text-decoration: none; filter: brightness(1.1); }
+.more-menu { position: relative; display: inline-flex; margin-left: auto; }
+.more-trigger { opacity: 0; transition: opacity 0.12s; font-weight: 700; letter-spacing: 1px; }
+.daily-item:hover .more-trigger, .daily-item:focus-within .more-trigger, .more-menu.open .more-trigger { opacity: 1; }
+@media (hover: none) {
+  .more-trigger { opacity: 1; }
+}
+.more-list {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 10;
+  display: grid;
+  min-width: 10rem;
+  padding: 0.3rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+}
+.more-item { border: none; background: transparent; color: var(--text); text-align: left; padding: 0.35rem 0.6rem; border-radius: 5px; }
+.more-item:not(:disabled):hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.more-item.danger { color: var(--down); }
+.page-head { display: grid; gap: 0.5rem; }
+.page-head h1 { margin: 0; display: flex; align-items: baseline; gap: 0.6rem; }
+.page-date { font-size: 1rem; font-weight: 500; }
+.status-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  padding: 0.55rem 0.85rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.92rem;
+}
+.status-focus { display: inline-flex; align-items: center; gap: 0.6rem; font-weight: 600; }
+.status-now strong, .status-next strong, .status-strong { color: var(--text); }
+.status-now { color: var(--up); }
+.today-layout { margin-top: 0.25rem; }
+.schedule-scroll { height: max(26rem, calc(100vh - 17rem)); }
+.schedule-block.now { box-shadow: 0 0 0 2px var(--up); }
+.schedule-block.now .schedule-block-title::before { content: '● '; color: var(--up); }
+body.immersive .app-header { display: none; }
+body.immersive .app-main { padding-top: 2rem; }
+.focus-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.focus-head h1 { margin: 0; }

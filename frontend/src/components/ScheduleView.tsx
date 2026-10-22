@@ -238,6 +238,7 @@ export default function ScheduleView({ dates, blocks, goals, sessions, run, onSt
                         b.dailyGoalId === null ? 'free' : '',
                         dragging ? 'dragging' : '',
                         short ? 'short' : '',
+                        date === today && start <= now && now < end ? 'now' : '',
                       ].join(' ')}
                       style={{
                         top: toPx(start),
