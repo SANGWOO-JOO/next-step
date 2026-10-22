@@ -9,6 +9,7 @@ import com.jobscheduler.daily.dto.DailyGoalResponse
 import com.jobscheduler.daily.dto.DailyGoalUpdateRequest
 import com.jobscheduler.goal.WeeklyGoal
 import com.jobscheduler.goal.WeeklyGoalRepository
+import com.jobscheduler.timeblock.TimeBlockRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -21,6 +22,7 @@ class DailyGoalService(
     private val dailyGoalRepository: DailyGoalRepository,
     private val weeklyGoalRepository: WeeklyGoalRepository,
     private val categoryService: CategoryService,
+    private val timeBlockRepository: TimeBlockRepository,
 ) {
     companion object {
         const val MAX_CORE = 3
@@ -78,13 +80,16 @@ class DailyGoalService(
         return DailyGoalResponse.from(dailyGoal)
     }
 
+    /** 하루 목표와 그 목표의 시간 블록을 함께 지운다. */
     fun delete(id: Long) {
-        dailyGoalRepository.delete(getEntity(id))
+        val dailyGoal = getEntity(id)
+        deleteTimeBlocks(id)
+        dailyGoalRepository.delete(dailyGoal)
     }
 
     /**
      * 다른 날로 넘긴다. 같은 주면 주간 목표를 그대로 두고, 다른 주면 그 주의 주간 목표를 받아야 한다.
-     * 넘길 날에 핵심이 이미 3개면 추가(EXTRA)로 넣는다.
+     * 넘길 날에 핵심이 이미 3개면 추가(EXTRA)로 넣는다. 원래 날의 시간 블록은 지운다.
      */
     fun move(id: Long, date: LocalDate, weeklyGoalId: Long?): DailyGoalMoveResponse {
         val dailyGoal = getEntity(id)
@@ -110,7 +115,8 @@ class DailyGoalService(
         dailyGoal.type = type
         dailyGoal.sortOrder = nextSortOrder(date, type)
         dailyGoal.carryCount += 1
-        return DailyGoalMoveResponse(DailyGoalResponse.from(dailyGoal), downgraded)
+        val removedBlocks = deleteTimeBlocks(id)
+        return DailyGoalMoveResponse(DailyGoalResponse.from(dailyGoal), downgraded, removedBlocks)
     }
 
     /** 핵심 ↔ 추가 전환. 바뀐 유형의 맨 뒤로 간다. */
@@ -136,6 +142,13 @@ class DailyGoalService(
         val byId = goals.associateBy { it.id!! }
         ids.forEachIndexed { index, id -> byId.getValue(id).sortOrder = index + 1 }
         return ids.map { DailyGoalResponse.from(byId.getValue(it)) }
+    }
+
+    /** 하루 목표의 시간 블록을 지우고 지운 개수를 돌려준다. */
+    private fun deleteTimeBlocks(dailyGoalId: Long): Int {
+        val blocks = timeBlockRepository.findAllByDailyGoalId(dailyGoalId)
+        timeBlockRepository.deleteAll(blocks)
+        return blocks.size
     }
 
     private fun nextSortOrder(date: LocalDate, type: DailyGoalType) =

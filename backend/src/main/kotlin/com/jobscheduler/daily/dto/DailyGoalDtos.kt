@@ -82,4 +82,6 @@ data class DailyGoalMoveResponse(
     val dailyGoal: DailyGoalResponse,
     /** 넘길 날에 핵심이 이미 3개여서 추가(EXTRA)로 바뀌었는지 */
     val downgradedToExtra: Boolean,
+    /** 원래 날에 잡혀 있다가 지워진 시간 블록 수 */
+    val removedTimeBlocks: Int = 0,
 )
