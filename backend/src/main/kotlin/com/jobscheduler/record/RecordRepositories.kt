@@ -14,4 +14,5 @@ interface ManualStudyLogRepository : JpaRepository<ManualStudyLog, Long> {
 
 interface DailyLogRepository : JpaRepository<DailyLog, Long> {
     fun findByDate(date: LocalDate): DailyLog?
+    fun findAllByDateBetween(from: LocalDate, to: LocalDate): List<DailyLog>
 }

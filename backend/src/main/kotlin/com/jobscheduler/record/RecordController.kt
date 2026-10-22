@@ -43,6 +43,13 @@ class ManualStudyLogController(private val manualLogService: ManualStudyLogServi
 @RestController
 @RequestMapping("/api/daily-logs")
 class DailyLogController(private val dailyLogService: DailyLogService) {
+    /** 기록 페이지: 기록이나 공부가 있는 날을 최신순으로 (예: ?from=2026-10-01&to=2026-10-31) */
+    @GetMapping
+    fun list(
+        @RequestParam @DateTimeFormat(iso = ISO.DATE) from: LocalDate,
+        @RequestParam @DateTimeFormat(iso = ISO.DATE) to: LocalDate,
+    ): List<DailyLogResponse> = dailyLogService.list(from, to)
+
     @GetMapping("/{date}")
     fun get(@PathVariable @DateTimeFormat(iso = ISO.DATE) date: LocalDate): DailyLogResponse = dailyLogService.get(date)
 

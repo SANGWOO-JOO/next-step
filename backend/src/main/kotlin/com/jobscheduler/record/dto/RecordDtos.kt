@@ -50,6 +50,8 @@ data class DailySummary(
 
 data class DailyLogResponse(
     val date: LocalDate,
+    /** 그날 완료한 하루 목표 내용 */
+    val doneGoals: List<String>,
     /** 아직 기록을 저장하지 않았으면 false */
     val saved: Boolean,
     val memo: String?,

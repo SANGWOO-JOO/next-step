@@ -118,4 +118,17 @@ class DailyLogServiceTest(
         assertEquals(0, manualLogService.list(thursday).size)
         assertThrows<NotFoundException> { manualLogService.create(ManualStudyLogRequest(thursday, 999_999, 30)) }
     }
+
+    @Test
+    fun `기록 목록은 기록이나 공부가 있는 날만 최신순으로 완료 목표와 함께 준다`() {
+        dailyLogService.save(thursday.minusDays(2), DailyLogRequest(memo = "화요일", condition = 3))
+        manualLogService.create(ManualStudyLogRequest(thursday, categoryId, 30))
+        val goal = dailyGoalService.create(DailyGoalCreateRequest(weeklyId, thursday, "성과 정리"))
+        dailyGoalService.update(goal.id, DailyGoalUpdateRequest(content = "성과 정리", status = DailyGoalStatus.DONE))
+
+        val list = dailyLogService.list(thursday.minusDays(6), thursday)
+        assertEquals(listOf(thursday, thursday.minusDays(2)), list.map { it.date })
+        assertEquals(listOf("성과 정리"), list[0].doneGoals)
+        assertEquals("화요일", list[1].memo)
+    }
 }

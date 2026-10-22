@@ -8,12 +8,14 @@ import com.jobscheduler.focus.InterruptionType
 import com.jobscheduler.record.dto.DailyLogRequest
 import com.jobscheduler.record.dto.DailyLogResponse
 import com.jobscheduler.record.dto.DailySummary
+import com.jobscheduler.common.BusinessRuleException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 import java.time.Duration
 import java.time.LocalDate
 import java.time.OffsetDateTime
+import java.time.temporal.ChronoUnit
 
 @Service
 @Transactional
@@ -24,9 +26,29 @@ class DailyLogService(
     private val dailyGoalRepository: DailyGoalRepository,
     private val clock: Clock,
 ) {
+    companion object {
+        const val MAX_RANGE_DAYS = 62L
+    }
+
     /** 저장한 기록이 없어도 자동 집계는 돌려준다. */
     @Transactional(readOnly = true)
     fun get(date: LocalDate): DailyLogResponse = toResponse(date, dailyLogRepository.findByDate(date))
+
+    /**
+     * 기록 페이지용: from~to(최대 62일) 중 하루 기록을 썼거나 공부·완료 목표가 있는 날을 최신순으로.
+     */
+    @Transactional(readOnly = true)
+    fun list(from: LocalDate, to: LocalDate): List<DailyLogResponse> {
+        if (to.isBefore(from) || ChronoUnit.DAYS.between(from, to) > MAX_RANGE_DAYS) {
+            throw BusinessRuleException("조회 기간은 $MAX_RANGE_DAYS 일 이내여야 해요.", "INVALID_RANGE")
+        }
+        val logs = dailyLogRepository.findAllByDateBetween(from, to).associateBy { it.date }
+        return generateSequence(to) { it.minusDays(1) }
+            .takeWhile { !it.isBefore(from) }
+            .map { toResponse(it, logs[it]) }
+            .filter { it.saved || it.summary.focusSeconds > 0 || it.summary.manualMinutes > 0 || it.summary.goalsDone > 0 }
+            .toList()
+    }
 
     /** 날짜당 1개라 없으면 만들고 있으면 고친다. */
     fun save(date: LocalDate, req: DailyLogRequest): DailyLogResponse {
@@ -55,6 +77,9 @@ class DailyLogService(
 
     private fun toResponse(date: LocalDate, log: DailyLog?) = DailyLogResponse(
         date = date,
+        doneGoals = dailyGoalRepository.findAllByDateBetween(date, date)
+            .filter { it.status == DailyGoalStatus.DONE }
+            .map { it.content },
         saved = log != null,
         memo = log?.memo,
         condition = log?.condition,
