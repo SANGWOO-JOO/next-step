@@ -10,4 +10,5 @@ interface WeeklyJournalRepository : JpaRepository<WeeklyJournal, Long> {
 
 interface MonthlyReviewRepository : JpaRepository<MonthlyReview, Long> {
     fun findByMonthStart(monthStart: LocalDate): MonthlyReview?
+    fun findAllByMonthStartBetweenOrderByMonthStartAsc(from: LocalDate, to: LocalDate): List<MonthlyReview>
 }

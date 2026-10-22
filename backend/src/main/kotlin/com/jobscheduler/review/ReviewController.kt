@@ -1,5 +1,6 @@
 package com.jobscheduler.review
 
+import com.jobscheduler.review.dto.MonthlyReviewBrief
 import com.jobscheduler.review.dto.MonthlyReviewRequest
 import com.jobscheduler.review.dto.MonthlyReviewResponse
 import com.jobscheduler.review.dto.WeeklyJournalRequest
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
 import java.time.YearMonth
@@ -34,6 +36,11 @@ class WeeklyJournalController(private val reviewService: ReviewService) {
 @RestController
 @RequestMapping("/api/monthly-reviews")
 class MonthlyReviewController(private val reviewService: ReviewService) {
+    /** 저장된 회고 목록 (예: ?from=2026-10&to=2027-03) */
+    @GetMapping
+    fun list(@RequestParam from: YearMonth, @RequestParam to: YearMonth): List<MonthlyReviewBrief> =
+        reviewService.listReviews(from, to)
+
     @GetMapping("/{month}")
     fun get(@PathVariable month: YearMonth): MonthlyReviewResponse = reviewService.getReview(month)
 

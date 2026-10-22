@@ -105,4 +105,13 @@ class ReviewServiceTest(
         assertTrue(week.journalWritten)
         assertFalse(review.weeks.first().journalWritten)
     }
+
+    @Test
+    fun `저장된 월간 회고만 달 순서로 모아 준다`() {
+        reviewService.saveReview(YearMonth.of(2026, 11), MonthlyReviewRequest(review = "11월"))
+        reviewService.saveReview(YearMonth.of(2026, 10), MonthlyReviewRequest(review = "10월", nextDirection = "면접"))
+        val list = reviewService.listReviews(YearMonth.of(2026, 9), YearMonth.of(2026, 12))
+        assertEquals(listOf("10월", "11월"), list.map { it.review })
+        assertEquals("면접", list[0].nextDirection)
+    }
 }

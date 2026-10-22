@@ -6,6 +6,7 @@ import com.jobscheduler.goal.WeeklyGoalRepository
 import com.jobscheduler.record.DailyLogRepository
 import com.jobscheduler.record.DailyLogService
 import com.jobscheduler.review.dto.DayStats
+import com.jobscheduler.review.dto.MonthlyReviewBrief
 import com.jobscheduler.review.dto.MonthlyReviewRequest
 import com.jobscheduler.review.dto.MonthlyReviewResponse
 import com.jobscheduler.review.dto.WeekStats
@@ -45,6 +46,16 @@ class ReviewService(
 
     @Transactional(readOnly = true)
     fun getReview(month: YearMonth): MonthlyReviewResponse = toResponse(month, reviewRepository.findByMonthStart(month.atDay(1)))
+
+    /** from~to 달의 저장된 월간 회고(최대 36개월) */
+    @Transactional(readOnly = true)
+    fun listReviews(from: YearMonth, to: YearMonth): List<MonthlyReviewBrief> {
+        if (to.isBefore(from) || from.plusMonths(36).isBefore(to)) {
+            throw BusinessRuleException("조회 기간은 36개월 이내여야 해요.", "INVALID_RANGE")
+        }
+        return reviewRepository.findAllByMonthStartBetweenOrderByMonthStartAsc(from.atDay(1), to.atDay(1))
+            .map { MonthlyReviewBrief(YearMonth.from(it.monthStart), it.review, it.nextDirection, it.aiSummary, it.updatedAt) }
+    }
 
     fun saveReview(month: YearMonth, req: MonthlyReviewRequest): MonthlyReviewResponse {
         val review = reviewRepository.findByMonthStart(month.atDay(1)) ?: reviewRepository.save(MonthlyReview(month.atDay(1)))

@@ -61,3 +61,12 @@ data class MonthlyReviewResponse(
     /** 그 달에 속한 주(목요일 기준)별 합계 */
     val weeks: List<WeekStats>,
 )
+
+/** 회고 목록용 요약(집계 없이 저장한 글만) */
+data class MonthlyReviewBrief(
+    val month: YearMonth,
+    val review: String?,
+    val nextDirection: String?,
+    val aiSummary: String?,
+    val updatedAt: OffsetDateTime,
+)
