@@ -28,6 +28,10 @@ const SETTINGS: Menu = { to: '/settings', label: '설정', icon: 'settings' }
 const ALL = [...GROUPS.flatMap((g) => g.menus), SETTINGS]
 
 const COLLAPSED_KEY = 'layout.sidebar.collapsed'
+/** 다른 화면에서 메뉴를 접게 할 때 보내는 이벤트(일정 화면의 넓게 보기 안내) */
+export const COLLAPSE_EVENT = 'layout:collapse-sidebar'
+/** 작업 화면: 본문 최대 폭 없이 창을 꽉 채운다(docs/design.md 6장 화면 폭) */
+const WIDE_PATHS = ['/', '/plan']
 
 const readCollapsed = () => {
   try {
@@ -68,6 +72,20 @@ export default function Layout() {
     }
   }
 
+  useEffect(() => {
+    const collapse = () => {
+      setCollapsed(true)
+      try {
+        localStorage.setItem(COLLAPSED_KEY, '1')
+      } catch {
+        // 저장 못 해도 지금은 접는다
+      }
+    }
+    window.addEventListener(COLLAPSE_EVENT, collapse)
+    return () => window.removeEventListener(COLLAPSE_EVENT, collapse)
+  }, [])
+
+  const wide = WIDE_PATHS.includes(location.pathname)
   const current = ALL.find((m) => (m.end ? location.pathname === m.to : location.pathname.startsWith(m.to)))
 
   const link = (m: Menu) => (
@@ -128,7 +146,7 @@ export default function Layout() {
         </div>
       </aside>
 
-      <main className="app-main">
+      <main className={wide ? 'app-main wide' : 'app-main'}>
         <Outlet />
       </main>
     </div>

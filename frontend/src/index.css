@@ -752,3 +752,30 @@ button.schedule-date.selected { background: color-mix(in srgb, var(--accent) 16%
 .quick-add-more { padding: 0.25rem 0.5rem; font-size: 0.8rem; }
 .quick-add-detail { padding-left: 1.4rem; }
 .quick-add-hint { margin: 0; padding-left: 1.4rem; }
+
+/* 화면 폭 (작업 화면은 꽉 채움) */
+.app-main.wide { max-width: none; margin: 0; }
+.today-layout { display: grid; grid-template-columns: var(--left-w, 380px) 8px minmax(0, 1fr); gap: 0.5rem; align-items: stretch; margin-top: 0.75rem; }
+.today-layout > .card { margin-top: 0; min-width: 0; }
+.today-layout.schedule-only { grid-template-columns: minmax(0, 1fr); }
+.today-layout.schedule-only .today-list, .today-layout.schedule-only .layout-splitter { display: none; }
+.layout-splitter { cursor: col-resize; border-radius: 4px; position: relative; }
+.layout-splitter::after { content: ''; position: absolute; top: 0; bottom: 0; left: 3px; width: 2px; border-radius: 2px; background: var(--border); }
+.layout-splitter:hover::after, body.resizing .layout-splitter::after { background: var(--accent); }
+body.resizing { cursor: col-resize; user-select: none; }
+.wide-toggle { padding: 0.2rem 0.55rem; font-size: 0.8rem; }
+.sidebar-tip { display: flex; align-items: center; gap: 0.5rem; margin: 0.25rem 0; }
+.schedule-help { margin: 0.25rem 0; }
+/* 창 높이에 맞추기: 넓은 화면에서는 페이지가 스크롤되지 않고 목록·시간표가 각자 스크롤 */
+@media (min-width: 1000px) {
+  .today-page { display: flex; flex-direction: column; height: calc(100vh - 3rem); min-height: 34rem; }
+  .today-page > .today-layout { flex: 1; min-height: 0; }
+  .today-list { overflow-y: auto; }
+  .schedule-card { display: flex; flex-direction: column; min-height: 0; }
+  .schedule-card .schedule { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .schedule-card .schedule-scroll { flex: 1; height: auto; min-height: 0; }
+}
+@media (max-width: 999px) {
+  .today-layout { grid-template-columns: 1fr; }
+  .layout-splitter { display: none; }
+}

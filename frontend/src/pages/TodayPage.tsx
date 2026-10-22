@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getCategories, type Category } from '../api/categories'
 import { errorMessage } from '../api/client'
@@ -22,6 +22,7 @@ import { getTimeBlocksBetween, type TimeBlock } from '../api/timeBlocks'
 import DailyGoalPanel from '../components/DailyGoalPanel'
 import PullSection from '../components/today/PullSection'
 import ShutdownDialog from '../components/today/ShutdownDialog'
+import { COLLAPSE_EVENT } from '../components/Layout'
 import ScheduleView from '../components/ScheduleView'
 import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, todaySeoul, weekDates } from '../utils/date'
 import { journalDue, plannedKey } from './plan/planData'
@@ -52,6 +53,34 @@ export default function TodayPage() {
   const [shutdown, setShutdown] = useState(false)
   /** 고른 날: 왼쪽 목록과 [일] 보기가 보여주는 날(이번 주 안). [주] 보기의 날짜 머리로 바꾼다 */
   const [selected, setSelected] = useState(today)
+  const [leftWidth, setLeftWidth] = useState(() => readNumber(LEFT_WIDTH_KEY, DEFAULT_LEFT_WIDTH))
+  const [wideSchedule, setWideSchedule] = useState(() => readNumber(WIDE_KEY, 0) === 1)
+
+  const saveLeftWidth = (w: number) => {
+    const clamped = Math.round(Math.min(MAX_LEFT_WIDTH, Math.max(MIN_LEFT_WIDTH, w)))
+    setLeftWidth(clamped)
+    writeValue(LEFT_WIDTH_KEY, String(clamped))
+  }
+
+  // 경계를 끌면 목록 폭이 바뀐다(포인터 위치 기준)
+  const startResize = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const listLeft = e.currentTarget.parentElement!.getBoundingClientRect().left
+    const onMove = (ev: PointerEvent) => saveLeftWidth(ev.clientX - listLeft)
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      document.body.classList.remove('resizing')
+    }
+    document.body.classList.add('resizing')
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
+
+  const toggleWide = () => {
+    const next = !wideSchedule
+    setWideSchedule(next)
+    writeValue(WIDE_KEY, next ? '1' : '0')
+  }
   const isToday = selected === today
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
@@ -129,7 +158,7 @@ export default function TodayPage() {
   const focusTotal = sessions.reduce((sum, s) => sum + s.focusSeconds, 0)
 
   return (
-    <section>
+    <section className="today-page">
       <div className="page-head">
         <h1>
           일정 <span className="page-date muted">{dayLabel(today)}</span>
@@ -177,8 +206,11 @@ export default function TodayPage() {
         onShutdown={() => setShutdown(true)}
       />
 
-      <div className="today-grid today-layout">
-        <div className="card">
+      <div
+        className={wideSchedule ? 'today-layout schedule-only' : 'today-layout'}
+        style={{ '--left-w': `${leftWidth}px` } as CSSProperties}
+      >
+        <div className="card today-list">
           {isToday ? (
             <Workload blocks={blocks.filter((b) => b.date === today)} goals={goals} />
           ) : (
@@ -225,9 +257,26 @@ export default function TodayPage() {
             </p>
           )}
         </div>
+        <div
+          className="layout-splitter"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="목록 폭 조절"
+          title="끌어서 목록 폭을 바꿔요 (두 번 누르면 기본값)"
+          onPointerDown={startResize}
+          onDoubleClick={() => saveLeftWidth(DEFAULT_LEFT_WIDTH)}
+        />
         <div className="card schedule-card">
           <div className="goal-header">
             <h3 className="timeline-title goal-title">시간표</h3>
+            <button
+              className="ghost wide-toggle"
+              onClick={toggleWide}
+              aria-pressed={wideSchedule}
+              title={wideSchedule ? '목록 다시 보기' : '목록을 접고 시간표만 넓게 보기'}
+            >
+              {wideSchedule ? '⤡ 목록 보기' : '⤢ 넓게 보기'}
+            </button>
             <span className="segmented">
               {(['day', 'week'] as const).map((v) => (
                 <button key={v} className={view === v ? 'active' : ''} onClick={() => changeView(v)}>
@@ -236,7 +285,8 @@ export default function TodayPage() {
               ))}
             </span>
           </div>
-          <p className="muted small">
+          <SidebarTip />
+          <p className="muted small schedule-help">
             빈 칸을 끌어 시간을 잡고, 블록을 끌어 옮기거나 아래 끝을 끌어 늘여요. 왼쪽 목표를 끌어다 놓아도 돼요.
             초록 막대는 실제 집중한 시간이에요.
           </p>
@@ -433,6 +483,63 @@ function ServerAlert() {
   return (
     <p className="error-banner" role="alert">
       서버나 DB에 연결할 수 없어요. 백엔드와 docker compose가 켜져 있는지 확인해 주세요.
+    </p>
+  )
+}
+
+const LEFT_WIDTH_KEY = 'today.leftWidth'
+const WIDE_KEY = 'today.wideSchedule'
+const DEFAULT_LEFT_WIDTH = 380
+const MIN_LEFT_WIDTH = 300
+const MAX_LEFT_WIDTH = 560
+const SIDEBAR_TIP_KEY = 'today.sidebarTipSeen'
+
+const readNumber = (key: string, fallback: number) => {
+  try {
+    const v = Number(localStorage.getItem(key))
+    return Number.isFinite(v) && v > 0 ? v : fallback
+  } catch {
+    return fallback
+  }
+}
+
+const writeValue = (key: string, value: string) => {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // 저장 못 해도 지금 화면은 바뀐다
+  }
+}
+
+/** 메뉴가 펼쳐져 있으면 '메뉴를 접으면 더 넓어져요'를 한 번 알려준다 */
+function SidebarTip() {
+  const [show, setShow] = useState(() => {
+    try {
+      return localStorage.getItem('layout.sidebar.collapsed') !== '1' && localStorage.getItem(SIDEBAR_TIP_KEY) !== '1'
+    } catch {
+      return false
+    }
+  })
+  if (!show) return null
+  const close = () => {
+    writeValue(SIDEBAR_TIP_KEY, '1')
+    setShow(false)
+  }
+  return (
+    <p className="notice small sidebar-tip">
+      왼쪽 메뉴를 접으면 시간표가 더 넓어져요.
+      <button
+        className="ghost"
+        onClick={() => {
+          window.dispatchEvent(new Event(COLLAPSE_EVENT))
+          close()
+        }}
+      >
+        메뉴 접기
+      </button>
+      <button className="icon" onClick={close} aria-label="다시 보지 않기">
+        ×
+      </button>
     </p>
   )
 }
