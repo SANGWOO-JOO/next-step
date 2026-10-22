@@ -3,6 +3,7 @@ package com.jobscheduler.goal
 import com.jobscheduler.category.CategoryService
 import com.jobscheduler.common.BusinessRuleException
 import com.jobscheduler.common.NotFoundException
+import com.jobscheduler.daily.DailyGoalRepository
 import com.jobscheduler.goal.dto.WeeklyGoalCreateRequest
 import com.jobscheduler.goal.dto.WeeklyGoalResponse
 import com.jobscheduler.goal.dto.WeeklyGoalUpdateRequest
@@ -17,6 +18,7 @@ class WeeklyGoalService(
     private val monthlyGoalRepository: MonthlyGoalRepository,
     private val weeklyGoalRepository: WeeklyGoalRepository,
     private val categoryService: CategoryService,
+    private val dailyGoalRepository: DailyGoalRepository,
 ) {
 
     @Transactional(readOnly = true)
@@ -49,6 +51,10 @@ class WeeklyGoalService(
     fun update(id: Long, req: WeeklyGoalUpdateRequest): WeeklyGoalResponse {
         val weeklyGoal = getEntity(id)
         GoalRules.requireWeekInMonth(req.weekStart, weeklyGoal.monthlyGoal.month)
+        // 하루 목표가 연결돼 있으면 주를 바꿀 수 없다(하루 목표 날짜가 주 밖으로 나가므로)
+        if (req.weekStart != weeklyGoal.weekStart && dailyGoalRepository.existsByWeeklyGoalId(id)) {
+            throw BusinessRuleException("하루 목표가 연결된 주간 목표는 주를 바꿀 수 없어요.", "HAS_CHILDREN")
+        }
 
         // 이미 지정된 분류는 나중에 비활성화돼도 유지할 수 있고, 새로 지정할 때만 활성 여부를 본다
         if (req.categoryId != weeklyGoal.category?.id) {
@@ -61,7 +67,11 @@ class WeeklyGoalService(
     }
 
     fun delete(id: Long) {
-        weeklyGoalRepository.delete(getEntity(id))
+        val weeklyGoal = getEntity(id)
+        if (dailyGoalRepository.existsByWeeklyGoalId(id)) {
+            throw BusinessRuleException("하루 목표가 연결된 주간 목표는 삭제할 수 없어요.", "HAS_CHILDREN")
+        }
+        weeklyGoalRepository.delete(weeklyGoal)
     }
 
     private fun getEntity(id: Long): WeeklyGoal =
