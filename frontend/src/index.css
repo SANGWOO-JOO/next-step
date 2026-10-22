@@ -30,7 +30,7 @@ h1 { font-size: 1.6rem; margin: 0 0 0.5rem; }
 h2 { font-size: 1.1rem; margin: 0 0 0.75rem; }
 
 .app { display: flex; min-height: 100vh; }
-.app-main { flex: 1; min-width: 0; max-width: 1240px; margin: 0 auto; padding: 1.5rem 1.25rem; }
+.app-main { flex: 1; min-width: 0; padding: 1.5rem 1.25rem; }
 .muted { color: var(--muted); }
 .card {
   margin-top: 1rem;
@@ -275,7 +275,7 @@ button.start-focus { padding: 0.05rem 0.45rem; font-size: 0.75rem; }
 .focus-main.paused { border-color: color-mix(in srgb, #f59e0b 60%, var(--border)); }
 .focus-goal { display: grid; justify-items: center; gap: 0.35rem; }
 .focus-goal-title { font-size: 1.25rem; }
-.focus-timer { font-size: clamp(3.5rem, 14vw, 6.5rem); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.focus-timer { font-size: clamp(3.5rem, 9vw, 10rem); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
 .focus-main.paused .focus-timer { opacity: 0.45; }
 .focus-timer.over { color: var(--up); }
 .focus-sub { margin: 0; }
@@ -754,7 +754,6 @@ button.schedule-date.selected { background: color-mix(in srgb, var(--accent) 16%
 .quick-add-hint { margin: 0; padding-left: 1.4rem; }
 
 /* 화면 폭 (작업 화면은 꽉 채움) */
-.app-main.wide { max-width: none; margin: 0; }
 .today-layout { display: grid; grid-template-columns: var(--left-w, 380px) 8px minmax(0, 1fr); gap: 0.5rem; align-items: stretch; margin-top: 0.75rem; }
 .today-layout > .card { margin-top: 0; min-width: 0; }
 .today-layout.schedule-only { grid-template-columns: minmax(0, 1fr); }
@@ -783,7 +782,7 @@ body.resizing { cursor: col-resize; user-select: none; }
 .schedule-scroll > .schedule-head { position: sticky; top: 0; z-index: 4; }
 
 /* 기록 페이지 (1-4d 다듬기) */
-.log-list { max-width: 52rem; }
+.log-list { max-width: none; }
 .log-summary > .card { margin-top: 0.5rem; }
 .log-view-toggle { justify-self: start; margin-top: 0.75rem; }
 .log-card.timeline { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: 1rem; align-items: start; }
@@ -817,3 +816,18 @@ body.resizing { cursor: col-resize; user-select: none; }
 .log-cal-cell.has:hover { border-color: var(--accent); }
 .log-cal-date { font-size: 0.8rem; font-variant-numeric: tabular-nums; }
 .log-cal-mood { font-size: 1.1rem; min-height: 1.3rem; }
+
+/* 같은 틀 안에서 페이지별 폭 쓰기 */
+.settings-page { max-width: 48rem; }
+.log-summary { max-width: 72rem; }
+.log-day-layout { display: grid; gap: 1rem; align-items: start; }
+.log-pane-list { display: grid; max-width: 52rem; }
+.log-day-layout.view-list .log-pane-calendar, .log-day-layout.view-calendar .log-pane-list { display: none; }
+.log-cal-cell.picked { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+@media (min-width: 1200px) {
+  .log-view-toggle { display: none; }
+  .log-day-layout { grid-template-columns: minmax(0, 52rem) minmax(20rem, 30rem); }
+  .log-day-layout .log-pane-list, .log-day-layout .log-pane-calendar { display: grid !important; }
+  .log-pane-calendar { position: sticky; top: 1rem; }
+  .log-pane-calendar .log-calendar { margin-top: 1rem; }
+}

@@ -101,17 +101,25 @@ export default function LogPage() {
                   </button>
                 ))}
               </span>
-              {dayView === 'calendar' && (
-                <LogCalendar
-                  month={month}
-                  days={days}
-                  onPick={(date) => {
-                    setDayView('list')
-                    setFocusDate(date)
-                  }}
-                />
-              )}
-              {dayView === 'list' && days.map((d) => <DayCard key={d.date} log={d} focused={d.date === focusDate} />)}
+              {/* 넓은 화면은 목록 + 달력 나란히, 좁으면 전환한 쪽만(CSS) */}
+              <div className={`log-day-layout view-${dayView}`}>
+                <div className="log-pane-list">
+                  {days.map((d) => (
+                    <DayCard key={d.date} log={d} focused={d.date === focusDate} />
+                  ))}
+                </div>
+                <div className="log-pane-calendar">
+                  <LogCalendar
+                    month={month}
+                    days={days}
+                    focusDate={focusDate}
+                    onPick={(date) => {
+                      setDayView('list')
+                      setFocusDate(date)
+                    }}
+                  />
+                </div>
+              </div>
             </>
           )}
           {kind === 'week' &&
@@ -223,7 +231,17 @@ function MonthSummary({ month, days }: { month: string; days: DailyLog[] }) {
 const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일']
 
 /** 달력 보기(Day One 달력, Daylio Year in Pixels 참고): 공부량을 색 진하기로, 컨디션을 이모지로 */
-function LogCalendar({ month, days, onPick }: { month: string; days: DailyLog[]; onPick: (date: string) => void }) {
+function LogCalendar({
+  month,
+  days,
+  focusDate,
+  onPick,
+}: {
+  month: string
+  days: DailyLog[]
+  focusDate: string | null
+  onPick: (date: string) => void
+}) {
   const byDate = new Map(days.map((d) => [d.date, d]))
   const max = Math.max(1, ...days.map((d) => d.summary.focusSeconds + d.summary.manualMinutes * 60))
   const { from, to } = monthRange(month)
@@ -248,7 +266,13 @@ function LogCalendar({ month, days, onPick }: { month: string; days: DailyLog[];
             <button
               key={date}
               type="button"
-              className={['log-cal-cell', inMonth ? '' : 'outside', date === today ? 'today' : '', log ? 'has' : ''].join(' ')}
+              className={[
+                'log-cal-cell',
+                inMonth ? '' : 'outside',
+                date === today ? 'today' : '',
+                log ? 'has' : '',
+                date === focusDate ? 'picked' : '',
+              ].join(' ')}
               disabled={!log}
               onClick={() => onPick(date)}
               title={log ? `${dayLabel(date)} · 공부 ${formatDuration(seconds)}` : dayLabel(date)}

@@ -22,7 +22,7 @@ const toNumberOrNull = (value: string) => (value.trim() === '' ? null : Number(v
 
 export default function SettingsPage() {
   return (
-    <section>
+    <section className="settings-page">
       <h1>설정</h1>
       <p className="muted">타이머, 알림, 텔레그램 설정은 1-5단계에서 추가돼요.</p>
       <CategorySettings />
