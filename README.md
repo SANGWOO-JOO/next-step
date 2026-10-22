@@ -42,6 +42,7 @@ job-scheduler/
 │       ├── category/   # 활동 분류
 │       ├── common/     # 공통 예외·에러 응답
 │       ├── config/     # CORS 등 설정
+│       ├── daily/      # 하루 목표
 │       ├── goal/       # 최종·월간·주간 목표
 │       └── health/     # 연결 확인 API
 ├── frontend/           # React + TS
