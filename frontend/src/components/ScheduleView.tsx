@@ -24,6 +24,9 @@ type Props = {
   sessions: FocusSession[]
   run: Run
   onStartFocus?: (goal: DailyGoal) => void
+  /** 고른 날(왼쪽 목록이 보여주는 날). [주] 보기에서 날짜 머리를 누르면 바뀐다 */
+  selectedDate?: string
+  onSelectDate?: (date: string) => void
 }
 
 /** 드래그 중 상태. create는 빈 칸을 끌어 범위를 고르는 중, move/resize는 블록을 옮기거나 늘이는 중 */
@@ -45,7 +48,7 @@ function minuteAt(e: { clientY: number }, column: HTMLElement) {
  * 맥 캘린더 같은 시간표. 빈 칸을 끌어 블록을 만들고, 블록을 끌어 옮기거나 아래 끝을 끌어 늘인다.
  * 하루 목표를 끌어다 놓으면 1시간 블록이 생기고, 지난 시간에는 실제 집중 세션을 오른쪽에 겹쳐 보여준다.
  */
-export default function ScheduleView({ dates, blocks, goals, sessions, run, onStartFocus }: Props) {
+export default function ScheduleView({ dates, blocks, goals, sessions, run, onStartFocus, selectedDate, onSelectDate }: Props) {
   const today = todaySeoul()
   const [drag, setDrag] = useState<Drag | null>(null)
   const [popover, setPopover] = useState<Popover>(null)
@@ -157,11 +160,24 @@ export default function ScheduleView({ dates, blocks, goals, sessions, run, onSt
       )}
       <div className="schedule-head" style={{ gridTemplateColumns: `3rem repeat(${dates.length}, minmax(0, 1fr))` }}>
         <span />
-        {dates.map((d) => (
-          <span key={d} className={d === today ? 'schedule-date today' : 'schedule-date'}>
-            {week ? dayLabel(d).replace(/^\d+월 /, '') : dayLabel(d)}
-          </span>
-        ))}
+        {dates.map((d) =>
+          week && onSelectDate ? (
+            <button
+              key={d}
+              type="button"
+              className={['schedule-date', d === today ? 'today' : '', d === selectedDate ? 'selected' : ''].join(' ')}
+              onClick={() => onSelectDate(d)}
+              aria-pressed={d === selectedDate}
+              title="이 날의 할 일을 왼쪽에 보여줘요"
+            >
+              {dayLabel(d).replace(/^\d+월 /, '')}
+            </button>
+          ) : (
+            <span key={d} className={d === today ? 'schedule-date today' : 'schedule-date'}>
+              {week ? dayLabel(d).replace(/^\d+월 /, '') : dayLabel(d)}
+            </span>
+          ),
+        )}
         <span className="schedule-allday-label muted">목표</span>
         {dates.map((d) => (
           <div key={d} className="schedule-allday">

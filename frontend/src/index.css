@@ -739,3 +739,8 @@ body.immersive .app-main { padding-top: 2rem; }
 .roadmap-bar { height: 0.35rem; background: var(--border); border-radius: 999px; overflow: hidden; }
 .roadmap-bar-fill { display: block; height: 100%; background: var(--up); }
 .roadmap-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); min-height: 1em; }
+button.schedule-date { border: none; border-left: 1px solid var(--border); border-radius: 0; background: transparent; color: var(--text); font: inherit; font-weight: 600; cursor: pointer; }
+button.schedule-date:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+button.schedule-date.today { color: var(--down); }
+button.schedule-date.selected { background: color-mix(in srgb, var(--accent) 16%, transparent); box-shadow: inset 0 -2px 0 var(--accent); }
+.workload.other-day { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }

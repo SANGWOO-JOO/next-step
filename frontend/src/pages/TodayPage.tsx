@@ -50,6 +50,9 @@ export default function TodayPage() {
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null)
   const [manualLogs, setManualLogs] = useState<ManualStudyLog[]>([])
   const [shutdown, setShutdown] = useState(false)
+  /** 고른 날: 왼쪽 목록과 [일] 보기가 보여주는 날(이번 주 안). [주] 보기의 날짜 머리로 바꾼다 */
+  const [selected, setSelected] = useState(today)
+  const isToday = selected === today
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
 
@@ -176,18 +179,37 @@ export default function TodayPage() {
 
       <div className="today-grid today-layout">
         <div className="card">
-          <Workload blocks={blocks.filter((b) => b.date === today)} goals={goals} />
+          {isToday ? (
+            <Workload blocks={blocks.filter((b) => b.date === today)} goals={goals} />
+          ) : (
+            <div className="workload other-day">
+              <span className="small">
+                {dayLabel(selected)}을 보고 있어요 · 시간 잡음{' '}
+                <strong>
+                  {formatDuration(
+                    blocks
+                      .filter((b) => b.date === selected)
+                      .reduce((sum, b) => sum + minutesOfDay(b.endAt, selected) - minutesOfDay(b.startAt, selected), 0) * 60,
+                  )}
+                </strong>
+              </span>
+              <button className="ghost" onClick={() => setSelected(today)}>
+                오늘로 돌아가기
+              </button>
+            </div>
+          )}
           <DailyGoalPanel
-            key={today}
-            date={today}
-            title="오늘 할 일"
-            goals={goals}
+            key={selected}
+            date={selected}
+            title={isToday ? '오늘 할 일' : `${dayLabel(selected)} 할 일`}
+            goals={weekGoals.filter((g) => g.date === selected)}
             weeklyGoals={weeklyGoals ?? []}
             categories={categories}
             run={run}
-            timeBlocks={blocks.filter((b) => b.date === today)}
-            onStartFocus={current ? undefined : startFocusFor}
+            timeBlocks={blocks.filter((b) => b.date === selected)}
+            onStartFocus={current || !isToday ? undefined : startFocusFor}
           />
+          {isToday && (
           <PullSection
             today={today}
             unfinished={unfinished}
@@ -196,6 +218,7 @@ export default function TodayPage() {
             weeklyGoals={weeklyGoals ?? []}
             run={run}
           />
+          )}
           {weeklyGoals?.length === 0 && (
             <p className="small">
               <Link to="/plan?level=week">계획</Link>에서 이번 주 주간 목표를 먼저 만들어 주세요.
@@ -218,12 +241,14 @@ export default function TodayPage() {
             초록 막대는 실제 집중한 시간이에요.
           </p>
           <ScheduleView
-            dates={view === 'day' ? [today] : weekDates(thisMonday)}
+            dates={view === 'day' ? [selected] : weekDates(thisMonday)}
             blocks={blocks}
             goals={weekGoals}
             sessions={weekSessions}
             run={run}
             onStartFocus={current ? undefined : startFocusFor}
+            selectedDate={selected}
+            onSelectDate={setSelected}
           />
         </div>
       </div>
