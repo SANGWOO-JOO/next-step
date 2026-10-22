@@ -23,6 +23,10 @@ type Props = {
   selectedDate: string | null
   onSelectDate: (date: string | null) => void
   run: (action: () => Promise<unknown>) => Promise<boolean>
+  /** 계획 화면에서는 위쪽 달 이동과 월간 목표 목록을 따로 보여주므로 숨긴다 */
+  embedded?: boolean
+  /** 주 줄의 '주 보기'를 누르면 */
+  onOpenWeek?: (monday: string) => void
 }
 
 /** 월 캘린더. 주(목요일 기준 소속) 한 줄마다 날짜 7칸과 그 주의 주간 목표를 보여준다. */
@@ -38,13 +42,16 @@ export default function GoalCalendar({
   selectedDate,
   onSelectDate,
   run,
+  embedded = false,
+  onOpenWeek,
 }: Props) {
   const goalTitle = new Map(goals.map((g) => [g.id, g.title]))
   const monthlyGoals = goals.flatMap((g) => g.monthlyGoals).filter((m) => m.month === month)
   const today = todaySeoul()
 
   return (
-    <div className="card">
+    <div className={embedded ? 'calendar-embedded' : 'card'}>
+      {!embedded && (
       <div className="calendar-nav">
         <button className="icon" onClick={() => onMonthChange(addMonths(month, -1))} aria-label="이전 달">
           ◀
@@ -59,8 +66,9 @@ export default function GoalCalendar({
           </button>
         )}
       </div>
+      )}
 
-      {monthlyGoals.length === 0 ? (
+      {embedded ? null : monthlyGoals.length === 0 ? (
         <p className="muted small">이 달의 월간 목표가 없어요. 트리 보기에서 먼저 추가하면 주간 목표를 넣을 수 있어요.</p>
       ) : (
         <ul className="calendar-monthly">
@@ -98,6 +106,7 @@ export default function GoalCalendar({
             selectedDate={selectedDate}
             onSelectDate={onSelectDate}
             run={run}
+            onOpenWeek={onOpenWeek}
           />
         ))}
       </div>
@@ -117,6 +126,7 @@ type WeekRowProps = {
   selectedDate: string | null
   onSelectDate: (date: string | null) => void
   run: (action: () => Promise<unknown>) => Promise<boolean>
+  onOpenWeek?: (monday: string) => void
 }
 
 function WeekRow({
@@ -131,6 +141,7 @@ function WeekRow({
   selectedDate,
   onSelectDate,
   run,
+  onOpenWeek,
 }: WeekRowProps) {
   const [adding, setAdding] = useState(false)
   const [pickedId, setPickedId] = useState<number | null>(null)
@@ -211,11 +222,18 @@ function WeekRow({
               />
             </div>
           ) : (
-            monthlyGoals.length > 0 && (
-              <button className="ghost add" onClick={() => setAdding(true)}>
-                + 주간 목표
-              </button>
-            )
+            <span className="row-actions">
+              {monthlyGoals.length > 0 && (
+                <button className="ghost add" onClick={() => setAdding(true)}>
+                  + 주간 목표
+                </button>
+              )}
+              {onOpenWeek && (
+                <button className="ghost add" onClick={() => onOpenWeek(monday)}>
+                  주 보기 ›
+                </button>
+              )}
+            </span>
           )}
         </div>
       </div>

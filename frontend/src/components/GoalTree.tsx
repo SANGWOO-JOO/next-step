@@ -1,8 +1,5 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { getCategories, type Category } from '../api/categories'
-import { errorMessage } from '../api/client'
-import { getDailyGoalsBetween, type DailyGoal } from '../api/dailyGoals'
+import { useState, type FormEvent } from 'react'
+import type { Category } from '../api/categories'
 import {
   GOAL_STATUS_LABEL,
   createGoal,
@@ -11,7 +8,8 @@ import {
   deleteGoal,
   deleteMonthlyGoal,
   deleteWeeklyGoal,
-  getGoals,
+  toMonthlyInput,
+  toWeeklyInput,
   updateGoal,
   updateMonthlyGoal,
   updateWeeklyGoal,
@@ -21,14 +19,12 @@ import {
   type MonthlyGoal,
   type MonthlyGoalInput,
   type WeeklyGoal,
-  toWeeklyInput,
 } from '../api/goals'
-import CategoryBadge from '../components/CategoryBadge'
-import FormButtons from '../components/FormButtons'
-import GoalCalendar from '../components/GoalCalendar'
-import ProgressBar from '../components/ProgressBar'
-import WeeklyGoalForm from '../components/WeeklyGoalForm'
-import { currentMonthSeoul, mondaysOfMonth, monthLabel, shiftDate, todaySeoul, weekLabel } from '../utils/date'
+import { currentMonthSeoul, monthLabel, todaySeoul, weekLabel } from '../utils/date'
+import CategoryBadge from './CategoryBadge'
+import FormButtons from './FormButtons'
+import ProgressBar from './ProgressBar'
+import WeeklyGoalForm from './WeeklyGoalForm'
 
 /** 변경 요청을 실행하고 목록을 다시 불러온다. 성공 여부를 돌려준다. */
 type Run = (action: () => Promise<unknown>) => Promise<boolean>
@@ -36,79 +32,18 @@ type Run = (action: () => Promise<unknown>) => Promise<boolean>
 const toNumberOrNull = (value: string) => (value.trim() === '' ? null : Number(value))
 const toTextOrNull = (value: string) => (value.trim() === '' ? null : value)
 
-export default function GoalsPage() {
-  const [goals, setGoals] = useState<Goal[] | null>(null)
-  const [categories, setCategories] = useState<Category[]>([])
-  const [dailyGoals, setDailyGoals] = useState<DailyGoal[]>([])
-  const [error, setError] = useState<string | null>(null)
+type TreeProps = { goals: Goal[]; categories: Category[]; run: Run }
+
+/** 최종 → 월간 → 주간 목표 트리와 '+ 최종 목표'. 계획 화면 [최종] 레벨에서 편집용으로 쓴다. */
+export default function GoalTree({ goals, categories, run }: TreeProps) {
   const [adding, setAdding] = useState(false)
-  // 보기 방식과 캘린더 달은 주소에 남겨 새로고침해도 유지한다
-  const [params, setParams] = useSearchParams()
-  const view = params.get('view') === 'calendar' ? 'calendar' : 'tree'
-  const calendarMonth = params.get('month') ?? currentMonthSeoul()
-  const selectedDate = params.get('date')
-  const setView = (next: 'tree' | 'calendar') =>
-    setParams(next === 'calendar' ? { view: next, month: calendarMonth } : {}, { replace: true })
-  const setCalendar = (month: string, date: string | null) =>
-    setParams(date ? { view: 'calendar', month, date } : { view: 'calendar', month }, { replace: true })
-
-  const load = useCallback(() => {
-    // 캘린더에 보이는 주(첫 주 월요일 ~ 마지막 주 일요일)의 하루 목표도 함께 불러온다
-    const mondays = mondaysOfMonth(calendarMonth)
-    const daily =
-      view === 'calendar'
-        ? getDailyGoalsBetween(mondays[0], shiftDate(mondays[mondays.length - 1], 6))
-        : Promise.resolve([])
-    Promise.all([getGoals(), getCategories(), daily])
-      .then(([g, c, d]) => {
-        setGoals(g)
-        setCategories(c)
-        setDailyGoals(d)
-      })
-      .catch((e) => setError(errorMessage(e)))
-  }, [view, calendarMonth])
-
-  useEffect(load, [load])
-
-  const run: Run = async (action) => {
-    setError(null)
-    try {
-      await action()
-      load()
-      return true
-    } catch (e) {
-      setError(errorMessage(e))
-      return false
-    }
-  }
-
   return (
-    <section>
-      <div className="page-title">
-        <h1>최종 목표</h1>
-        <span className="row-actions">
-          <span className="segmented" role="group" aria-label="보기 방식">
-            <button className={view === 'tree' ? 'active' : ''} onClick={() => setView('tree')}>
-              트리
-            </button>
-            <button className={view === 'calendar' ? 'active' : ''} onClick={() => setView('calendar')}>
-              캘린더
-            </button>
-          </span>
-          {!adding && <button onClick={() => setAdding(true)}>+ 최종 목표</button>}
-        </span>
-      </div>
-      <p className="muted">최종 목표 → 월간 목표 → 주간 목표 → 하루 목표 순으로 연결해요. 캘린더에서 날짜를 누르면 하루 목표를 넣을 수 있어요. 진행률은 하위 목표 달성 비율로 자동 계산돼요.</p>
-      {error && (
-        <p className="error-banner" role="alert">
-          {error}
-          <button className="icon" onClick={() => setError(null)} aria-label="닫기">
-            ×
-          </button>
-        </p>
-      )}
-
-      {adding && (
+    <>
+      {goals.map((goal) => (
+        <GoalCard key={goal.id} goal={goal} categories={categories} run={run} />
+      ))}
+      {goals.length === 0 && !adding && <p className="card muted">아직 최종 목표가 없어요. 이직 목표부터 적어보세요.</p>}
+      {adding ? (
         <div className="card">
           <h2>새 최종 목표</h2>
           <GoalForm
@@ -117,27 +52,12 @@ export default function GoalsPage() {
             onCancel={() => setAdding(false)}
           />
         </div>
+      ) : (
+        <button className="ghost add goal-add" onClick={() => setAdding(true)}>
+          + 최종 목표
+        </button>
       )}
-
-      {goals?.length === 0 && !adding && <p className="card muted">아직 최종 목표가 없어요. 이직 목표부터 적어보세요.</p>}
-      {view === 'tree' &&
-        goals?.map((goal) => <GoalCard key={goal.id} goal={goal} categories={categories} run={run} />)}
-      {view === 'calendar' && goals && goals.length > 0 && (
-        <GoalCalendar
-          goals={goals}
-          categories={categories}
-          month={calendarMonth}
-          onMonthChange={(month) => setCalendar(month, null)}
-          onToggleMonthly={(m) => run(() => updateMonthlyGoal(m.id, { ...monthlyInput(m), achieved: !m.achieved }))}
-          onToggleWeekly={(w) => run(() => updateWeeklyGoal(w.id, { ...toWeeklyInput(w), achieved: !w.achieved }))}
-          onAddWeekly={(monthlyGoalId, input) => run(() => createWeeklyGoal(monthlyGoalId, input))}
-          dailyGoals={dailyGoals}
-          selectedDate={selectedDate}
-          onSelectDate={(date) => setCalendar(calendarMonth, date)}
-          run={run}
-        />
-      )}
-    </section>
+    </>
   )
 }
 
@@ -276,7 +196,7 @@ function MonthlyGoalItem({ monthly, goal, categories, run }: MonthlyItemProps) {
   const [addingWeekly, setAddingWeekly] = useState(false)
 
   const toggleAchieved = () =>
-    run(() => updateMonthlyGoal(monthly.id, { ...monthlyInput(monthly), achieved: !monthly.achieved }))
+    run(() => updateMonthlyGoal(monthly.id, { ...toMonthlyInput(monthly), achieved: !monthly.achieved }))
 
   const remove = () => {
     if (confirm(`'${monthly.content}' 월간 목표를 삭제할까요?`)) run(() => deleteMonthlyGoal(monthly.id))
@@ -341,15 +261,6 @@ function MonthlyGoalItem({ monthly, goal, categories, run }: MonthlyItemProps) {
     </div>
   )
 }
-
-const monthlyInput = (m: MonthlyGoal): MonthlyGoalInput => ({
-  month: m.month,
-  content: m.content,
-  targetValue: m.targetValue,
-  currentValue: m.currentValue,
-  unit: m.unit,
-  achieved: m.achieved,
-})
 
 type MonthlyFormProps = {
   goal: Goal
@@ -456,7 +367,10 @@ function WeeklyGoalItem({ weekly, month, categories, run }: WeeklyItemProps) {
     <div className="tree-row">
       <input type="checkbox" checked={weekly.achieved} onChange={toggleAchieved} aria-label="달성" />
       <span className="tree-label">{weekLabel(weekly.weekStart)}</span>
-      <span className={weekly.achieved ? 'tree-content done' : 'tree-content'}>{weekly.content}</span>
+      <span className={weekly.achieved ? 'tree-content done' : 'tree-content'}>
+        {weekly.content}
+        {weekly.carriedOver && <span className="carry"> → 다음 주로 이어감</span>}
+      </span>
       {weekly.category ? (
         <CategoryBadge name={weekly.category.name} color={weekly.category.color} inactive={!weekly.category.active} />
       ) : (

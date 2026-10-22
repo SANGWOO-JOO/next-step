@@ -29,6 +29,7 @@ import DailyLogCard from '../components/DailyLogCard'
 import WeeklyPlanItem from '../components/WeeklyPlanItem'
 import ScheduleView from '../components/ScheduleView'
 import { dayLabel, mondayOf, todaySeoul, weekDates } from '../utils/date'
+import { plannedKey } from './plan/planData'
 
 export default function TodayPage() {
   const today = todaySeoul()
@@ -44,7 +45,7 @@ export default function TodayPage() {
       return 'day'
     }
   })
-  const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[]>([])
+  const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[] | null>(null)
   const [unfinished, setUnfinished] = useState<DailyGoal[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [blocks, setBlocks] = useState<TimeBlock[]>([])
@@ -159,8 +160,10 @@ export default function TodayPage() {
         {!current && <Link to="/focus">분류만으로 집중하기</Link>}
       </div>
 
+      {weeklyGoals && <WeekPlanBanner today={today} monday={thisMonday} hasWeeklyGoals={weeklyGoals.length > 0} />}
+
       {unfinished.length > 0 && (
-        <UnfinishedCard goals={unfinished} today={today} weeklyGoals={weeklyGoals} run={run} />
+        <UnfinishedCard goals={unfinished} today={today} weeklyGoals={weeklyGoals ?? []} run={run} />
       )}
 
       {plans.length > 0 && (
@@ -186,15 +189,15 @@ export default function TodayPage() {
             date={today}
             title="오늘 할 일"
             goals={goals}
-            weeklyGoals={weeklyGoals}
+            weeklyGoals={weeklyGoals ?? []}
             categories={categories}
             run={run}
             timeBlocks={blocks.filter((b) => b.date === today)}
             onStartFocus={current ? undefined : startFocusFor}
           />
-          {weeklyGoals.length === 0 && (
+          {weeklyGoals?.length === 0 && (
             <p className="small">
-              <Link to="/goals?view=calendar">최종 목표 캘린더</Link>에서 이번 주 주간 목표를 먼저 만들어 주세요.
+              <Link to="/plan?level=week">계획</Link>에서 이번 주 주간 목표를 먼저 만들어 주세요.
             </p>
           )}
         </div>
@@ -325,6 +328,43 @@ function ServerStatus() {
           <span className={health?.database === 'UP' ? 'status up' : 'status down'}>{health?.database ?? '…'}</span>
         </>
       )}
+    </p>
+  )
+}
+
+/** 월요일이거나 이번 주 주간 목표가 없으면 '이번 주 계획하기'를 띄운다(docs/design.md 1-4c). 월요일 배너는 이번 주만 닫을 수 있다. */
+function WeekPlanBanner({ today, monday, hasWeeklyGoals }: { today: string; monday: string; hasWeeklyGoals: boolean }) {
+  const read = () => {
+    try {
+      return localStorage.getItem(plannedKey(monday)) === '1'
+    } catch {
+      return false
+    }
+  }
+  const [dismissed, setDismissed] = useState(read)
+  const show = !hasWeeklyGoals || (today === monday && !dismissed)
+  if (!show) return null
+
+  const dismiss = () => {
+    try {
+      localStorage.setItem(plannedKey(monday), '1')
+    } catch {
+      // 저장 못 해도 지금은 닫는다
+    }
+    setDismissed(true)
+  }
+
+  return (
+    <p className="focus-banner plan-banner">
+      <span>{hasWeeklyGoals ? '새로운 한 주예요. 지난주를 돌아보고 이번 주를 계획해요.' : '이번 주 주간 목표가 아직 없어요.'}</span>
+      <span className="row-actions">
+        <Link to={`/plan?level=week&date=${monday}`}>이번 주 계획하기 ▶</Link>
+        {hasWeeklyGoals && (
+          <button className="icon" onClick={dismiss} aria-label="이번 주는 닫기">
+            ×
+          </button>
+        )}
+      </span>
     </p>
   )
 }

@@ -19,6 +19,8 @@ export type WeeklyGoal = {
   content: string
   category: CategoryRef | null
   achieved: boolean
+  /** 다음 주로 이어갔는지 */
+  carriedOver: boolean
 }
 
 export type MonthlyGoal = {
@@ -96,3 +98,16 @@ export const updateWeeklyGoal = (id: number, input: WeeklyGoalInput) =>
 export const deleteWeeklyGoal = (id: number) => api.delete<void>(`/api/weekly-goals/${id}`)
 
 export const getMonthlyGoalsOfMonth = (month: string) => api.get<MonthlyGoal[]>(`/api/monthly-goals?month=${month}`)
+
+export const toMonthlyInput = (m: MonthlyGoal): MonthlyGoalInput => ({
+  month: m.month,
+  content: m.content,
+  targetValue: m.targetValue,
+  currentValue: m.currentValue,
+  unit: m.unit,
+  achieved: m.achieved,
+})
+
+/** 못 끝낸 주간 목표를 다음 주로 이어간다. 다음 주가 다른 달이면 그 달의 월간 목표가 필요하다 */
+export const carryOverWeeklyGoal = (id: number, monthlyGoalId: number | null = null) =>
+  api.post<WeeklyGoal>(`/api/weekly-goals/${id}/carry-over`, { monthlyGoalId })

@@ -53,3 +53,15 @@ export const saveMonthlyReview = (month: string, input: MonthlyReviewInput) =>
 
 /** 순 공부 시간(초) = 집중 + 수동 기록 */
 export const studySeconds = (s: { focusSeconds: number; manualMinutes: number }) => s.focusSeconds + s.manualMinutes * 60
+
+export type MonthlyReviewBrief = {
+  month: string
+  review: string | null
+  nextDirection: string | null
+  aiSummary: string | null
+  updatedAt: string
+}
+
+/** 저장된 월간 회고 목록 */
+export const getMonthlyReviews = (from: string, to: string) =>
+  api.get<MonthlyReviewBrief[]>(`/api/monthly-reviews?from=${from}&to=${to}`)

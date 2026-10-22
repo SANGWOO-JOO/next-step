@@ -1,13 +1,11 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
 import TodayPage from './pages/TodayPage'
-import GoalsPage from './pages/GoalsPage'
+import PlanPage from './pages/plan/PlanPage'
 import ChecklistPage from './pages/ChecklistPage'
 import DashboardPage from './pages/DashboardPage'
-import MonthlyPage from './pages/MonthlyPage'
 import FocusPage from './pages/FocusPage'
 import SettingsPage from './pages/SettingsPage'
-import WeeklyPage from './pages/WeeklyPage'
 
 export default function App() {
   return (
@@ -16,9 +14,11 @@ export default function App() {
         <Route element={<Layout />}>
           <Route index element={<TodayPage />} />
           <Route path="focus" element={<FocusPage />} />
-          <Route path="weekly" element={<WeeklyPage />} />
-          <Route path="monthly" element={<MonthlyPage />} />
-          <Route path="goals" element={<GoalsPage />} />
+          <Route path="plan" element={<PlanPage />} />
+          {/* 1-4c 전 주소. 계획 화면으로 옮겨 북마크가 깨지지 않게 한다 */}
+          <Route path="weekly" element={<Navigate to="/plan?level=week" replace />} />
+          <Route path="monthly" element={<Navigate to="/plan?level=month" replace />} />
+          <Route path="goals" element={<Navigate to="/plan?level=goal" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="checklist" element={<ChecklistPage />} />
           <Route path="settings" element={<SettingsPage />} />

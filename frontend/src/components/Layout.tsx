@@ -3,10 +3,8 @@ import { NavLink, Outlet } from 'react-router-dom'
 const MENUS = [
   { to: '/', label: '오늘', end: true },
   { to: '/focus', label: '집중' },
-  { to: '/weekly', label: '주간' },
-  { to: '/monthly', label: '월간' },
-  { to: '/goals', label: '최종 목표' },
-  { to: '/dashboard', label: '시간 대시보드' },
+  { to: '/plan', label: '계획' },
+  { to: '/dashboard', label: '대시보드' },
   { to: '/checklist', label: '체크리스트' },
   { to: '/settings', label: '설정' },
 ]

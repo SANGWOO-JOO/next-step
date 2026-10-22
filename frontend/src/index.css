@@ -461,3 +461,68 @@ button.start-focus { padding: 0.05rem 0.45rem; font-size: 0.75rem; }
 .schedule.week .schedule-block { font-size: 0.72rem; right: 7px; }
 .schedule.week .schedule-date { font-size: 0.85rem; }
 .schedule-block.free { border-left-style: dashed; background: color-mix(in srgb, var(--border) 55%, var(--surface)) !important; }
+
+/* 계획 화면 (1-4c) */
+.health { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+.health-dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; background: var(--muted); }
+.health-on .health-dot { background: var(--up); }
+.health-risk .health-dot { background: #f59e0b; }
+.health-risk { color: #b45309; }
+.health-done .health-dot { background: var(--accent); }
+.health-idle .health-dot { background: var(--border); }
+button.goal-add { margin-top: 0.75rem; }
+.plan-header { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
+.plan-path { flex: 1 1 18rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; color: var(--muted); }
+.plan-path button.ghost { border: none; padding: 0.2rem 0.35rem; color: var(--accent); }
+.plan-path strong { color: var(--text); }
+.plan-layout { display: grid; grid-template-columns: minmax(0, 1fr) 21rem; gap: 1rem; align-items: start; }
+.plan-main, .plan-side { display: grid; gap: 0; min-width: 0; align-content: start; }
+@media (max-width: 1000px) {
+  .plan-layout { grid-template-columns: 1fr; }
+}
+.plan-subtitle { margin-top: 1.25rem; }
+.pinned { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+.pinned-text { margin: 0.25rem 0 0; white-space: pre-wrap; }
+.week-goals { display: grid; gap: 0.4rem; margin-top: 0.5rem; }
+.monthly-cards { list-style: none; margin: 0.5rem 0 0; padding: 0; display: grid; gap: 0.6rem; }
+.monthly-card { display: grid; gap: 0.3rem; padding: 0.5rem 0.6rem; border: 1px solid var(--border); border-radius: 8px; }
+.monthly-card-head { margin: 0; }
+.monthly-card-metrics { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; padding-left: 1.6rem; }
+.calendar-embedded { margin-top: 0.5rem; }
+.roadmap { display: grid; gap: 0.4rem; margin-top: 0.75rem; overflow-x: auto; }
+.roadmap-month {
+  display: grid;
+  align-content: start;
+  gap: 0.3rem;
+  min-height: 6rem;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  white-space: normal;
+}
+.roadmap-month:hover { border-color: var(--accent); }
+.roadmap-month.current { border-color: var(--down); background: color-mix(in srgb, var(--down) 5%, transparent); }
+.roadmap-label { font-weight: 600; display: flex; justify-content: space-between; }
+.roadmap-now { font-size: 0.7rem; color: var(--down); }
+.roadmap-item { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; font-size: 0.85rem; }
+.review-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.review-list p { margin: 0.15rem 0 0; white-space: pre-wrap; }
+.wizard-backdrop { position: fixed; inset: 0; z-index: 20; display: grid; place-items: start center; padding: 4vh 1rem; overflow-y: auto; background: rgb(0 0 0 / 0.45); }
+.wizard { width: min(64rem, 100%); display: grid; gap: 0.75rem; }
+.wizard-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.wizard-steps button { border-radius: 999px; }
+.wizard-steps li.active button { color: var(--accent); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.wizard-steps li.passed button { color: var(--text); }
+.wizard-body { display: grid; gap: 0.6rem; min-height: 12rem; }
+.wizard-nav { display: flex; justify-content: space-between; }
+.month-context { margin: 0; padding-left: 1.1rem; }
+.drawer-backdrop { place-items: stretch start; padding: 0; }
+.plan-drawer { margin: 0; width: min(24rem, 90vw); height: 100%; overflow-y: auto; border-radius: 0; display: grid; align-content: start; gap: 0.25rem; }
+.drawer-node { display: block; width: 100%; text-align: left; border: none; white-space: normal; color: var(--text); }
+.drawer-month { padding-left: 0.75rem; display: grid; }
+.drawer-week { padding-left: 1.5rem; font-size: 0.85rem; }
+.plan-banner { background: color-mix(in srgb, #f59e0b 14%, var(--surface)); border-color: color-mix(in srgb, #f59e0b 45%, transparent); }
+.plan-main > *, .plan-side > * { min-width: 0; }
