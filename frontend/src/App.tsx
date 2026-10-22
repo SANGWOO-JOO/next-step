@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
 import TodayPage from './pages/TodayPage'
 import GoalsPage from './pages/GoalsPage'
+import DashboardPage from './pages/DashboardPage'
 import MonthlyPage from './pages/MonthlyPage'
 import FocusPage from './pages/FocusPage'
 import PlaceholderPage from './pages/PlaceholderPage'
@@ -18,7 +19,7 @@ export default function App() {
           <Route path="weekly" element={<WeeklyPage />} />
           <Route path="monthly" element={<MonthlyPage />} />
           <Route path="goals" element={<GoalsPage />} />
-          <Route path="dashboard" element={<PlaceholderPage title="시간 대시보드" stage="1-4단계" />} />
+          <Route path="dashboard" element={<DashboardPage />} />
           <Route path="checklist" element={<PlaceholderPage title="체크리스트" stage="1-4단계" />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
