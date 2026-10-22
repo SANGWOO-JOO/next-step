@@ -7,6 +7,7 @@ import com.jobscheduler.daily.DailyGoalRepository
 import com.jobscheduler.goal.dto.WeeklyGoalCreateRequest
 import com.jobscheduler.goal.dto.WeeklyGoalResponse
 import com.jobscheduler.goal.dto.WeeklyGoalUpdateRequest
+import com.jobscheduler.plan.WeeklyPlanRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -19,6 +20,7 @@ class WeeklyGoalService(
     private val weeklyGoalRepository: WeeklyGoalRepository,
     private val categoryService: CategoryService,
     private val dailyGoalRepository: DailyGoalRepository,
+    private val weeklyPlanRepository: WeeklyPlanRepository,
 ) {
 
     @Transactional(readOnly = true)
@@ -55,6 +57,9 @@ class WeeklyGoalService(
         if (req.weekStart != weeklyGoal.weekStart && dailyGoalRepository.existsByWeeklyGoalId(id)) {
             throw BusinessRuleException("하루 목표가 연결된 주간 목표는 주를 바꿀 수 없어요.", "HAS_CHILDREN")
         }
+        if (req.weekStart != weeklyGoal.weekStart && weeklyPlanRepository.existsByWeeklyGoalId(id)) {
+            throw BusinessRuleException("요일별 계획이 있는 주간 목표는 주를 바꿀 수 없어요.", "HAS_CHILDREN")
+        }
 
         // 이미 지정된 분류는 나중에 비활성화돼도 유지할 수 있고, 새로 지정할 때만 활성 여부를 본다
         if (req.categoryId != weeklyGoal.category?.id) {
@@ -66,11 +71,13 @@ class WeeklyGoalService(
         return WeeklyGoalResponse.from(weeklyGoal)
     }
 
+    /** 요일별 계획은 함께 지운다. 하루 목표가 있으면 지울 수 없다. */
     fun delete(id: Long) {
         val weeklyGoal = getEntity(id)
         if (dailyGoalRepository.existsByWeeklyGoalId(id)) {
             throw BusinessRuleException("하루 목표가 연결된 주간 목표는 삭제할 수 없어요.", "HAS_CHILDREN")
         }
+        weeklyPlanRepository.deleteAll(weeklyPlanRepository.findAllByWeeklyGoalId(id))
         weeklyGoalRepository.delete(weeklyGoal)
     }
 
