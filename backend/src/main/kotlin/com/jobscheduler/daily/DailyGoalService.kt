@@ -7,6 +7,7 @@ import com.jobscheduler.daily.dto.DailyGoalCreateRequest
 import com.jobscheduler.daily.dto.DailyGoalMoveResponse
 import com.jobscheduler.daily.dto.DailyGoalResponse
 import com.jobscheduler.daily.dto.DailyGoalUpdateRequest
+import com.jobscheduler.focus.FocusSessionRepository
 import com.jobscheduler.goal.WeeklyGoal
 import com.jobscheduler.goal.WeeklyGoalRepository
 import com.jobscheduler.timeblock.TimeBlockRepository
@@ -23,6 +24,7 @@ class DailyGoalService(
     private val weeklyGoalRepository: WeeklyGoalRepository,
     private val categoryService: CategoryService,
     private val timeBlockRepository: TimeBlockRepository,
+    private val focusSessionRepository: FocusSessionRepository,
 ) {
     companion object {
         const val MAX_CORE = 3
@@ -80,10 +82,11 @@ class DailyGoalService(
         return DailyGoalResponse.from(dailyGoal)
     }
 
-    /** 하루 목표와 그 목표의 시간 블록을 함께 지운다. */
+    /** 하루 목표와 그 목표의 시간 블록을 함께 지운다. 집중 세션은 기록으로 남기고 연결만 끊는다. */
     fun delete(id: Long) {
         val dailyGoal = getEntity(id)
         deleteTimeBlocks(id)
+        focusSessionRepository.findAllByDailyGoalId(id).forEach { it.dailyGoal = null }
         dailyGoalRepository.delete(dailyGoal)
     }
 
