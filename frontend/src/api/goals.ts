@@ -94,3 +94,5 @@ export const createWeeklyGoal = (monthlyGoalId: number, input: WeeklyGoalInput) 
 export const updateWeeklyGoal = (id: number, input: WeeklyGoalInput) =>
   api.put<WeeklyGoal>(`/api/weekly-goals/${id}`, input)
 export const deleteWeeklyGoal = (id: number) => api.delete<void>(`/api/weekly-goals/${id}`)
+
+export const getMonthlyGoalsOfMonth = (month: string) => api.get<MonthlyGoal[]>(`/api/monthly-goals?month=${month}`)

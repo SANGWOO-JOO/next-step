@@ -3,8 +3,12 @@ import { Link } from 'react-router-dom'
 import { errorMessage } from '../api/client'
 import { getDailyGoalsBetween, type DailyGoal } from '../api/dailyGoals'
 import { getWeeklyGoalsOfWeek, type WeeklyGoal } from '../api/goals'
+import { formatDuration } from '../api/focus'
+import { CONDITION_LABELS } from '../api/records'
+import { getWeeklyJournal, saveWeeklyJournal, studySeconds, type WeeklyJournal } from '../api/reviews'
 import { createWeeklyPlan, getWeeklyPlans, type WeeklyPlan } from '../api/weeklyPlans'
 import CategoryBadge from '../components/CategoryBadge'
+import ReviewFields from '../components/ReviewFields'
 import WeeklyPlanItem from '../components/WeeklyPlanItem'
 import { dayLabel, mondayOf, shiftDate, todaySeoul, weekDates, weekLabel } from '../utils/date'
 
@@ -15,12 +19,19 @@ export default function WeeklyPage() {
   const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[]>([])
   const [plans, setPlans] = useState<WeeklyPlan[]>([])
   const [dailyGoals, setDailyGoals] = useState<DailyGoal[]>([])
+  const [journal, setJournal] = useState<WeeklyJournal | null>(null)
   const [error, setError] = useState<string | null>(null)
   const dates = weekDates(monday)
 
   const load = useCallback(() => {
-    Promise.all([getWeeklyGoalsOfWeek(monday), getWeeklyPlans(monday), getDailyGoalsBetween(monday, shiftDate(monday, 6))])
-      .then(([w, p, d]) => {
+    Promise.all([
+      getWeeklyGoalsOfWeek(monday),
+      getWeeklyPlans(monday),
+      getDailyGoalsBetween(monday, shiftDate(monday, 6)),
+      getWeeklyJournal(monday),
+    ])
+      .then(([w, p, d, j]) => {
+        setJournal(j)
         setWeeklyGoals(w)
         setPlans(p)
         setDailyGoals(d)
@@ -107,6 +118,30 @@ export default function WeeklyPage() {
           />
         ))}
       </div>
+
+      {journal && (
+        <div className="today-grid">
+          <div className="card">
+            <h2>주간 일지</h2>
+            <ReviewFields
+              fields={[
+                { key: 'good', label: '잘한 점', placeholder: '이번 주에 잘된 것' },
+                { key: 'bad', label: '아쉬운 점', placeholder: '막혔던 것, 딴짓한 때' },
+                { key: 'nextAction', label: '다음 주 반영', placeholder: '다음 주에 바꿀 한 가지' },
+              ]}
+              values={{ good: journal.good, bad: journal.bad, nextAction: journal.nextAction }}
+              version={`${monday}|${journal.updatedAt}`}
+              aiSummary={journal.aiSummary}
+              onSave={(v) =>
+                run(() =>
+                  saveWeeklyJournal(monday, { good: v.good, bad: v.bad, nextAction: v.nextAction }),
+                )
+              }
+            />
+          </div>
+          <WeekSummary journal={journal} />
+        </div>
+      )}
     </section>
   )
 }
@@ -188,6 +223,46 @@ function DayColumn({ date, today, plans, dailyGoals, weeklyGoals, weekDates, run
           + 계획
         </button>
       )}
+    </div>
+  )
+}
+
+/** 이번 주 요일별 공부 시간, 목표 완료, 컨디션 */
+function WeekSummary({ journal }: { journal: WeeklyJournal }) {
+  const t = journal.total
+  const max = Math.max(1, ...journal.days.map((d) => studySeconds(d.summary)))
+  return (
+    <div className="card">
+      <h3 className="timeline-title">이번 주 요약</h3>
+      <dl className="result-stats">
+        <dt>공부 합계</dt>
+        <dd>{formatDuration(studySeconds(t))}</dd>
+        <dt>딴짓</dt>
+        <dd>{formatDuration(t.distractionSeconds)}</dd>
+        <dt>하루 목표</dt>
+        <dd>
+          {t.goalsDone}/{t.goalsTotal} 완료
+        </dd>
+        <dt>주간 목표</dt>
+        <dd>
+          {t.weeklyGoalsAchieved}/{t.weeklyGoalsTotal} 달성
+        </dd>
+      </dl>
+      <ul className="week-bars">
+        {journal.days.map((d) => {
+          const seconds = studySeconds(d.summary)
+          return (
+            <li key={d.date}>
+              <span className="muted small">{dayLabel(d.date).slice(-3)}</span>
+              <span className="week-bar-track">
+                <span className="week-bar-fill" style={{ width: `${(seconds / max) * 100}%` }} />
+              </span>
+              <span className="small">{seconds > 0 ? formatDuration(seconds) : '-'}</span>
+              <span title="컨디션">{d.condition ? CONDITION_LABELS[d.condition] : ''}</span>
+            </li>
+          )
+        })}
+      </ul>
     </div>
   )
 }
