@@ -228,7 +228,7 @@ export default function MonthLevel({ month, goals, run: parentRun, onOpenWeek, o
                       <span className="week-bar-track">
                         <span className="week-bar-fill" style={{ width: `${(studySeconds(w) / max) * 100}%` }} />
                       </span>
-                      <span className="small">{studySeconds(w) > 0 ? formatDuration(studySeconds(w)) : '-'}</span>
+                      <span className="small">{formatDuration(studySeconds(w))}</span>
                       <span title="일지">{w.journalWritten ? '✓' : ''}</span>
                     </li>
                   )

@@ -290,7 +290,7 @@ export function WeekSummary({ journal }: { journal: WeeklyJournal }) {
               <span className="week-bar-track">
                 <span className="week-bar-fill" style={{ width: `${(seconds / max) * 100}%` }} />
               </span>
-              <span className="small">{seconds > 0 ? formatDuration(seconds) : '-'}</span>
+              <span className="small">{formatDuration(seconds)}</span>
               <span title="컨디션">{d.condition ? CONDITION_LABELS[d.condition] : ''}</span>
             </li>
           )

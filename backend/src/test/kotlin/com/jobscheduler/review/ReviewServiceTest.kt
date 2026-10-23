@@ -1,5 +1,8 @@
 package com.jobscheduler.review
 
+import com.jobscheduler.actual.ActualKind
+import com.jobscheduler.actual.ActualLogService
+import com.jobscheduler.actual.dto.ActualLogRequest
 import com.jobscheduler.category.CategoryService
 import com.jobscheduler.common.BusinessRuleException
 import com.jobscheduler.focus.MutableClock
@@ -26,6 +29,8 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 import java.time.LocalDate
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.time.YearMonth
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -45,6 +50,7 @@ class ReviewServiceTest(
     @Autowired private val monthlyGoalService: MonthlyGoalService,
     @Autowired private val weeklyGoalService: WeeklyGoalService,
     @Autowired private val clock: MutableClock,
+    @Autowired private val actualLogService: ActualLogService,
 ) {
     private val monday = LocalDate.of(2026, 10, 19)
 
@@ -121,5 +127,19 @@ class ReviewServiceTest(
         reviewService.saveJournal(monday.minusWeeks(1), WeeklyJournalRequest(good = "첫째"))
         val list = reviewService.listJournals(monday.minusWeeks(3), monday)
         assertEquals(listOf("첫째", "둘째"), list.map { it.good })
+    }
+
+    @Test
+    fun `주 합계의 공부 시간은 실제 기록과 수동 기록을 더한다`() {
+        clock.instant = Instant.parse("2026-10-22T00:00:00Z")
+        val categoryId = categoryService.list(includeInactive = false).first().id
+        val day = monday.plusDays(1)
+        fun at(h: Int) = OffsetDateTime.of(2026, 10, 20, h, 0, 0, 0, ZoneOffset.ofHours(9))
+        actualLogService.create(ActualLogRequest(day, at(9), at(10), ActualKind.STUDY, categoryId = categoryId))
+        manualLogService.create(ManualStudyLogRequest(day, categoryId, 30))
+
+        val total = reviewService.getJournal(monday).total
+        assertEquals((60 + 30) * 60L, total.studySeconds)
+        assertEquals((60 + 30) * 60L, reviewService.getReview(YearMonth.of(2026, 10)).weeks.first { it.weekStart == monday }.studySeconds)
     }
 }

@@ -92,6 +92,7 @@ class ReviewService(
         val weeklyGoals = weeklyGoalRepository.findAllByWeekStartOrderByIdAsc(weekStart)
         return WeekStats(
             weekStart = weekStart,
+            studySeconds = days.sumOf { it.summary.studySeconds },
             focusSeconds = days.sumOf { it.summary.focusSeconds },
             manualMinutes = days.sumOf { it.summary.manualMinutes },
             distractionSeconds = days.sumOf { it.summary.distractionSeconds },

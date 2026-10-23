@@ -28,6 +28,8 @@ data class DayStats(val date: LocalDate, val condition: Int?, val summary: Daily
 /** 한 주의 합계 */
 data class WeekStats(
     val weekStart: LocalDate,
+    /** 하루 요약의 공부 시간 합(실제 기록 기준, 없는 날은 지난 집중 세션 + 수동 기록) */
+    val studySeconds: Long,
     val focusSeconds: Long,
     val manualMinutes: Int,
     val distractionSeconds: Long,

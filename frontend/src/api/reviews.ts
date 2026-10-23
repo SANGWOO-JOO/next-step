@@ -5,6 +5,7 @@ export type DayStats = { date: string; condition: number | null; summary: DailyS
 
 export type WeekStats = {
   weekStart: string
+  studySeconds: number
   focusSeconds: number
   manualMinutes: number
   distractionSeconds: number
@@ -52,7 +53,8 @@ export const saveMonthlyReview = (month: string, input: MonthlyReviewInput) =>
   api.put<MonthlyReview>(`/api/monthly-reviews/${month}`, input)
 
 /** 순 공부 시간(초) = 집중 + 수동 기록 */
-export const studySeconds = (s: { focusSeconds: number; manualMinutes: number }) => s.focusSeconds + s.manualMinutes * 60
+/** 공부 시간: 실제 기록 기준(없는 날은 지난 집중 세션) + 수동 기록. 서버가 계산한 값 */
+export const studySeconds = (s: { studySeconds: number }) => s.studySeconds
 
 export type MonthlyReviewBrief = {
   month: string

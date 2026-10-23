@@ -115,7 +115,8 @@ export function formatClock(seconds: number) {
 /** 초 → '1시간 5분' / '12분' / '40초' */
 export function formatDuration(seconds: number) {
   const s = Math.max(0, Math.floor(seconds))
-  if (s < 60) return `${s}초`
+  // 1분 미만은 의미가 없어 "–"로 보여준다(1-4f, "딴짓 1초" 같은 표시 없앰)
+  if (s < 60) return '–'
   const h = Math.floor(s / 3600)
   const m = Math.floor((s % 3600) / 60)
   return h > 0 ? `${h}시간${m > 0 ? ` ${m}분` : ''}` : `${m}분`
