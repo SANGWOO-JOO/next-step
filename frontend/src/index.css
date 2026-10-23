@@ -858,3 +858,23 @@ body.resizing { cursor: col-resize; user-select: none; }
 @media (max-width: 1199px) {
   .log-summary { max-width: none; }
 }
+/* 목표 줄 칩 = 할 일 목록 (시간표 중심) */
+.schedule-goal { display: flex; align-items: center; gap: 0.3rem; padding: 0.1rem 0.15rem 0.1rem 0.35rem; }
+.schedule-goal input[type='checkbox'] { margin: 0; flex: none; }
+.schedule-goal-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.schedule-goal.done .schedule-goal-text { text-decoration: line-through; }
+.schedule-goal.done { text-decoration: none; }
+.chip-play { flex: none; padding: 0 0.3rem; font-size: 0.65rem; line-height: 1.3; }
+.schedule-goal .more-menu { margin-left: 0; }
+.schedule-goal:hover .more-trigger, .schedule-goal .more-menu.open .more-trigger { opacity: 1; }
+.schedule-goal .more-trigger { padding: 0 0.3rem; }
+.schedule-allday { overflow: visible; }
+/* 시간표 머리 도구 줄(시간표만 볼 때) */
+.schedule-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin: 0.25rem 0; }
+.toolbar-add { flex: 1 1 24rem; max-width: 40rem; }
+.toolbar-add .quick-add { margin-top: 0; }
+.toolbar-pull { position: relative; }
+.toolbar-pull-panel { position: absolute; top: calc(100% + 4px); left: 0; z-index: 12; width: min(28rem, 80vw); margin: 0; box-shadow: 0 8px 28px rgb(0 0 0 / 0.3); }
+.toolbar-pull-panel .pull-section { margin-top: 0; }
+.toolbar-workload strong { color: var(--text); }
+.toolbar-workload.over { color: #b45309; }

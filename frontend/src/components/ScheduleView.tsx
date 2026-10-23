@@ -1,8 +1,16 @@
 import { useEffect, useRef, useState, type DragEvent, type PointerEvent } from 'react'
-import type { DailyGoal } from '../api/dailyGoals'
+import {
+  changeDailyGoalType,
+  deleteDailyGoal,
+  moveDailyGoal,
+  toDailyGoalUpdateInput,
+  updateDailyGoal,
+  type DailyGoal,
+} from '../api/dailyGoals'
 import { formatDuration, type FocusSession } from '../api/focus'
 import { createTimeBlock, deleteTimeBlock, toTimeBlockInput, updateTimeBlock, type TimeBlock } from '../api/timeBlocks'
-import { dayLabel, formatMinutes, minutesOfDay, nowMinutesSeoul, seoulIso, todaySeoul } from '../utils/date'
+import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, seoulIso, shiftDate, todaySeoul } from '../utils/date'
+import MoreMenu from './MoreMenu'
 import TimeBlockForm from './TimeBlockForm'
 
 const HOUR_PX = 48
@@ -184,17 +192,13 @@ export default function ScheduleView({ dates, blocks, goals, sessions, run, onSt
         {dates.map((d) => (
           <div key={d} className="schedule-allday">
             {goalsOf(d).map((g) => (
-              <span
+              <GoalChip
                 key={g.id}
-                className={g.status === 'DONE' ? 'schedule-goal done' : 'schedule-goal'}
-                draggable={g.status === 'TODO'}
-                onDragStart={(e) => e.dataTransfer.setData(GOAL_DRAG_TYPE, String(g.id))}
-                style={{ borderLeftColor: g.category?.color ?? 'var(--muted)' }}
-                title={g.status === 'TODO' ? '시간표로 끌어다 놓으면 1시간 블록이 생겨요' : '완료한 목표'}
-              >
-                {g.type === 'CORE' ? '★ ' : ''}
-                {g.content}
-              </span>
+                goal={g}
+                run={run}
+                onStartFocus={d === today ? onStartFocus : undefined}
+                coreFull={goalsOf(d).filter((x) => x.type === 'CORE').length >= 3}
+              />
             ))}
           </div>
         ))}
@@ -361,11 +365,83 @@ function SchedulePopover({ popover, goals, run, onClose, onStartFocus }: Popover
             : undefined
         }
       />
-      {goal && goal.status === 'TODO' && onStartFocus && (
-        <button className="start-focus" onClick={() => onStartFocus(goal)}>
-          ▶ 지금 집중 시작
-        </button>
+      {goal && (
+        <span className="row-actions">
+          {goal.status === 'TODO' && onStartFocus && (
+            <button className="start-focus" onClick={() => onStartFocus(goal)}>
+              ▶ 지금 집중 시작
+            </button>
+          )}
+          <button
+            className="ghost"
+            onClick={() =>
+              run(() =>
+                updateDailyGoal(goal.id, { ...toDailyGoalUpdateInput(goal), status: goal.status === 'DONE' ? 'TODO' : 'DONE' }),
+              ).then((ok) => ok && onClose())
+            }
+          >
+            {goal.status === 'DONE' ? '완료 취소' : '✓ 목표 완료'}
+          </button>
+        </span>
       )}
     </div>
+  )
+}
+
+type ChipProps = {
+  goal: DailyGoal
+  run: Run
+  onStartFocus?: (goal: DailyGoal) => void
+  /** 그날 핵심이 이미 3개면 '핵심으로'를 막는다 */
+  coreFull: boolean
+}
+
+/**
+ * 시간표 위쪽 "목표" 줄의 칩(docs/design.md 6장 시간표 중심). 할 일 목록 역할:
+ * 완료 체크, ▶ 집중(오늘만), ⋯ 메뉴, 끌어서 시간표에 놓으면 1시간 블록.
+ */
+function GoalChip({ goal, run, onStartFocus, coreFull }: ChipProps) {
+  const done = goal.status === 'DONE'
+  const tomorrow = shiftDate(goal.date, 1)
+  const sameWeek = mondayOf(tomorrow) === mondayOf(goal.date)
+
+  return (
+    <span
+      className={done ? 'schedule-goal done' : 'schedule-goal'}
+      draggable={!done}
+      onDragStart={(e) => e.dataTransfer.setData(GOAL_DRAG_TYPE, String(goal.id))}
+      style={{ borderLeftColor: goal.category?.color ?? 'var(--muted)' }}
+      title={done ? '완료한 목표' : `${goal.firstAction ? `첫 행동: ${goal.firstAction} · ` : ''}시간표로 끌어다 놓으면 1시간 블록이 생겨요`}
+    >
+      <input
+        type="checkbox"
+        checked={done}
+        onChange={() => run(() => updateDailyGoal(goal.id, { ...toDailyGoalUpdateInput(goal), status: done ? 'TODO' : 'DONE' }))}
+        aria-label="완료"
+      />
+      {onStartFocus && !done && (
+        <button className="chip-play" onClick={() => onStartFocus(goal)} aria-label="집중 시작" title="집중 시작">
+          ▶
+        </button>
+      )}
+      <span className="schedule-goal-text">
+        {goal.type === 'CORE' ? '★ ' : ''}
+        {goal.content}
+      </span>
+      <MoreMenu
+        label="목표 동작"
+        items={[
+          { label: '내일로', onClick: () => run(() => moveDailyGoal(goal.id, tomorrow)), show: !done && sameWeek },
+          goal.type === 'EXTRA'
+            ? { label: '핵심으로', onClick: () => run(() => changeDailyGoalType(goal.id, 'CORE')), disabled: coreFull }
+            : { label: '추가로', onClick: () => run(() => changeDailyGoalType(goal.id, 'EXTRA')) },
+          {
+            label: '삭제',
+            danger: true,
+            onClick: () => confirm(`'${goal.content}' 하루 목표를 삭제할까요?`) && run(() => deleteDailyGoal(goal.id)),
+          },
+        ]}
+      />
+    </span>
   )
 }

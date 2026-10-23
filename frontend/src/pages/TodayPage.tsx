@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type CSSProperties, type PointerEvent
 import { Link, useNavigate } from 'react-router-dom'
 import { getCategories, type Category } from '../api/categories'
 import { errorMessage } from '../api/client'
-import { getDailyGoalsBetween, getUnfinishedDailyGoals, type DailyGoal } from '../api/dailyGoals'
+import { createDailyGoal, getDailyGoalsBetween, getUnfinishedDailyGoals, type DailyGoal } from '../api/dailyGoals'
 import { getWeeklyGoalsOfWeek, type WeeklyGoal } from '../api/goals'
 import {
   DEFAULT_BREAK_MINUTES,
@@ -19,7 +19,7 @@ import { CONDITION_LABELS, getDailyLog, getManualLogs, type DailyLog, type Manua
 import { getWeeklyJournals } from '../api/reviews'
 import { getWeeklyPlansOfDate, type WeeklyPlan } from '../api/weeklyPlans'
 import { getTimeBlocksBetween, type TimeBlock } from '../api/timeBlocks'
-import DailyGoalPanel from '../components/DailyGoalPanel'
+import DailyGoalPanel, { NewDailyGoalForm } from '../components/DailyGoalPanel'
 import PullSection from '../components/today/PullSection'
 import ShutdownDialog from '../components/today/ShutdownDialog'
 import { COLLAPSE_EVENT } from '../components/Layout'
@@ -54,7 +54,15 @@ export default function TodayPage() {
   /** 고른 날: 왼쪽 목록과 [일] 보기가 보여주는 날(이번 주 안). [주] 보기의 날짜 머리로 바꾼다 */
   const [selected, setSelected] = useState(today)
   const [leftWidth, setLeftWidth] = useState(() => readNumber(LEFT_WIDTH_KEY, DEFAULT_LEFT_WIDTH))
-  const [wideSchedule, setWideSchedule] = useState(() => readNumber(WIDE_KEY, 0) === 1)
+  // 기본은 시간표만(docs/design.md 6장 시간표 중심). 목록을 연 적이 있으면 그 상태를 기억한다
+  const [wideSchedule, setWideSchedule] = useState(() => {
+    try {
+      return localStorage.getItem(WIDE_KEY) !== '0'
+    } catch {
+      return true
+    }
+  })
+  const [pullOpen, setPullOpen] = useState(false)
 
   const saveLeftWidth = (w: number) => {
     const clamped = Math.round(Math.min(MAX_LEFT_WIDTH, Math.max(MIN_LEFT_WIDTH, w)))
@@ -144,6 +152,7 @@ export default function TodayPage() {
   }
 
   const goals = weekGoals.filter((g) => g.date === today)
+  const pullCount = unfinished.length + plans.filter((p) => !goals.some((g) => g.content === p.content)).length
   const sessions = weekSessions.filter((s) => s.date === today)
   const changeView = (v: 'day' | 'week') => {
     setView(v)
@@ -285,9 +294,46 @@ export default function TodayPage() {
               ))}
             </span>
           </div>
+          {wideSchedule && (
+            <div className="schedule-toolbar">
+              {(weeklyGoals?.length ?? 0) > 0 ? (
+                <div className="toolbar-add">
+                  <NewDailyGoalForm
+                    key={selected}
+                    date={selected}
+                    weeklyGoals={weeklyGoals ?? []}
+                    categories={categories}
+                    onSubmit={(input) => run(() => createDailyGoal(input))}
+                  />
+                </div>
+              ) : (
+                <Link to="/plan?level=week">이번 주 주간 목표 먼저 만들기</Link>
+              )}
+              {isToday && pullCount > 0 && (
+                <span className="toolbar-pull">
+                  <button className="ghost" onClick={() => setPullOpen(!pullOpen)} aria-expanded={pullOpen}>
+                    가져올 것 {pullCount}
+                  </button>
+                  {pullOpen && (
+                    <div className="card toolbar-pull-panel">
+                      <PullSection
+                        today={today}
+                        unfinished={unfinished}
+                        plans={plans}
+                        goals={goals}
+                        weeklyGoals={weeklyGoals ?? []}
+                        run={run}
+                      />
+                    </div>
+                  )}
+                </span>
+              )}
+              {isToday && <Workload blocks={blocks.filter((b) => b.date === today)} goals={goals} compact />}
+            </div>
+          )}
           <SidebarTip />
           <p className="muted small schedule-help">
-            빈 칸을 끌어 시간을 잡고, 블록을 끌어 옮기거나 아래 끝을 끌어 늘여요. 왼쪽 목표를 끌어다 놓아도 돼요.
+            빈 칸을 끌어 시간을 잡고, 블록을 끌어 옮기거나 아래 끝을 끌어 늘여요. {wideSchedule ? '위쪽 목표 칩을' : '왼쪽 목표를'} 끌어다 놓아도 돼요.
             초록 막대는 실제 집중한 시간이에요.
           </p>
           <ScheduleView
@@ -446,7 +492,7 @@ function AlertSlot({
 const SHUTDOWN_HOUR = 21
 
 /** 오늘 시간 잡은 양과 남은 시간(지금~자정). 남은 일정이 남은 시간보다 많으면 경고(Sunsama의 과부하 경고 참고) */
-function Workload({ blocks, goals }: { blocks: TimeBlock[]; goals: DailyGoal[] }) {
+function Workload({ blocks, goals, compact = false }: { blocks: TimeBlock[]; goals: DailyGoal[]; compact?: boolean }) {
   const today = todaySeoul()
   const now = nowMinutesSeoul()
   const spans = blocks.map((b) => ({ start: minutesOfDay(b.startAt, today), end: minutesOfDay(b.endAt, today), goalId: b.dailyGoalId }))
@@ -456,6 +502,15 @@ function Workload({ blocks, goals }: { blocks: TimeBlock[]; goals: DailyGoal[] }
   const unscheduled = goals.filter((g) => g.status === 'TODO' && !spans.some((x) => x.goalId === g.id)).length
   const over = ahead > left
   const hm = (m: number) => formatDuration(m * 60)
+
+  if (compact) {
+    return (
+      <span className={over ? 'toolbar-workload over' : 'toolbar-workload muted small'}>
+        시간 잡음 <strong>{hm(planned)}</strong> · 남은 일정 {hm(ahead)} / 자정까지 {hm(left)}
+        {unscheduled > 0 && ` · 안 잡은 할 일 ${unscheduled}개`}
+      </span>
+    )
+  }
 
   return (
     <div className={over ? 'workload over' : 'workload'}>

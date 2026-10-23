@@ -354,7 +354,7 @@ type NewFormProps = {
  * 첫 번째 주간 목표에 연결하고, 분류는 주간 목표에서 물려받고, 핵심 자리가 있으면 핵심으로 넣는다.
  * '자세히'를 누르면 첫 행동·주간 목표·분류·유형을 고를 수 있다.
  */
-function NewDailyGoalForm({ date, weeklyGoals, categories, onSubmit }: NewFormProps) {
+export function NewDailyGoalForm({ date, weeklyGoals, categories, onSubmit }: NewFormProps) {
   const [weeklyGoalId, setWeeklyGoalId] = useState(weeklyGoals[0].id)
   const [content, setContent] = useState('')
   const [firstAction, setFirstAction] = useState('')
