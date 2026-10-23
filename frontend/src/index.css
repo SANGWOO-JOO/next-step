@@ -1194,3 +1194,14 @@ button.color-dot.auto::after { content: 'A'; position: absolute; inset: 0; displ
 .schedule-block.tiny { align-items: center; }
 .schedule-block.tiny .as-planned.compact { align-self: center; }
 .actual-mark-icon { display: inline-block; width: 14px; height: 14px; vertical-align: -2px; margin-right: 1px; }
+/* 일정 도구 줄 아이콘(1-4f ㉛, 시안 2: 얇은 원 아이콘만, 글자는 마우스를 올리면) */
+.quick-add-row { position: relative; }
+img.quick-add-plus { position: absolute; left: 0.55rem; top: 50%; transform: translateY(-50%); pointer-events: none; z-index: 1; }
+.quick-add-row > input.grow { padding-left: 2.1rem !important; }
+button.icon-only { position: relative; display: inline-grid; place-items: center; padding: 0; width: 30px; height: 30px; border: none; border-radius: 999px; background: transparent; }
+button.icon-only:hover:not(:disabled) { filter: none; background: var(--soft-fill); }
+button.icon-only.on { background: var(--soft-fill); }
+button.icon-only img { display: block; }
+.icon-badge { position: absolute; top: -3px; right: -5px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: #FF9F43; color: #1d1d1f; font-size: 10px; font-weight: 800; line-height: 16px; }
+.workload-line { display: inline-flex; align-items: center; gap: 0.3rem; }
+img.inline-icon { display: block; }

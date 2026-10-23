@@ -17,6 +17,8 @@ import { getWeeklyGoalsOfWeek, type WeeklyGoal } from '../api/goals'
 import { createTimeBlock, type TimeBlock } from '../api/timeBlocks'
 import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, shiftDate, todaySeoul } from '../utils/date'
 import FormButtons from './FormButtons'
+import addIcon from '../assets/icons/add.svg'
+import moreIcon from '../assets/icons/more.svg'
 import MoreMenu from './MoreMenu'
 import { GOAL_DRAG_TYPE } from './ScheduleView'
 import TimeBlockForm from './TimeBlockForm'
@@ -424,9 +426,7 @@ export function NewDailyGoalForm({ date, weeklyGoals, categories, onSubmit }: Ne
       onKeyDown={(e) => e.key === 'Escape' && reset()}
     >
       <div className="quick-add-row">
-        <span className="quick-add-plus" aria-hidden="true">
-          +
-        </span>
+        <img className="quick-add-plus" src={addIcon} alt="" aria-hidden="true" width={18} height={18} draggable={false} />
         <input
           className="grow"
           placeholder="하루 목표 추가 후 Enter"
@@ -435,8 +435,15 @@ export function NewDailyGoalForm({ date, weeklyGoals, categories, onSubmit }: Ne
           maxLength={500}
           aria-label="하루 목표 내용"
         />
-        <button type="button" className="ghost quick-add-more" onClick={() => setDetailed(!detailed)} aria-expanded={detailed}>
-          {detailed ? '간단히' : '자세히'}
+        <button
+          type="button"
+          className={detailed ? 'icon-only quick-add-more on' : 'icon-only quick-add-more'}
+          onClick={() => setDetailed(!detailed)}
+          aria-expanded={detailed}
+          aria-label={detailed ? '간단히' : '자세히'}
+          title={detailed ? '간단히' : '자세히 (첫 행동, 주간 목표, 분류, 유형)'}
+        >
+          <img src={moreIcon} alt="" aria-hidden="true" width={26} height={26} draggable={false} />
         </button>
         {(detailed || content) && <button type="submit">추가</button>}
       </div>

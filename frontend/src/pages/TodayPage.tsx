@@ -13,6 +13,8 @@ import PullSection from '../components/today/PullSection'
 import DayWrapUp from '../components/today/DayWrapUp'
 import { COLLAPSE_EVENT } from '../components/Layout'
 import ScheduleView, { type Lanes } from '../components/ScheduleView'
+import clockIcon from '../assets/icons/clock.svg'
+import pullIcon from '../assets/icons/pull.svg'
 import { dayLabel, minutesOfDay, mondayOf, nowMinutesSeoul, shiftDate, todaySeoul, weekDates } from '../utils/date'
 import { plannedKey } from './plan/planData'
 
@@ -315,8 +317,15 @@ export default function TodayPage() {
               </div>
               {isToday && pullCount > 0 && (
                 <span className="toolbar-pull">
-                  <button className="ghost" onClick={() => setPullOpen(!pullOpen)} aria-expanded={pullOpen}>
-                    가져올 것 {pullCount}
+                  <button
+                    className={pullOpen ? 'icon-only pull-toggle on' : 'icon-only pull-toggle'}
+                    onClick={() => setPullOpen(!pullOpen)}
+                    aria-expanded={pullOpen}
+                    aria-label={`가져올 것 ${pullCount}개`}
+                    title={`가져올 것 ${pullCount}개 (지난 미완료)`}
+                  >
+                    <img src={pullIcon} alt="" aria-hidden="true" width={26} height={26} draggable={false} />
+                    <span className="icon-badge">{pullCount}</span>
                   </button>
                   {pullOpen && (
                     <div className="card toolbar-pull-panel">
@@ -448,8 +457,9 @@ function Workload({ blocks, goals, compact = false }: { blocks: TimeBlock[]; goa
           ⚠ 남은 계획 <strong>{hm(ahead)}</strong>이 오늘 남은 시간({hm(left)})보다 많아요. 내일로 넘길 것을 골라요.
         </span>
       ) : (
-        <span>
-          계획 <strong>{hm(planned)}</strong>
+        <span className="workload-line" title="오늘 계획한 시간">
+          {compact ? <img className="inline-icon" src={clockIcon} alt="계획" width={16} height={16} draggable={false} /> : '계획 '}
+          <strong>{hm(planned)}</strong>
           {unscheduled.length > 0 && (
             <span title={unscheduled.map((g) => g.content).join('\n')}> · 시간 안 잡음 {unscheduled.length}</span>
           )}
