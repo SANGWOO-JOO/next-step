@@ -1110,3 +1110,15 @@ input[type='checkbox'] { accent-color: #6d74f7; }
 .brand-logo { display: block; height: 28px; width: auto; }
 /* 메뉴 묶음 제목 대신 묶음 사이 얇은 선(1-4f ⑲) */
 .side-group + .side-group { margin-top: 0.4rem; padding-top: 0.5rem; border-top: 1px solid var(--hairline); }
+/* 기록 [하루](1-4f ㉒): 달력이 메인 + 고른 날 기록 한 장 */
+.log-day-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(18rem, 1fr); gap: 1rem; align-items: start; margin-top: 0.5rem; }
+@media (max-width: 900px) { .log-day-layout { grid-template-columns: 1fr; } }
+.log-detail { margin-top: 0; display: grid; gap: 0.6rem; position: sticky; top: 1rem; }
+.log-detail-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.log-detail-date { margin: 0; font-size: 1.15rem; }
+.log-detail-mood { font-size: 1.6rem; line-height: 1; }
+.log-detail-line { margin: 0; }
+.log-detail-line b { font-weight: 700; }
+.log-detail .log-cta { margin-top: 0.25rem; }
+.log-cal-cell { cursor: pointer; }
+.log-cal-cell.picked { outline: 2px solid #6d74f7; outline-offset: -2px; }
