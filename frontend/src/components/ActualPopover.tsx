@@ -96,7 +96,6 @@ export default function ActualPopover({ date, start, end, log, goals, categories
           <select value={goalId ?? ''} onChange={(e) => setGoalId(Number(e.target.value))} aria-label="하루 목표">
             {goals.map((g) => (
               <option key={g.id} value={g.id}>
-                {g.type === 'CORE' ? '★ ' : ''}
                 {g.content}
               </option>
             ))}

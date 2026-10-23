@@ -64,7 +64,6 @@ export default function TimeBlockForm({
         {allowFree && <option value="">목표 아닌 일정 (밥, 산책 등)</option>}
         {goals.map((g) => (
           <option key={g.id} value={g.id}>
-            {g.type === 'CORE' ? '★ ' : ''}
             {g.content}
           </option>
         ))}
