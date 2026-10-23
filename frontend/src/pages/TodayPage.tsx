@@ -319,8 +319,8 @@ export default function TodayPage() {
                     className={pullOpen ? 'icon-only pull-toggle on' : 'icon-only pull-toggle'}
                     onClick={() => setPullOpen(!pullOpen)}
                     aria-expanded={pullOpen}
-                    aria-label={`가져올 것 ${pullCount}개`}
-                    title={`가져올 것 ${pullCount}개 (지난 미완료)`}
+                    aria-label={`지난 할 일 ${pullCount}개`}
+                    title={`지난 할 일 ${pullCount}개: 눌러서 오늘로 가져오기`}
                   >
                     <img src={pullIcon} alt="" aria-hidden="true" width={26} height={26} draggable={false} />
                     <span className="icon-badge">{pullCount}</span>

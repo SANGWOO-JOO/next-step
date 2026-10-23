@@ -396,24 +396,20 @@ export function NewDailyGoalForm({ date, weeklyGoals, categories, onSubmit }: Ne
   // 주간 목표가 있으면 첫 번째에 연결해 두고, "연결 안 함"도 고를 수 있다(1-4f)
   const [weeklyGoalId, setWeeklyGoalId] = useState<number | null>(weeklyGoals[0]?.id ?? null)
   const [content, setContent] = useState('')
-  const [firstAction, setFirstAction] = useState('')
   const [categoryId, setCategoryId] = useState<number | null>(null)
-  const [type, setType] = useState<DailyGoalType | null>(null)
   const [detailed, setDetailed] = useState(false)
   const inherited = weeklyGoals.find((w) => w.id === weeklyGoalId)?.category
 
   const reset = () => {
     setContent('')
-    setFirstAction('')
     setCategoryId(null)
-    setType(null)
     setDetailed(false)
   }
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
     if (!content.trim()) return
-    onSubmit({ weeklyGoalId, date, content, firstAction: firstAction.trim() || null, categoryId, type }).then(
+    onSubmit({ weeklyGoalId, date, content, firstAction: null, categoryId, type: null }).then(
       (ok) => ok && reset(),
     )
   }
@@ -446,43 +442,27 @@ export function NewDailyGoalForm({ date, weeklyGoals, categories, onSubmit }: Ne
         </button>
         {(detailed || content) && <button type="submit">추가</button>}
       </div>
+      {/* 상세는 주간 목표·분류만(1-4f ㉟). 첫 행동은 수정에서, 핵심은 ☆로 */}
       {detailed && (
-        <div className="stack-form quick-add-detail">
-          <input
-            placeholder="첫 행동 (예: 노션 열고 제목만 쓰기)"
-            value={firstAction}
-            onChange={(e) => setFirstAction(e.target.value)}
-            maxLength={500}
+        <div className="inline-form quick-add-detail">
+          <select
+            value={weeklyGoalId ?? ''}
+            onChange={(e) => setWeeklyGoalId(e.target.value === '' ? null : Number(e.target.value))}
+            aria-label="연결할 주간 목표"
+          >
+            <option value="">주간 목표 없음</option>
+            {weeklyGoals.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.content}
+              </option>
+            ))}
+          </select>
+          <CategorySelect
+            categories={categories}
+            value={categoryId}
+            onChange={setCategoryId}
+            emptyLabel={inherited ? `분류: ${inherited.name}` : '분류 없음'}
           />
-          <div className="inline-form">
-            <select
-              value={weeklyGoalId ?? ''}
-              onChange={(e) => setWeeklyGoalId(e.target.value === '' ? null : Number(e.target.value))}
-              aria-label="연결할 주간 목표"
-            >
-              <option value="">주간 목표 연결 안 함</option>
-              {weeklyGoals.map((w) => (
-                <option key={w.id} value={w.id}>
-                  주간: {w.content}
-                </option>
-              ))}
-            </select>
-            <CategorySelect
-              categories={categories}
-              value={categoryId}
-              onChange={setCategoryId}
-              emptyLabel={inherited ? `주간 목표 분류 (${inherited.name})` : '분류 없음'}
-            />
-            <select
-              value={type ?? ''}
-              onChange={(e) => setType(e.target.value === '' ? null : (e.target.value as DailyGoalType))}
-              aria-label="유형"
-            >
-              <option value="">자동 (핵심 자리가 있으면 핵심)</option>
-              <option value="CORE">핵심</option>
-              <option value="EXTRA">추가</option>
-            </select>
-          </div>
         </div>
       )}
       {!detailed && content && (

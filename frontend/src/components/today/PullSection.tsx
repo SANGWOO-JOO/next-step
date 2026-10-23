@@ -1,4 +1,6 @@
 import { moveDailyGoal, type DailyGoal } from '../../api/dailyGoals'
+import pullIcon from '../../assets/icons/pull.svg'
+import IconButton from '../IconButton'
 
 type Props = {
   today: string
@@ -29,10 +31,12 @@ export default function PullSection({ today, unfinished, run }: Props) {
   return (
     <div className="pull-section">
       <div className="daily-panel-head">
-        <h4 className="pull-title">가져올 것 {unfinished.length}</h4>
+        <h4 className="pull-title">
+          지난 할 일 <span className="muted">{unfinished.length}</span>
+        </h4>
         {unfinished.length > 1 && (
-          <button className="ghost" onClick={moveAll}>
-            미완료 모두 오늘로
+          <button className="link-button small pull-all" onClick={moveAll}>
+            모두 오늘로
           </button>
         )}
       </div>
@@ -44,9 +48,7 @@ export default function PullSection({ today, unfinished, run }: Props) {
               {g.content}
               {g.carryCount > 0 && <span className="carry">↻{g.carryCount}</span>}
             </span>
-            <button className="ghost" onClick={() => run(() => moveToToday(g))}>
-              오늘로
-            </button>
+            <IconButton icon={pullIcon} label="오늘로 가져오기" onClick={() => run(() => moveToToday(g))} />
           </li>
         ))}
       </ul>

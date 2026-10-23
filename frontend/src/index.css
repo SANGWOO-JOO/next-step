@@ -8,7 +8,7 @@
   --accent: #2563eb;
   --up: #16a34a;
   --down: #dc2626;
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif;
+  font-family: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif;
   color: var(--text);
   background: var(--bg);
 }
@@ -1207,3 +1207,19 @@ button.icon-only img { display: block; }
 img.inline-icon { display: block; }
 .workload-line { gap: 0.15rem; } .workload-line strong { font-variant-numeric: tabular-nums; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+/* 글자 크기 단계(1-4f ㉟): 기본 14px, 패널 제목 15px 굵게, 보조 12px */
+
+body { font-size: 14px; line-height: 1.5; letter-spacing: -0.01em; -webkit-font-smoothing: antialiased; }
+.daily-panel h3, .pull-title { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; }
+.daily-content, .plan-content { font-size: 14px; font-weight: 500; }
+.small, .muted.small { font-size: 12px; }
+input, select, textarea, button { font-size: 14px; }
+/* 지난 할 일(1-4f ㉟): 옅은 배경, 줄마다 → 아이콘 */
+.pull-section { border: none; background: var(--soft-fill); border-radius: 14px; padding: 0.7rem 0.8rem; gap: 0.35rem; }
+.pull-section .plan-item { flex-wrap: nowrap; gap: 0.5rem; }
+.pull-section .plan-content { flex: 1; min-width: 0; }
+.pull-section .pull-tag { flex: none; }
+button.pull-all { color: var(--muted); }
+button.pull-all:hover { color: #7c6cf8; }
+.quick-add-detail { margin-top: 0.5rem; gap: 0.4rem; padding-left: 0; margin-right: 2.4rem; }
+.quick-add-detail select { flex: 1 1 8rem; min-width: 0; font-size: 13px; }
