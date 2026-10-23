@@ -1233,3 +1233,7 @@ button.pull-all:hover { color: #7c6cf8; }
 .category-chip:hover { border-color: var(--text-muted, #888); }
 .category-chip.on { border-color: #8B5CF6; background: color-mix(in srgb, #8B5CF6 18%, transparent); color: var(--text); }
 .category-chip .category-dot { width: 8px; height: 8px; }
+/* 분류 미선택 검증(1-4f ㊴): ⋯ 버튼이 없어져 칩 줄은 ↑ 버튼 폭만큼만 비운다 */
+.quick-add-detail.category-chips { margin-right: calc(32px + 0.4rem); }
+.category-chips.need .category-chip { border-color: color-mix(in srgb, var(--danger, #ef4444) 55%, transparent); }
+.quick-add-error { margin: 0.1rem 0 0; color: var(--danger, #ef4444); font-weight: 500; }

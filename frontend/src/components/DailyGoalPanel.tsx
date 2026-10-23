@@ -16,7 +16,6 @@ import { createTimeBlock, type TimeBlock } from '../api/timeBlocks'
 import { dayLabel, formatMinutes, minutesOfDay, nowMinutesSeoul, shiftDate, todaySeoul } from '../utils/date'
 import FormButtons from './FormButtons'
 import addIcon from '../assets/icons/add.svg'
-import moreIcon from '../assets/icons/more.svg'
 import MoreMenu from './MoreMenu'
 import { GOAL_DRAG_TYPE } from './ScheduleView'
 import TimeBlockForm from './TimeBlockForm'
@@ -303,36 +302,40 @@ type NewFormProps = {
 }
 
 /**
- * 한 줄 빠른 추가(Todoist 빠른 추가 참고). 내용만 쓰고 Enter를 누르면
- * 첫 번째 주간 목표에 연결하고, 분류는 주간 목표에서 물려받고, 핵심 자리가 있으면 핵심으로 넣는다.
- * '자세히'를 누르면 첫 행동·주간 목표·분류·유형을 고를 수 있다.
+ * 한 줄 빠른 추가(Todoist 빠른 추가 참고). 내용을 쓰면 분류 색 칩이 나오고,
+ * 분류를 골라야 추가된다(1-4f ㊴). 핵심 자리가 있으면 핵심으로 넣는다.
  */
 export function NewDailyGoalForm({ date, categories, onSubmit }: NewFormProps) {
   // 오늘 할 일은 주간 목표와 잇지 않는다. 연결은 주간 계획 화면에서(1-4f ㊲)
   const [content, setContent] = useState('')
   const [categoryId, setCategoryId] = useState<number | null>(null)
-  const [detailed, setDetailed] = useState(false)
+  const [needCategory, setNeedCategory] = useState(false)
 
   const reset = () => {
     setContent('')
     setCategoryId(null)
-    setDetailed(false)
+    setNeedCategory(false)
   }
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
     if (!content.trim()) return
+    if (categoryId === null) {
+      setNeedCategory(true)
+      return
+    }
     onSubmit({ weeklyGoalId: null, date, content, firstAction: null, categoryId, type: null }).then(
       (ok) => ok && reset(),
     )
   }
 
+  const pick = (id: number) => {
+    setCategoryId(categoryId === id ? null : id)
+    setNeedCategory(false)
+  }
+
   return (
-    <form
-      className={detailed ? 'quick-add detailed' : 'quick-add'}
-      onSubmit={submit}
-      onKeyDown={(e) => e.key === 'Escape' && reset()}
-    >
+    <form className="quick-add" onSubmit={submit} onKeyDown={(e) => e.key === 'Escape' && reset()}>
       <div className="quick-add-row">
         <img className="quick-add-plus" src={addIcon} alt="" aria-hidden="true" width={18} height={18} draggable={false} />
         <input
@@ -343,17 +346,7 @@ export function NewDailyGoalForm({ date, categories, onSubmit }: NewFormProps) {
           maxLength={500}
           aria-label="하루 목표 내용"
         />
-        <button
-          type="button"
-          className={detailed ? 'icon-only quick-add-more on' : 'icon-only quick-add-more'}
-          onClick={() => setDetailed(!detailed)}
-          aria-expanded={detailed}
-          aria-label={detailed ? '간단히' : '자세히'}
-          title={detailed ? '간단히' : '자세히 (분류)'}
-        >
-          <img src={moreIcon} alt="" aria-hidden="true" width={26} height={26} draggable={false} />
-        </button>
-        {(detailed || content) && (
+        {content && (
           <button type="submit" className="quick-add-submit" aria-label="추가" title="추가 (Enter)">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M12 19V5M5.5 11.5 12 5l6.5 6.5" />
@@ -361,22 +354,35 @@ export function NewDailyGoalForm({ date, categories, onSubmit }: NewFormProps) {
           </button>
         )}
       </div>
-      {/* 상세는 분류 색 칩만(1-4f ㉟·㊲·㊳). 다시 누르면 분류 없음. 첫 행동은 수정에서, 핵심은 ☆로 */}
-      {detailed && (
-        <div className="quick-add-detail category-chips" role="group" aria-label="분류">
-          {categories.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              className={categoryId === c.id ? 'category-chip on' : 'category-chip'}
-              aria-pressed={categoryId === c.id}
-              onClick={() => setCategoryId(categoryId === c.id ? null : c.id)}
-            >
-              <span className="category-dot" style={{ background: c.color }} aria-hidden="true" />
-              {c.name}
-            </button>
-          ))}
-        </div>
+      {/* 내용을 쓰면 분류 칩이 나온다. 분류는 꼭 골라야 한다(1-4f ㉟·㊳·㊴) */}
+      {content && (
+        <>
+          <div
+            className={needCategory ? 'quick-add-detail category-chips need' : 'quick-add-detail category-chips'}
+            role="radiogroup"
+            aria-label="분류"
+            aria-invalid={needCategory}
+          >
+            {categories.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                role="radio"
+                className={categoryId === c.id ? 'category-chip on' : 'category-chip'}
+                aria-checked={categoryId === c.id}
+                onClick={() => pick(c.id)}
+              >
+                <span className="category-dot" style={{ background: c.color }} aria-hidden="true" />
+                {c.name}
+              </button>
+            ))}
+          </div>
+          {needCategory && (
+            <p className="quick-add-error small" role="alert">
+              분류를 골라 주세요
+            </p>
+          )}
+        </>
       )}
     </form>
   )
