@@ -18,6 +18,7 @@ import { getHealth } from '../api/health'
 import { CONDITION_LABELS, getDailyLog, getManualLogs, type DailyLog, type ManualStudyLog } from '../api/records'
 import { getWeeklyJournals } from '../api/reviews'
 import { getWeeklyPlansOfDate, type WeeklyPlan } from '../api/weeklyPlans'
+import { getActualLogsBetween, type ActualLog } from '../api/actualLogs'
 import { getTimeBlocksBetween, type TimeBlock } from '../api/timeBlocks'
 import DailyGoalPanel, { NewDailyGoalForm } from '../components/DailyGoalPanel'
 import PullSection from '../components/today/PullSection'
@@ -45,6 +46,8 @@ export default function TodayPage() {
   const [unfinished, setUnfinished] = useState<DailyGoal[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [blocks, setBlocks] = useState<TimeBlock[]>([])
+  /** 이번 주 실제 기록(시간표 "실제" 줄) */
+  const [actuals, setActuals] = useState<ActualLog[]>([])
   const [current, setCurrent] = useState<FocusSession | null>(null)
   const [uncheckedNotes, setUncheckedNotes] = useState(0)
   const [plans, setPlans] = useState<WeeklyPlan[]>([])
@@ -100,6 +103,7 @@ export default function TodayPage() {
       getUnfinishedDailyGoals(today),
       getCategories(),
       getTimeBlocksBetween(thisMonday, sunday),
+      getActualLogsBetween(thisMonday, sunday),
       Promise.all(weekDates(thisMonday).filter((d) => d <= today).map(getFocusSessions)).then((all) => all.flat()),
       getCurrentFocus(),
       getDistractionNotes(false),
@@ -107,7 +111,8 @@ export default function TodayPage() {
       getDailyLog(today),
       getManualLogs(today),
     ])
-      .then(([d, w, u, c, b, f, cur, notes, p, log, manual]) => {
+      .then(([d, w, u, c, b, actual, f, cur, notes, p, log, manual]) => {
+        setActuals(actual)
         setPlans(p)
         setDailyLog(log)
         setManualLogs(manual)
@@ -345,6 +350,8 @@ export default function TodayPage() {
             onStartFocus={current ? undefined : startFocusFor}
             selectedDate={selected}
             onSelectDate={setSelected}
+            actuals={actuals}
+            categories={categories}
           />
         </div>
       </div>

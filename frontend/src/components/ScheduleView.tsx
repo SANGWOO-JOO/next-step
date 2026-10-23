@@ -8,8 +8,11 @@ import {
   type DailyGoal,
 } from '../api/dailyGoals'
 import { formatDuration, type FocusSession } from '../api/focus'
+import { actualFromBlock, type ActualLog } from '../api/actualLogs'
+import type { Category } from '../api/categories'
 import { createTimeBlock, deleteTimeBlock, toTimeBlockInput, updateTimeBlock, type TimeBlock } from '../api/timeBlocks'
 import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, seoulIso, shiftDate, todaySeoul } from '../utils/date'
+import ActualPopover from './ActualPopover'
 import MoreMenu from './MoreMenu'
 import FocusStartIcon from './FocusStartIcon'
 import TimeBlockForm from './TimeBlockForm'
@@ -36,14 +39,35 @@ type Props = {
   /** 고른 날(왼쪽 목록이 보여주는 날). [주] 보기에서 날짜 머리를 누르면 바뀐다 */
   selectedDate?: string
   onSelectDate?: (date: string) => void
+  /** 넘기면 하루 열을 "계획 | 실제" 두 줄로 나눈다(docs/design.md 1-4e) */
+  actuals?: ActualLog[]
+  categories?: Category[]
 }
 
 /** 드래그 중 상태. create는 빈 칸을 끌어 범위를 고르는 중, move/resize는 블록을 옮기거나 늘이는 중 */
+type Lane = 'plan' | 'actual'
+
 type Drag =
-  | { kind: 'create'; date: string; anchor: number; start: number; end: number }
+  | {
+      kind: 'create'
+      lane: Lane
+      date: string
+      anchor: number
+      start: number
+      end: number
+      /** 실제 기록 위에서 시작했으면 그 기록. 끌지 않고 떼면 그 기록을 고친다 */
+      from?: ActualLog
+      moved?: boolean
+    }
   | { kind: 'move' | 'resize'; block: TimeBlock; date: string; grab: number; start: number; end: number; moved: boolean }
 
-type Popover = { kind: 'new'; date: string; start: number; end: number } | { kind: 'edit'; block: TimeBlock } | null
+type Popover =
+  | { kind: 'new'; date: string; start: number; end: number }
+  | { kind: 'edit'; block: TimeBlock }
+  | { kind: 'actual'; date: string; start: number; end: number; log?: ActualLog }
+  | null
+
+const popoverDate = (p: NonNullable<Popover>) => (p.kind === 'edit' ? p.block.date : p.date)
 
 const snap = (minutes: number) => Math.min(DAY, Math.max(0, Math.round(minutes / SNAP) * SNAP))
 const toPx = (minutes: number) => (minutes / 60) * HOUR_PX
@@ -57,7 +81,19 @@ function minuteAt(e: { clientY: number }, column: HTMLElement) {
  * 맥 캘린더 같은 시간표. 빈 칸을 끌어 블록을 만들고, 블록을 끌어 옮기거나 아래 끝을 끌어 늘인다.
  * 하루 목표를 끌어다 놓으면 1시간 블록이 생기고, 지난 시간에는 실제 집중 세션을 오른쪽에 겹쳐 보여준다.
  */
-export default function ScheduleView({ dates, blocks, goals, sessions, run, onStartFocus, selectedDate, onSelectDate }: Props) {
+export default function ScheduleView({
+  dates,
+  blocks,
+  goals,
+  sessions,
+  run,
+  onStartFocus,
+  selectedDate,
+  onSelectDate,
+  actuals,
+  categories = [],
+}: Props) {
+  const twoLane = actuals !== undefined
   const today = todaySeoul()
   const [drag, setDrag] = useState<Drag | null>(null)
   const [popover, setPopover] = useState<Popover>(null)
@@ -82,8 +118,11 @@ export default function ScheduleView({ dates, blocks, goals, sessions, run, onSt
     if (e.button !== 0 || e.target !== e.currentTarget) return
     e.currentTarget.setPointerCapture(e.pointerId)
     const m = Math.min(minuteAt(e, e.currentTarget), DAY - SNAP)
+    // 두 줄일 때는 오른쪽 반이 "실제" 줄
+    const rect = e.currentTarget.getBoundingClientRect()
+    const lane: Lane = twoLane && e.clientX - rect.left > rect.width / 2 ? 'actual' : 'plan'
     setPopover(null)
-    setDrag({ kind: 'create', date, anchor: m, start: m, end: m + SNAP })
+    setDrag({ kind: 'create', lane, date, anchor: m, start: m, end: m + SNAP })
   }
 
   // ---- 블록 끌기. 아래 끝 RESIZE_ZONE 픽셀 안을 잡으면 길이를 바꾼다 ----
@@ -106,7 +145,8 @@ export default function ScheduleView({ dates, blocks, goals, sessions, run, onSt
       // 위로 끌어도 되게 anchor 기준으로 양쪽을 정한다
       const start = Math.min(drag.anchor, m)
       const end = Math.max(drag.anchor + SNAP, m)
-      setDrag({ ...drag, start, end: Math.min(end, DAY) })
+      const moved = drag.moved || m !== drag.anchor
+      setDrag({ ...drag, start, end: Math.min(end, DAY), moved })
     } else if (drag.kind === 'move') {
       const length = minutesOfDay(drag.block.endAt, drag.date) - minutesOfDay(drag.block.startAt, drag.date)
       const start = Math.min(Math.max(0, m - drag.grab), DAY - length)
@@ -120,10 +160,20 @@ export default function ScheduleView({ dates, blocks, goals, sessions, run, onSt
   const onColumnPointerUp = () => {
     if (!drag) return
     setDrag(null)
+    if (drag.kind === 'create' && drag.from && !drag.moved) {
+      // 실제 기록을 누르기만 했으면 그 기록 고치기
+      const a = drag.from
+      setPopover({ kind: 'actual', date: drag.date, start: minutesOfDay(a.startAt, drag.date), end: minutesOfDay(a.endAt, drag.date), log: a })
+      return
+    }
     if (drag.kind === 'create') {
       // 그냥 누르기만 했으면 1시간짜리로
       const end = drag.end - drag.start <= SNAP ? Math.min(drag.start + 60, DAY) : drag.end
-      setPopover({ kind: 'new', date: drag.date, start: drag.start, end })
+      setPopover(
+        drag.lane === 'actual'
+          ? { kind: 'actual', date: drag.date, start: drag.start, end }
+          : { kind: 'new', date: drag.date, start: drag.start, end },
+      )
       return
     }
     if (!drag.moved) {
@@ -189,6 +239,17 @@ export default function ScheduleView({ dates, blocks, goals, sessions, run, onSt
             </span>
           ),
         )}
+        {twoLane && (
+          <>
+            <span />
+            {dates.map((d) => (
+              <span key={d} className="lane-labels muted">
+                <span>계획</span>
+                <span>실제</span>
+              </span>
+            ))}
+          </>
+        )}
         <span className="schedule-allday-label muted">목표</span>
         {dates.map((d) => (
           <div key={d} className="schedule-allday">
@@ -219,7 +280,7 @@ export default function ScheduleView({ dates, blocks, goals, sessions, run, onSt
           {dates.map((date) => (
             <div
               key={date}
-              className={date === today ? 'schedule-column today' : 'schedule-column'}
+              className={['schedule-column', date === today ? 'today' : '', twoLane ? 'two-lane' : ''].join(' ')}
               onPointerDown={(e) => onColumnPointerDown(e, date)}
               onPointerMove={onColumnPointerMove}
               onPointerUp={onColumnPointerUp}
@@ -227,7 +288,7 @@ export default function ScheduleView({ dates, blocks, goals, sessions, run, onSt
               onDragOver={(e) => e.dataTransfer.types.includes(GOAL_DRAG_TYPE) && e.preventDefault()}
               onDrop={(e) => onDrop(e, date)}
             >
-              {sessions
+              {!twoLane && sessions
                 .filter((s) => s.date === date)
                 .map((s) => {
                   const start = minutesOfDay(s.startedAt, date)
@@ -251,6 +312,14 @@ export default function ScheduleView({ dates, blocks, goals, sessions, run, onSt
                   // 목표 아닌 일정은 회색 점선 테두리로 구분한다
                   const color = b.category?.color ?? 'var(--muted)'
                   const short = end - start <= 30
+                  const past = date < today || (date === today && end <= now)
+                  // 지난 계획인데 그 시간에 실제 기록이 하나도 없으면 [계획대로]를 보여준다
+                  const unrecorded =
+                    twoLane &&
+                    past &&
+                    !actuals!.some(
+                      (a) => a.date === date && minutesOfDay(a.startAt, date) < end && minutesOfDay(a.endAt, date) > start,
+                    )
                   return (
                     <div
                       key={b.id}
@@ -261,6 +330,8 @@ export default function ScheduleView({ dates, blocks, goals, sessions, run, onSt
                         dragging ? 'dragging' : '',
                         short ? 'short' : '',
                         date === today && start <= now && now < end ? 'now' : '',
+                        twoLane ? 'plan-lane' : '',
+                        unrecorded ? 'unrecorded' : '',
                       ].join(' ')}
                       style={{
                         top: toPx(start),
@@ -275,13 +346,78 @@ export default function ScheduleView({ dates, blocks, goals, sessions, run, onSt
                       <span className="schedule-block-time">
                         {formatMinutes(start)}~{formatMinutes(end)}
                       </span>
+                      {unrecorded && (
+                        <button
+                          type="button"
+                          className="as-planned"
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onClick={() => run(() => actualFromBlock(b.id))}
+                          title="이 계획대로 했다고 실제 줄에 기록해요"
+                        >
+                          ✓ 계획대로
+                        </button>
+                      )}
                       <span className="schedule-block-resize" aria-hidden />
                     </div>
                   )
                 })}
 
+              {twoLane &&
+                actuals!
+                  .filter((a) => a.date === date)
+                  .map((a) => {
+                    const start = minutesOfDay(a.startAt, date)
+                    const end = minutesOfDay(a.endAt, date)
+                    const color = a.category?.color ?? 'var(--muted)'
+                    // 계획과 같은 일이면 ✓, 계획에 없던 일이면 ＋, 딴짓이면 ⚠
+                    const planned = blocks.some(
+                      (b) =>
+                        b.date === date &&
+                        (b.id === a.timeBlockId || (a.dailyGoalId !== null && b.dailyGoalId === a.dailyGoalId)) &&
+                        minutesOfDay(b.startAt, date) < end &&
+                        minutesOfDay(b.endAt, date) > start,
+                    )
+                    const mark = a.kind === 'DISTRACTION' ? '⚠' : planned ? '✓' : '＋'
+                    return (
+                      <div
+                        key={a.id}
+                        className={['actual-entry', `actual-${a.kind.toLowerCase()}`, end - start <= 30 ? 'short' : ''].join(' ')}
+                        style={{
+                          top: toPx(start),
+                          height: Math.max(toPx(end - start) - 2, 14),
+                          borderLeftColor: a.kind === 'DISTRACTION' ? 'var(--down)' : color,
+                          background:
+                            a.kind === 'DISTRACTION' || a.kind === 'OTHER'
+                              ? undefined
+                              : `color-mix(in srgb, ${color} 30%, var(--surface))`,
+                        }}
+                        onPointerDown={(e) => {
+                          // 누르면 고치기, 끌면 그 위에 새 기록(딴짓 덧붙이기 등). 새 기록이 겹친 부분을 잘라낸다
+                          if (e.button !== 0) return
+                          e.stopPropagation()
+                          const column = e.currentTarget.closest<HTMLElement>('.schedule-column')!
+                          column.setPointerCapture(e.pointerId)
+                          const m = Math.min(minuteAt(e, column), DAY - SNAP)
+                          setPopover(null)
+                          setDrag({ kind: 'create', lane: 'actual', date, anchor: m, start: m, end: m + SNAP, from: a, moved: false })
+                        }}
+                        title={`실제: ${a.label} ${formatMinutes(start)}~${formatMinutes(end)} · 누르면 고치기, 끌면 그 위에 새로 기록`}
+                      >
+                        <span className="schedule-block-title">
+                          <span className="actual-mark">{mark}</span> {a.label}
+                        </span>
+                        <span className="schedule-block-time">
+                          {formatMinutes(start)}~{formatMinutes(end)}
+                        </span>
+                      </div>
+                    )
+                  })}
+
               {drag?.kind === 'create' && drag.date === date && (
-                <div className="schedule-block preview" style={{ top: toPx(drag.start), height: toPx(drag.end - drag.start) }}>
+                <div
+                  className={['schedule-block preview', twoLane ? (drag.lane === 'actual' ? 'actual-lane' : 'plan-lane') : ''].join(' ')}
+                  style={{ top: toPx(drag.start), height: toPx(drag.end - drag.start) }}
+                >
                   <span className="schedule-block-time">
                     {formatMinutes(drag.start)}~{formatMinutes(drag.end)}
                   </span>
@@ -290,7 +426,26 @@ export default function ScheduleView({ dates, blocks, goals, sessions, run, onSt
 
               {date === today && <div className="schedule-now" style={{ top: toPx(now) }} aria-label="지금" />}
 
-              {popover && (popover.kind === 'new' ? popover.date : popover.block.date) === date && (
+              {popover?.kind === 'actual' && popover.date === date && (
+                <ActualPopover
+                  key={`${popover.log?.id ?? 'new'}-${popover.start}`}
+                  date={date}
+                  start={popover.start}
+                  end={popover.end}
+                  log={popover.log}
+                  goals={goalsOf(date)}
+                  categories={categories}
+                  run={run}
+                  onClose={() => setPopover(null)}
+                  style={
+                    popover.start > 18 * 60
+                      ? { bottom: `calc(100% - ${toPx(popover.start)}px + 4px)`, left: 'auto', right: '0.5rem' }
+                      : { top: toPx(popover.end) + 4, left: 'auto', right: '0.5rem' }
+                  }
+                />
+              )}
+
+              {popover && popover.kind !== 'actual' && popoverDate(popover) === date && (
                 <SchedulePopover
                   popover={popover}
                   goals={goalsOf(date)}
@@ -308,7 +463,7 @@ export default function ScheduleView({ dates, blocks, goals, sessions, run, onSt
 }
 
 type PopoverProps = {
-  popover: NonNullable<Popover>
+  popover: Extract<NonNullable<Popover>, { kind: 'new' } | { kind: 'edit' }>
   goals: DailyGoal[]
   run: Run
   onClose: () => void
