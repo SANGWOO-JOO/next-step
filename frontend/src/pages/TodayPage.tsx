@@ -48,6 +48,18 @@ export default function TodayPage() {
   }, [searchParams, setSearchParams])
   /** 고른 날: 왼쪽 목록과 [일] 보기가 보여주는 날(이번 주 안). [주] 보기의 날짜 머리로 바꾼다 */
   const [selected, setSelected] = useState(today)
+  /** 24시간 한눈에(1-4f ㉕). 켠 상태를 기억한다 */
+  const [fitDay, setFitDay] = useState(() => {
+    try {
+      return localStorage.getItem(FIT_DAY_KEY) === '1'
+    } catch {
+      return false
+    }
+  })
+  const toggleFitDay = () => {
+    setFitDay(!fitDay)
+    writeValue(FIT_DAY_KEY, fitDay ? '0' : '1')
+  }
   const [leftWidth, setLeftWidth] = useState(() => readNumber(LEFT_WIDTH_KEY, DEFAULT_LEFT_WIDTH))
   // 기본은 시간표만(docs/design.md 6장 시간표 중심). 목록을 연 적이 있으면 그 상태를 기억한다
   const [wideSchedule, setWideSchedule] = useState(() => {
@@ -242,6 +254,14 @@ export default function TodayPage() {
               <h3 className="cal-title">{view === 'week' ? weekTitle(viewMonday) : dayLabel(selected)}</h3>
             </span>
             <span className="cal-tools">
+              <button
+                className={fitDay ? 'ghost fit-day-toggle on' : 'ghost fit-day-toggle'}
+                onClick={toggleFitDay}
+                aria-pressed={fitDay}
+                title={fitDay ? '시간표를 원래 크기로' : '0시~24시를 스크롤 없이 한 화면에'}
+              >
+                24시간
+              </button>
               <span className="segmented">
                 {(['day', 'week'] as const).map((v) => (
                   <button key={v} className={view === v ? 'active' : ''} onClick={() => changeView(v)}>
@@ -303,6 +323,7 @@ export default function TodayPage() {
             onSelectDate={setSelected}
             actuals={actuals}
             categories={categories}
+            fitDay={fitDay}
           />
         </div>
       </div>
@@ -440,6 +461,7 @@ const weekTitle = (monday: string) => {
 
 const LEFT_WIDTH_KEY = 'today.leftWidth'
 const WIDE_KEY = 'today.wideSchedule'
+const FIT_DAY_KEY = 'today.fitDay'
 const DEFAULT_LEFT_WIDTH = 380
 const MIN_LEFT_WIDTH = 300
 const MAX_LEFT_WIDTH = 560

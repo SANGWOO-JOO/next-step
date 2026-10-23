@@ -38,6 +38,8 @@ type Props = {
   /** 넘기면 하루 열을 "계획 | 실제" 두 줄로 나눈다(docs/design.md 1-4e) */
   actuals?: ActualLog[]
   categories?: Category[]
+  /** 켜면 0시~24시가 스크롤 없이 한 화면에 들어오게 한 시간 높이를 줄인다 */
+  fitDay?: boolean
 }
 
 /** 드래그 중 상태. create는 빈 칸을 끌어 범위를 고르는 중, move/resize는 블록을 옮기거나 늘이는 중 */
@@ -68,11 +70,13 @@ type Popover =
 const popoverDate = (p: NonNullable<Popover>) => (p.kind === 'edit' ? p.block.date : p.date)
 
 const snap = (minutes: number) => Math.min(DAY, Math.max(0, Math.round(minutes / SNAP) * SNAP))
-const toPx = (minutes: number) => (minutes / 60) * HOUR_PX
+/** 지금 쓰는 한 시간 높이. "24시간 한눈에"를 켜면 화면에 맞춰 줄어든다(1-4f ㉕) */
+let hourPx = HOUR_PX
+const toPx = (minutes: number) => (minutes / 60) * hourPx
 
 /** 이벤트 위치를 그 열의 0시부터의 분으로 */
 function minuteAt(e: { clientY: number }, column: HTMLElement) {
-  return snap(((e.clientY - column.getBoundingClientRect().top) / HOUR_PX) * 60)
+  return snap(((e.clientY - column.getBoundingClientRect().top) / hourPx) * 60)
 }
 
 /**
@@ -88,14 +92,31 @@ export default function ScheduleView({
   onSelectDate,
   actuals,
   categories = [],
+  fitDay = false,
 }: Props) {
   const twoLane = actuals !== undefined
+  // 24시간 한눈에: 스크롤 영역 높이에 맞춰 한 시간 높이를 정한다(최소 16px)
+  const [fitHour, setFitHour] = useState(HOUR_PX)
+  hourPx = fitDay ? fitHour : HOUR_PX
   const today = todaySeoul()
   const [drag, setDrag] = useState<Drag | null>(null)
   const [popover, setPopover] = useState<Popover>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [now, setNow] = useState(nowMinutesSeoul)
   const scroller = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = scroller.current
+    if (!fitDay || !el) return
+    const measure = () => {
+      const head = el.querySelector<HTMLElement>('.schedule-head')?.offsetHeight ?? 0
+      setFitHour(Math.max(16, Math.floor((el.clientHeight - head - 4) / 24)))
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [fitDay, dates.length])
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(nowMinutesSeoul()), 60_000)
@@ -296,6 +317,7 @@ export default function ScheduleView({
             <div
               key={date}
               className={['schedule-column', date === today ? 'today' : '', twoLane ? 'two-lane' : ''].join(' ')}
+              style={{ backgroundSize: `100% ${hourPx}px, 100% ${hourPx / 2}px` }}
               onPointerDown={(e) => onColumnPointerDown(e, date)}
               onPointerMove={onColumnPointerMove}
               onPointerUp={onColumnPointerUp}

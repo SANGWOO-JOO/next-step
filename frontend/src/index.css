@@ -1149,3 +1149,6 @@ input[type='checkbox'] { accent-color: #6d74f7; }
   .log-cal-cell { min-height: 3.4rem; padding: 0.3rem; }
   .log-cal-plan { display: none; }
 }
+/* 24시간 한눈에 버튼(1-4f ㉕) */
+button.fit-day-toggle { padding: 0.25rem 0.75rem; font-size: 0.82rem; }
+button.fit-day-toggle.on { color: #fff; border-color: transparent; background: var(--grad); }
