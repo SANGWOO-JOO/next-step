@@ -1177,3 +1177,7 @@ button.color-dot.auto::after { content: 'A'; position: absolute; inset: 0; displ
 .as-planned-icon { display: block; flex: none; border-radius: 5px; }
 .as-planned.compact { padding: 0; border: none; background: none; }
 .as-planned.compact .as-planned-icon { width: 15px; height: 15px; }
+/* 짧은 블록에서 제목이 먼저 보이게(1-4f ㉖ 보완): 폭이 모자라면 시간이 먼저 줄어들고 사라진다 */
+.schedule-block.short .schedule-block-title, .schedule-block.tiny .schedule-block-title,
+.actual-entry.short .schedule-block-title, .actual-entry.tiny .schedule-block-title { flex: 0 1 auto; min-width: 2.2em; }
+.schedule-block.short .schedule-block-time, .actual-entry.short .schedule-block-time { flex: 0 1000 auto; min-width: 0; overflow: hidden; text-overflow: clip; margin-left: auto; }
