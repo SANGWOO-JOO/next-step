@@ -15,7 +15,7 @@ import PullSection from '../components/today/PullSection'
 import ShutdownDialog from '../components/today/ShutdownDialog'
 import { COLLAPSE_EVENT } from '../components/Layout'
 import ScheduleView from '../components/ScheduleView'
-import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, todaySeoul, weekDates } from '../utils/date'
+import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, shiftDate, todaySeoul, weekDates } from '../utils/date'
 import { journalDue, plannedKey } from './plan/planData'
 
 export default function TodayPage() {
@@ -32,6 +32,8 @@ export default function TodayPage() {
     }
   })
   const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[] | null>(null)
+  /** 이번 주(오늘이 속한 주)에 주간 목표가 있는지. 알림 칸용(보는 주와 다를 수 있음) */
+  const [thisWeekHasWeekly, setThisWeekHasWeekly] = useState<boolean | null>(null)
   const [unfinished, setUnfinished] = useState<DailyGoal[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [blocks, setBlocks] = useState<TimeBlock[]>([])
@@ -81,18 +83,27 @@ export default function TodayPage() {
   const isToday = selected === today
   const [error, setError] = useState<string | null>(null)
 
+  // 보는 주(고른 날의 주)를 불러온다. 다른 주를 볼 때는 오늘 할 일·하루 마무리를 위해 이번 주도 함께 불러 합친다
+  const viewMonday = mondayOf(selected)
   const load = useCallback(() => {
+    const viewSunday = shiftDate(viewMonday, 6)
+    const ranges: [string, string][] =
+      viewMonday === thisMonday ? [[thisMonday, sunday]] : [[viewMonday, viewSunday], [thisMonday, sunday]]
+    const each = <T,>(get: (from: string, to: string) => Promise<T[]>) =>
+      Promise.all(ranges.map(([f, t]) => get(f, t))).then((all) => all.flat())
     Promise.all([
-      getDailyGoalsBetween(thisMonday, sunday),
-      getWeeklyGoalsOfWeek(thisMonday),
+      each(getDailyGoalsBetween),
+      getWeeklyGoalsOfWeek(viewMonday),
       getUnfinishedDailyGoals(today),
       getCategories(),
-      getTimeBlocksBetween(thisMonday, sunday),
-      getActualLogsBetween(thisMonday, sunday),
+      each(getTimeBlocksBetween),
+      each(getActualLogsBetween),
       getDailyLog(today),
       getManualLogs(today),
+      viewMonday === thisMonday ? null : getWeeklyGoalsOfWeek(thisMonday),
     ])
-      .then(([d, w, u, c, b, actual, log, manual]) => {
+      .then(([d, w, u, c, b, actual, log, manual, thisWeek]) => {
+        setThisWeekHasWeekly((thisWeek ?? w).length > 0)
         setActuals(actual)
         setDailyLog(log)
         setManualLogs(manual)
@@ -103,7 +114,7 @@ export default function TodayPage() {
         setBlocks(b)
       })
       .catch((e) => setError(errorMessage(e)))
-  }, [today, thisMonday, sunday])
+  }, [today, thisMonday, sunday, viewMonday])
 
   useEffect(load, [load])
 
@@ -173,7 +184,7 @@ export default function TodayPage() {
       <AlertSlot
         today={today}
         monday={thisMonday}
-        hasWeeklyGoals={weeklyGoals === null ? null : weeklyGoals.length > 0}
+        hasWeeklyGoals={thisWeekHasWeekly}
         logSaved={dailyLog?.saved ?? true}
         onShutdown={() => setShutdown(true)}
       />
@@ -240,6 +251,28 @@ export default function TodayPage() {
             >
               {wideSchedule ? '⤡ 목록 보기' : '⤢ 넓게 보기'}
             </button>
+            {/* 달력 앱처럼 ‹ 오늘 ›으로 이전·다음 주(일 보기는 하루)로 이동(1-4f) */}
+            <span className="row-actions schedule-nav">
+              <button
+                className="icon"
+                onClick={() => setSelected(shiftDate(selected, view === 'week' ? -7 : -1))}
+                aria-label={view === 'week' ? '지난주' : '전날'}
+                title={view === 'week' ? '지난주' : '전날'}
+              >
+                ‹
+              </button>
+              <button className="ghost" onClick={() => setSelected(today)} disabled={view === 'week' ? viewMonday === thisMonday : isToday}>
+                오늘
+              </button>
+              <button
+                className="icon"
+                onClick={() => setSelected(shiftDate(selected, view === 'week' ? 7 : 1))}
+                aria-label={view === 'week' ? '다음 주' : '다음 날'}
+                title={view === 'week' ? '다음 주' : '다음 날'}
+              >
+                ›
+              </button>
+            </span>
             <span className="segmented">
               {(['day', 'week'] as const).map((v) => (
                 <button key={v} className={view === v ? 'active' : ''} onClick={() => changeView(v)}>
@@ -283,7 +316,7 @@ export default function TodayPage() {
             빈 칸을 끌어 시간을 잡고, 블록을 끌어 옮기거나 아래 끝을 끌어 늘여요. {wideSchedule ? '위쪽 목표 칩을' : '왼쪽 목표를'} 끌어다 놓아도 돼요.
           </p>
           <ScheduleView
-            dates={view === 'day' ? [selected] : weekDates(thisMonday)}
+            dates={view === 'day' ? [selected] : weekDates(viewMonday)}
             blocks={blocks}
             goals={weekGoals}
             run={run}
