@@ -6,15 +6,13 @@ import { createDailyGoal, getDailyGoalsBetween, getUnfinishedDailyGoals, type Da
 import { getWeeklyGoalsOfWeek, type WeeklyGoal } from '../api/goals'
 import { formatDuration } from '../api/focus'
 import { getHealth } from '../api/health'
-import { getDailyLog, getManualLogs, type DailyLog, type ManualStudyLog } from '../api/records'
 import { getActualLogsBetween, type ActualLog } from '../api/actualLogs'
 import { getTimeBlocksBetween, type TimeBlock } from '../api/timeBlocks'
 import DailyGoalPanel, { NewDailyGoalForm } from '../components/DailyGoalPanel'
 import PullSection from '../components/today/PullSection'
-import ShutdownDialog from '../components/today/ShutdownDialog'
+import DayWrapUp from '../components/today/DayWrapUp'
 import { COLLAPSE_EVENT } from '../components/Layout'
 import ScheduleView from '../components/ScheduleView'
-import { refreshReminders } from '../utils/reminders'
 import { dayLabel, minutesOfDay, mondayOf, nowMinutesSeoul, shiftDate, todaySeoul, weekDates } from '../utils/date'
 import { plannedKey } from './plan/planData'
 
@@ -39,8 +37,6 @@ export default function TodayPage() {
   const [blocks, setBlocks] = useState<TimeBlock[]>([])
   /** 이번 주 실제 기록(시간표 "실제" 줄) */
   const [actuals, setActuals] = useState<ActualLog[]>([])
-  const [dailyLog, setDailyLog] = useState<DailyLog | null>(null)
-  const [manualLogs, setManualLogs] = useState<ManualStudyLog[]>([])
   // 오른쪽 위 알림의 [하루 마무리]는 /?shutdown=1로 와서 창을 연다
   const [searchParams, setSearchParams] = useSearchParams()
   const [shutdown, setShutdown] = useState(() => searchParams.get('shutdown') === '1')
@@ -106,15 +102,11 @@ export default function TodayPage() {
       getCategories(),
       each(getTimeBlocksBetween),
       each(getActualLogsBetween),
-      getDailyLog(today),
-      getManualLogs(today),
       viewMonday === thisMonday ? null : getWeeklyGoalsOfWeek(thisMonday),
     ])
-      .then(([d, w, u, c, b, actual, log, manual, thisWeek]) => {
+      .then(([d, w, u, c, b, actual, thisWeek]) => {
         setThisWeekHasWeekly((thisWeek ?? w).length > 0)
         setActuals(actual)
-        setDailyLog(log)
-        setManualLogs(manual)
         setWeekGoals(d)
         setWeeklyGoals(w)
         setUnfinished(u)
@@ -316,19 +308,11 @@ export default function TodayPage() {
       </div>
 
       {shutdown && (
-        <ShutdownDialog
+        <DayWrapUp
           date={today}
-          log={dailyLog}
-          goals={goals}
-          manualLogs={manualLogs}
-          categories={categories}
-          plannedMinutes={blocks
-            .filter((b) => b.date === today)
-            .reduce((sum, b) => sum + minutesOfDay(b.endAt, today) - minutesOfDay(b.startAt, today), 0)}
-          run={run}
           onClose={() => {
             setShutdown(false)
-            refreshReminders()
+            load()
           }}
         />
       )}

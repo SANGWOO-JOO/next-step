@@ -5,6 +5,7 @@ import { formatDuration } from '../api/focus'
 import { CONDITION_LABELS, getDailyLogs, type DailyLog } from '../api/records'
 import NoteInbox from '../components/NoteInbox'
 import ReviewWriter from '../components/ReviewWriter'
+import DayWrapUp from '../components/today/DayWrapUp'
 import { getMonthlyReviews, getWeeklyJournals, type MonthlyReviewBrief, type WeeklyJournalBrief } from '../api/reviews'
 import { addMonths, currentMonthSeoul, dayLabel, mondayOf, mondaysOfMonth, monthLabel, shiftDate, todaySeoul, weekLabel } from '../utils/date'
 import { monthRange } from '../utils/health'
@@ -32,6 +33,8 @@ export default function LogPage() {
   const [focusDate, setFocusDate] = useState<string | null>(null)
   /** 일지·회고를 저장하면 목록을 다시 불러온다 */
   const [version, setVersion] = useState(0)
+  /** 하루 마무리 창을 연 날짜 */
+  const [wrapDate, setWrapDate] = useState<string | null>(null)
 
   useEffect(() => {
     setError(null)
@@ -75,7 +78,7 @@ export default function LogPage() {
           </button>
         </span>
       </div>
-      <p className="muted">하루 마무리, 주간 일지, 월간 회고를 최신순으로 모아 봐요.</p>
+      <p className="muted">하루 마무리로 쓴 기록이 쌓여요. 카드에서 바로 쓰거나 고칠 수 있어요.</p>
       {error && <p className="error-banner">{error}</p>}
       {kind === 'day' && <NoteInbox />}
       {kind !== 'day' && <ReviewWriter key={kind} kind={kind} onSaved={() => setVersion((v) => v + 1)} />}
@@ -113,7 +116,7 @@ export default function LogPage() {
               <div className={`log-day-layout view-${dayView}`}>
                 <div className="log-pane-list">
                   {days.map((d) => (
-                    <DayCard key={d.date} log={d} focused={d.date === focusDate} />
+                    <DayCard key={d.date} log={d} focused={d.date === focusDate} onWrite={() => setWrapDate(d.date)} />
                   ))}
                 </div>
                 <div className="log-pane-calendar">
@@ -122,8 +125,13 @@ export default function LogPage() {
                     days={days}
                     focusDate={focusDate}
                     onPick={(date) => {
-                      setDayView('list')
-                      setFocusDate(date)
+                      // 기록 카드가 있는 날은 그 카드로, 없는 날(오늘까지)은 바로 쓰기
+                      if (days.some((d) => d.date === date)) {
+                        setDayView('list')
+                        setFocusDate(date)
+                      } else {
+                        setWrapDate(date)
+                      }
                     }}
                   />
                 </div>
@@ -146,14 +154,22 @@ export default function LogPage() {
             ))}
         </div>
       )}
+      {wrapDate && (
+        <DayWrapUp
+          date={wrapDate}
+          onClose={() => {
+            setWrapDate(null)
+            setVersion((v) => v + 1)
+          }}
+        />
+      )}
     </section>
   )
 }
 
-function DayCard({ log, focused }: { log: DailyLog; focused: boolean }) {
+function DayCard({ log, focused, onWrite }: { log: DailyLog; focused: boolean; onWrite: () => void }) {
   const s = log.summary
   const ref = useRef<HTMLElement>(null)
-  const isToday = log.date === todaySeoul()
   useEffect(() => {
     if (focused) ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [focused])
@@ -191,14 +207,16 @@ function DayCard({ log, focused }: { log: DailyLog; focused: boolean }) {
           </ul>
         )}
         {log.memo && <p className="log-memo">{log.memo}</p>}
-        {!log.saved &&
-          (isToday ? (
-            <Link className="button-link log-cta" to="/">
-              하루 마무리하기
-            </Link>
+        {/* 버튼은 하나: 안 썼으면 쓰기, 썼으면 고치기(1-4f ㉑) */}
+        <span className="log-cta">
+          {log.saved ? (
+            <button className="ghost" onClick={onWrite}>
+              고치기
+            </button>
           ) : (
-            <span className="muted small">하루 마무리를 하지 않은 날이에요.</span>
-          ))}
+            <button onClick={onWrite}>하루 마무리 쓰기</button>
+          )}
+        </span>
       </div>
     </article>
   )
@@ -288,9 +306,9 @@ function LogCalendar({
                 log ? 'has' : '',
                 date === focusDate ? 'picked' : '',
               ].join(' ')}
-              disabled={!log}
+              disabled={!log && date > today}
               onClick={() => onPick(date)}
-              title={log ? `${dayLabel(date)} · 공부 ${formatDuration(seconds)}` : dayLabel(date)}
+              title={log ? `${dayLabel(date)} · 공부 ${formatDuration(seconds)}` : date <= today ? `${dayLabel(date)} · 하루 마무리 쓰기` : dayLabel(date)}
               style={
                 seconds > 0
                   ? { background: `color-mix(in srgb, var(--up) ${Math.round(15 + (seconds / max) * 55)}%, transparent)` }
