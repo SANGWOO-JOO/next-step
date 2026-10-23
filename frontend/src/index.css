@@ -1322,3 +1322,26 @@ button.schedule-date.selected { box-shadow: none; background: color-mix(in srgb,
 .actual-entry .schedule-block-title { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .actual-entry .schedule-block-time { color: inherit; opacity: 0.7; }
 @container (max-width: 40px) { .actual-entry .schedule-block-label, .actual-entry .schedule-block-time { display: none; } }
+
+/* 보기 줄 아이콘 세 칸 + 툴팁(1-4f ㊼) */
+.lane-switch button { position: relative; display: inline-flex; align-items: center; justify-content: center; padding: 0.3rem 0.55rem; color: var(--text-muted, var(--muted)); }
+.lane-switch button.active { color: #a78bfa; background: color-mix(in srgb, #8B5CF6 22%, transparent); box-shadow: none; }
+[data-tip] { position: relative; }
+[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute; top: calc(100% + 8px); left: 50%;
+  transform: translate(-50%, -4px);
+  padding: 5px 10px; border-radius: 8px;
+  background: color-mix(in srgb, var(--surface, #222) 85%, #8B5CF6); color: var(--text);
+  border: 1px solid color-mix(in srgb, #8B5CF6 35%, var(--border));
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.28);
+  font-size: 12px; font-weight: 600; white-space: nowrap; letter-spacing: -0.01em;
+  opacity: 0; pointer-events: none; z-index: 40;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+[data-tip]:hover::after, [data-tip]:focus-visible::after { opacity: 1; transform: translate(-50%, 0); transition-delay: 0.25s; }
+
+/* 파스텔을 더 밝게: 진한 분류 색(예: #2563eb)도 남색이 아니라 옅은 파랑으로(1-4f ㊻ 보완) */
+.schedule-block { background: color-mix(in srgb, color-mix(in srgb, var(--block, var(--muted)) 60%, #fff) 20%, transparent); }
+.actual-entry.actual-goal, .actual-entry.actual-study { background: color-mix(in srgb, color-mix(in srgb, var(--block, var(--muted)) 60%, #fff) 24%, transparent); }
+.segmented.lane-switch { overflow: visible; }

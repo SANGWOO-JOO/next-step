@@ -19,9 +19,6 @@ import chevronRight from '../assets/icons/chevron-right.svg'
 import clockIcon from '../assets/icons/clock.svg'
 import fitDayOnIcon from '../assets/icons/fit-day-on.svg'
 import fitDayIcon from '../assets/icons/fit-day.svg'
-import lanesActual from '../assets/icons/lanes-actual.svg'
-import lanesBoth from '../assets/icons/lanes-both.svg'
-import lanesPlan from '../assets/icons/lanes-plan.svg'
 import narrowIcon from '../assets/icons/narrow.svg'
 import wideIcon from '../assets/icons/wide.svg'
 import IconButton from '../components/IconButton'
@@ -68,7 +65,7 @@ export default function TodayPage() {
       return false
     }
   })
-  /** 계획·실제 → 계획만 → 실제만 순서로 돌아가며 바꾼다(1-4f ㉗). 기억한다 */
+  /** 계획만 / 실제만 / 둘 다 중 하나를 고른다(1-4f ㉗·㊼). 기억한다 */
   const [lanes, setLanes] = useState<Lanes>(() => {
     try {
       const v = localStorage.getItem(LANES_KEY)
@@ -77,8 +74,7 @@ export default function TodayPage() {
       return 'both'
     }
   })
-  const cycleLanes = () => {
-    const next = nextLanes(lanes)
+  const chooseLanes = (next: Lanes) => {
     setLanes(next)
     writeValue(LANES_KEY, next)
   }
@@ -269,12 +265,23 @@ export default function TodayPage() {
               <h3 className="cal-title">{view === 'week' ? weekTitle(viewMonday) : dayLabel(selected)}</h3>
             </span>
             <span className="cal-tools">
-              <IconButton
-                icon={LANE_ICONS[lanes]}
-                label={`보기 줄: ${LANE_LABELS[lanes]}`}
-                title={`보기 줄: 지금 ${LANE_LABELS[lanes]} → 누르면 ${LANE_LABELS[nextLanes(lanes)]}`}
-                onClick={cycleLanes}
-              />
+              {/* 보기 줄 아이콘 세 칸(1-4f ㊼): 고른 칸만 칠해져 지금 상태가 늘 보인다. 이름은 툴팁으로 */}
+              <span className="segmented lane-switch" role="radiogroup" aria-label="보기 줄">
+                {(['plan', 'actual', 'both'] as const).map((l) => (
+                  <button
+                    key={l}
+                    type="button"
+                    role="radio"
+                    aria-checked={lanes === l}
+                    aria-label={LANE_LABELS[l]}
+                    data-tip={LANE_LABELS[l]}
+                    className={lanes === l ? 'active' : ''}
+                    onClick={() => chooseLanes(l)}
+                  >
+                    <LaneGlyph lanes={l} />
+                  </button>
+                ))}
+              </span>
               <IconButton
                 icon={fitDay ? fitDayOnIcon : fitDayIcon}
                 label="24시간 한눈에"
@@ -515,9 +522,19 @@ const LEFT_WIDTH_KEY = 'today.leftWidth'
 const WIDE_KEY = 'today.wideSchedule'
 const FIT_DAY_KEY = 'today.fitDay'
 const LANES_KEY = 'today.lanes'
-const LANE_LABELS: Record<Lanes, string> = { both: '계획·실제', plan: '계획만', actual: '실제만' }
-const LANE_ICONS: Record<Lanes, string> = { both: lanesBoth, plan: lanesPlan, actual: lanesActual }
-const nextLanes = (l: Lanes): Lanes => (l === 'both' ? 'plan' : l === 'plan' ? 'actual' : 'both')
+const LANE_LABELS: Record<Lanes, string> = { both: '계획·실제 둘 다', plan: '계획만', actual: '실제만' }
+
+/** 하루 칸을 두 줄로 그리고 보이는 줄을 칠한다: 왼쪽 = 계획, 오른쪽 = 실제 */
+function LaneGlyph({ lanes }: { lanes: Lanes }) {
+  const left = lanes !== 'actual'
+  const right = lanes !== 'plan'
+  return (
+    <svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true">
+      <rect x="2.5" y="3" width="6" height="12" rx="2" fill={left ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.4" />
+      <rect x="9.5" y="3" width="6" height="12" rx="2" fill={right ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  )
+}
 const DEFAULT_LEFT_WIDTH = 380
 const MIN_LEFT_WIDTH = 300
 const MAX_LEFT_WIDTH = 560
