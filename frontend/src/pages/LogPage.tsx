@@ -189,6 +189,14 @@ function DayDetail({ date, log, onWrite }: { date: string; log: DailyLog | undef
 
 const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일']
 
+/** 달력 색 단계(범례용). 색은 그달 최대 공부 시간 대비 비율로 칠한다 */
+const LEVELS: { label: string; ratio: number; range: (max: number) => string }[] = [
+  { label: '없음', ratio: 0, range: () => '' },
+  { label: '조금', ratio: 0.2, range: (max) => `~${formatDuration(max / 3)}` },
+  { label: '보통', ratio: 0.55, range: (max) => `${formatDuration(max / 3)}~${formatDuration((max * 2) / 3)}` },
+  { label: '많이', ratio: 1, range: (max) => `${formatDuration((max * 2) / 3)} 이상` },
+]
+
 /** 기록 달력(Day One 달력, Daylio Year in Pixels 참고): 공부량을 색 진하기로, 컨디션을 이모지로. 누르면 그날을 고른다 */
 function LogCalendar({
   month,
@@ -246,7 +254,25 @@ function LogCalendar({
           )
         })}
       </div>
-      <p className="muted small">날짜를 누르면 그날 기록을 봐요. 색이 진할수록 공부를 많이 한 날이에요.</p>
+      {/* 안내 글자에 마우스를 올리거나 포커스하면 색 단계 범례가 보인다 */}
+      <p className="muted small log-cal-hint" tabIndex={0}>
+        날짜를 누르면 그날 기록을 봐요. 색이 진할수록 공부를 많이 한 날이에요.
+        <span className="log-cal-legend" role="tooltip">
+          <span className="log-cal-legend-title">색 단계 (이 달 가장 많이 공부한 날 {formatDuration(max)} 기준)</span>
+          {LEVELS.map((l) => (
+            <span key={l.label} className="log-cal-legend-row">
+              <span
+                className="log-cal-legend-swatch"
+                style={{
+                  background: l.ratio === 0 ? 'transparent' : `color-mix(in srgb, var(--up) ${Math.round(15 + l.ratio * 55)}%, transparent)`,
+                }}
+              />
+              <span>{l.label}</span>
+              <span className="muted">{l.ratio === 0 ? '기록 없음' : l.range(max)}</span>
+            </span>
+          ))}
+        </span>
+      </p>
     </div>
   )
 }

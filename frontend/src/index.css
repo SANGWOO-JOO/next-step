@@ -1122,3 +1122,10 @@ input[type='checkbox'] { accent-color: #6d74f7; }
 .log-detail .log-cta { margin-top: 0.25rem; }
 .log-cal-cell { cursor: pointer; }
 .log-cal-cell.picked { outline: 2px solid #6d74f7; outline-offset: -2px; }
+/* 달력 색 단계 범례: 안내 글자에 마우스를 올리면 보임 */
+.log-cal-hint { position: relative; cursor: help; text-decoration: underline dotted; text-underline-offset: 3px; outline: none; }
+.log-cal-legend { display: none; position: absolute; left: 0; bottom: calc(100% + 0.4rem); z-index: 20; gap: 0.35rem; min-width: 16rem; padding: 0.75rem 0.85rem; border: 1px solid var(--hairline); border-radius: 14px; background: var(--surface); color: var(--text); box-shadow: 0 12px 32px rgb(0 0 0 / 0.28); text-decoration: none; cursor: default; }
+.log-cal-hint:hover .log-cal-legend, .log-cal-hint:focus .log-cal-legend { display: grid; }
+.log-cal-legend-title { font-weight: 600; margin-bottom: 0.15rem; }
+.log-cal-legend-row { display: grid; grid-template-columns: 1.4rem 2.5rem 1fr; align-items: center; gap: 0.5rem; }
+.log-cal-legend-swatch { width: 1.4rem; height: 1.1rem; border-radius: 5px; border: 1px solid var(--hairline); }
