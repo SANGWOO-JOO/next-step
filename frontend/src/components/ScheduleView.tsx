@@ -25,6 +25,9 @@ const SNAP = 15
 const DAY = 1440
 /** 블록 아래 끝에서 이만큼(px)을 잡으면 길이 바꾸기 */
 const RESIZE_ZONE = 8
+/** [주] 보기 목표 칸에 접지 않고 보여줄 칩 수 */
+const ALLDAY_MAX = 3
+
 /** 하루 목표를 끌어다 놓을 때 쓰는 dataTransfer 형식 */
 export const GOAL_DRAG_TYPE = 'application/x-daily-goal'
 
@@ -115,6 +118,7 @@ export default function ScheduleView({
   const [drag, setDrag] = useState<Drag | null>(null)
   const [popover, setPopover] = useState<Popover>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [alldayOpen, setAlldayOpen] = useState(false)
   const [now, setNow] = useState(nowMinutesSeoul)
   const scroller = useRef<HTMLDivElement>(null)
 
@@ -270,8 +274,9 @@ export default function ScheduleView({
       {/* 머리(날짜·목표 줄)도 같은 스크롤 영역 안에 둬야 세로 스크롤바 폭만큼 열이 어긋나지 않는다 */}
       <div className="schedule-scroll" ref={scroller}>
       <div className="schedule-head" style={{ gridTemplateColumns: `3rem repeat(${dates.length}, minmax(0, 1fr))` }}>
-        <span />
-        {dates.map((d) =>
+        {/* [일] 보기는 날짜가 위 제목에 있으니 표 머리 날짜를 빼고, 할 일은 왼쪽 목록·카드 열에 둔다(1-4f ㊸) */}
+        {week && <span />}
+        {week && dates.map((d) =>
           week && onSelectDate ? (
             <button
               key={d}
@@ -289,7 +294,7 @@ export default function ScheduleView({
             </span>
           ),
         )}
-        {twoLane && (
+        {split && (
           <>
             <span />
             {dates.map((d) => (
@@ -300,19 +305,30 @@ export default function ScheduleView({
             ))}
           </>
         )}
-        <span className="schedule-allday-label muted">목표</span>
-        {dates.map((d) => (
-          <div key={d} className="schedule-allday">
-            {[...goalsOf(d)].sort((a, b) => Number(b.type === 'CORE') - Number(a.type === 'CORE')).map((g) => (
-              <GoalChip
-                key={g.id}
-                goal={g}
-                run={run}
-                coreFull={goalsOf(d).filter((x) => x.type === 'CORE').length >= 3}
-              />
-            ))}
-          </div>
-        ))}
+        {week && <span className="schedule-allday-label muted">목표</span>}
+        {week &&
+          dates.map((d) => {
+            const dayGoals = [...goalsOf(d)].sort((a, b) => Number(b.type === 'CORE') - Number(a.type === 'CORE'))
+            // 하루에 3개가 넘으면 "+N개"로 접고, 누르면 모든 날을 펼친다(구글 캘린더 종일 칸처럼)
+            const shown = alldayOpen ? dayGoals : dayGoals.slice(0, ALLDAY_MAX)
+            return (
+              <div key={d} className="schedule-allday">
+                {shown.map((g) => (
+                  <GoalChip
+                    key={g.id}
+                    goal={g}
+                    run={run}
+                    coreFull={goalsOf(d).filter((x) => x.type === 'CORE').length >= 3}
+                  />
+                ))}
+                {dayGoals.length > ALLDAY_MAX && (
+                  <button type="button" className="ghost schedule-allday-more" onClick={() => setAlldayOpen(!alldayOpen)}>
+                    {alldayOpen ? '접기' : `+${dayGoals.length - ALLDAY_MAX}개`}
+                  </button>
+                )}
+              </div>
+            )
+          })}
       </div>
 
         <div

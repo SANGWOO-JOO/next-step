@@ -1250,3 +1250,31 @@ button.pull-all:hover { color: #7c6cf8; }
 .swatch.on { box-shadow: 0 0 0 2px var(--surface, #2a2a2e), 0 0 0 4px var(--text, #fff); }
 .quick-add-create-foot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .quick-add-create-foot button { padding: 6px 14px; border-radius: 999px; background: var(--grad); color: #fff; border: 0; min-height: 0; }
+
+/* 넓게 보기 [일] 보기: 할 일 카드 열 + 시간표(1-4f ㊸) */
+.day-split.off { display: contents; }
+.day-split:not(.off) { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 0.9rem; min-height: 0; }
+@media (min-width: 1000px) {
+  .schedule-card > .day-split:not(.off) { flex: 1; }
+  .day-split:not(.off) > .schedule { min-height: 0; display: flex; flex-direction: column; }
+  .day-split:not(.off) > .schedule .schedule-scroll { flex: 1; height: auto; min-height: 0; }
+}
+@media (max-width: 760px) { .day-split:not(.off) { grid-template-columns: 1fr; } }
+.day-tasks { display: flex; flex-direction: column; gap: 0.5rem; min-height: 0; overflow-y: auto; }
+.day-tasks-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; font-size: 14px; }
+.day-tasks-head strong { font-weight: 700; }
+.day-tasks-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.day-task { display: flex; align-items: center; gap: 8px; padding: 9px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface, transparent); font-size: 14px; cursor: grab; }
+.day-task:hover { border-color: color-mix(in srgb, #8B5CF6 55%, var(--border)); }
+.day-task:active { cursor: grabbing; }
+.day-task input[type='checkbox'] { margin: 0; flex: none; }
+.day-task .category-dot { width: 8px; height: 8px; flex: none; }
+.day-task-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.day-task-grip { color: var(--text-muted, #888); font-size: 14px; letter-spacing: -1px; }
+.day-task.done { cursor: default; opacity: 0.55; }
+.day-task.done .day-task-text { text-decoration: line-through; }
+.day-tasks-hint { margin: 0; }
+
+/* [주] 보기 목표 칸: 얇은 칩 + "+N개" 접기(1-4f ㊸) */
+.schedule.week .schedule-goal { font-size: 12px; }
+.schedule-allday-more { align-self: flex-start; min-height: 0; padding: 1px 6px; font-size: 12px; border-radius: 6px; }
