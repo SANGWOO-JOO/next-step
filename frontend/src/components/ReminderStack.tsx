@@ -1,9 +1,14 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { formatDuration } from '../api/focus'
 import { CONDITION_LABELS, getDailyLog, type DailyLog } from '../api/records'
 import { getWeeklyJournals } from '../api/reviews'
 import { getTimeBlocksBetween } from '../api/timeBlocks'
+import nowIcon from '../assets/reminders/now.svg'
+import shutdownIcon from '../assets/reminders/shutdown.svg'
+import soonIcon from '../assets/reminders/soon.svg'
+import todayIcon from '../assets/reminders/today.svg'
+import weeklyIcon from '../assets/reminders/weekly.svg'
 import { journalDue } from '../pages/plan/planData'
 import { formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, todaySeoul } from '../utils/date'
 import { REMINDER_REFRESH } from '../utils/reminders'
@@ -103,82 +108,109 @@ export default function ReminderStack() {
   return (
     <div className="reminder-stack" role="region" aria-label="알림">
       {showToday && log && (
-        <div className="reminder-card today" role="status">
-          <button className="icon reminder-close" onClick={() => dismiss('today')} aria-label="오늘은 닫기">
-            ×
-          </button>
-          <strong>📊 오늘</strong>
-          <p className="muted small" title="지나간 계획 시간 중 계획과 같은 일을 실제로 한 비율">
-            실제 공부 {formatDuration(log.summary.plan.actualStudyMinutes * 60)}
-            {log.summary.plan.asPlannedPercent != null && ` · 계획대로 ${log.summary.plan.asPlannedPercent}%`}
-          </p>
-          <span className="row-actions">
-            {log.saved ? (
-              <button className="ghost" onClick={() => navigate('/?shutdown=1')}>
-                오늘 기록 ✓ {log.condition ? CONDITION_LABELS[log.condition] : ''}
-              </button>
-            ) : (
-              <button className="ghost" onClick={() => navigate('/?shutdown=1')}>
-                🌙 하루 마무리
-              </button>
-            )}
-          </span>
-        </div>
+        <ReminderCard
+          icon={todayIcon}
+          title="오늘"
+          onClose={() => dismiss('today')}
+          body={
+            <span title="지나간 계획 시간 중 계획과 같은 일을 실제로 한 비율">
+              실제 공부 <b>{formatDuration(log.summary.plan.actualStudyMinutes * 60)}</b>
+              {log.summary.plan.asPlannedPercent != null && (
+                <>
+                  {' '}
+                  · 계획대로 <b>{log.summary.plan.asPlannedPercent}%</b>
+                </>
+              )}
+            </span>
+          }
+          actions={
+            <button className="reminder-btn" onClick={() => navigate('/?shutdown=1')}>
+              {log.saved ? `오늘 기록 보기 ${log.condition ? CONDITION_LABELS[log.condition] : ''}` : '하루 마무리'}
+            </button>
+          }
+        />
       )}
       {b && (
-        <div className="reminder-card now" role="status">
-          <button className="icon reminder-close" onClick={() => dismiss(`block-${b.id}`)} aria-label="이 일정 알림 닫기">
-            ×
-          </button>
-          {b.start <= b.now ? (
-            <>
-              <strong>⏱ 지금: {b.label}</strong>
-              <p className="muted small">
-                {formatMinutes(b.end)}까지 · {b.end - b.now}분 남음
-              </p>
-            </>
-          ) : (
-            <>
-              <strong>🔔 곧 시작: {b.label}</strong>
-              <p className="muted small">
-                {formatMinutes(b.start)} 시작 · {b.start - b.now}분 뒤
-              </p>
-            </>
-          )}
-        </div>
-      )}
-      {state.shutdown && (
-        <div className="reminder-card" role="status">
-          <button className="icon reminder-close" onClick={() => dismiss('shutdown')} aria-label="오늘은 닫기">
-            ×
-          </button>
-          <strong>🌙 저녁 9시가 지났어요</strong>
-          <p className="muted small">오늘을 마무리하고 내일을 가볍게 시작해요.</p>
-          <span className="row-actions">
-            <button onClick={() => navigate('/?shutdown=1')}>하루 마무리</button>
-            <button className="ghost" onClick={() => dismiss('shutdown')}>
-              나중에
-            </button>
-          </span>
-        </div>
+        <ReminderCard
+          icon={b.start <= b.now ? nowIcon : soonIcon}
+          title={b.start <= b.now ? `지금 · ${b.label}` : `곧 시작 · ${b.label}`}
+          onClose={() => dismiss(`block-${b.id}`)}
+          body={
+            b.start <= b.now
+              ? `${formatMinutes(b.end)}까지 · ${b.end - b.now}분 남음`
+              : `${formatMinutes(b.start)} 시작 · ${b.start - b.now}분 뒤`
+          }
+          progress={b.start <= b.now ? (b.now - b.start) / Math.max(1, b.end - b.start) : undefined}
+        />
       )}
       {state.weekly && (
-        <div className="reminder-card" role="status">
-          <button className="icon reminder-close" onClick={() => dismiss('weekly')} aria-label="오늘은 닫기">
-            ×
-          </button>
-          <strong>📝 한 주가 끝나가요</strong>
-          <p className="muted small">이번 주를 돌아보고 다음 주에 바꿀 한 가지를 정해요.</p>
-          <span className="row-actions">
-            <Link className="button-link" to={`/plan?level=week&date=${monday}#journal`} onClick={() => dismiss('weekly')}>
-              주간 일지 쓰기
-            </Link>
-            <button className="ghost" onClick={() => dismiss('weekly')}>
-              나중에
-            </button>
-          </span>
-        </div>
+        <ReminderCard
+          icon={weeklyIcon}
+          title="한 주가 끝나가요"
+          onClose={() => dismiss('weekly')}
+          body="이번 주를 돌아보고 다음 주에 바꿀 한 가지를 정해요."
+          actions={
+            <>
+              <Link className="reminder-btn primary" to={`/plan?level=week&date=${monday}#journal`} onClick={() => dismiss('weekly')}>
+                주간 일지 쓰기
+              </Link>
+              <button className="reminder-btn" onClick={() => dismiss('weekly')}>
+                나중에
+              </button>
+            </>
+          }
+        />
       )}
+      {state.shutdown && (
+        <ReminderCard
+          icon={shutdownIcon}
+          title="저녁 9시가 지났어요"
+          onClose={() => dismiss('shutdown')}
+          body="오늘을 마무리하고 내일을 가볍게 시작해요."
+          actions={
+            <>
+              <button className="reminder-btn primary" onClick={() => navigate('/?shutdown=1')}>
+                하루 마무리
+              </button>
+              <button className="reminder-btn" onClick={() => dismiss('shutdown')}>
+                나중에
+              </button>
+            </>
+          }
+        />
+      )}
+    </div>
+  )
+}
+
+type CardProps = {
+  icon: string
+  title: string
+  body: ReactNode
+  actions?: ReactNode
+  /** 0~1. 지금 하는 일정이 얼마나 지났는지 */
+  progress?: number
+  onClose: () => void
+}
+
+/** 알림 카드 한 장: 왼쪽 그라데이션 아이콘 타일 + 제목·설명·버튼(1-4f ⑯) */
+function ReminderCard({ icon, title, body, actions, progress, onClose }: CardProps) {
+  return (
+    <div className="reminder-card" role="status">
+      <img className="reminder-icon" src={icon} alt="" aria-hidden="true" width={40} height={40} draggable={false} />
+      <div className="reminder-main">
+        <strong className="reminder-title">{title}</strong>
+        <p className="reminder-body">{body}</p>
+        {progress !== undefined && (
+          <span className="reminder-progress">
+            <span style={{ width: `${Math.min(100, Math.max(0, progress * 100))}%` }} />
+          </span>
+        )}
+        {actions && <span className="reminder-actions">{actions}</span>}
+      </div>
+      <button className="reminder-close" onClick={onClose} aria-label="오늘은 닫기" title="오늘은 닫기">
+        ×
+      </button>
     </div>
   )
 }
