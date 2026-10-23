@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Next Step CI</title>
+<style>
+  :root { --bg:#f7f7f5; --surface:#fff; --text:#1f2328; --muted:#6b7280; --line:rgba(31,35,40,.09); --grad:linear-gradient(135deg,#5b8cff,#8b5cf6); }
+  @media (prefers-color-scheme: dark) { :root { --bg:#141414; --surface:#1d1d1f; --text:#ececec; --muted:#9ca3af; --line:rgba(255,255,255,.09); } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:Pretendard,-apple-system,'Apple SD Gothic Neo',sans-serif; line-height:1.6; }
+  main { max-width:960px; margin:0 auto; padding:40px 16px 80px; display:grid; gap:20px; }
+  h1 { font-size:2rem; margin:0; letter-spacing:-.5px; }
+  h2 { font-size:1.15rem; margin:0 0 12px; }
+  p { margin:0; }
+  .muted { color:var(--muted); }
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:24px; box-shadow:0 8px 24px rgba(0,0,0,.06); }
+  .hero { background:var(--grad); color:#fff; border:none; display:grid; gap:14px; padding:40px 28px; }
+  .hero img { width:72px; }
+  .hero .slogan { font-size:1.6rem; font-weight:800; letter-spacing:-.5px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; }
+  .tile { border-radius:14px; border:1px solid var(--line); padding:20px; display:grid; place-items:center; gap:8px; min-height:140px; text-align:center; font-size:.85rem; }
+  .tile.dark { background:#141414; color:#ececec; }
+  .tile.light { background:#fff; color:#1f2328; }
+  .tile.grad { background:var(--grad); color:#fff; border:none; }
+  .sw { border-radius:14px; overflow:hidden; border:1px solid var(--line); }
+  .sw div:first-child { height:72px; }
+  .sw div:last-child { padding:10px 12px; font-size:.82rem; }
+  code { font-family:ui-monospace,Menlo,monospace; font-size:.85em; }
+  ul { margin:0; padding-left:1.2rem; }
+  li + li { margin-top:4px; }
+  table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  td, th { text-align:left; padding:8px 6px; border-top:1px solid var(--line); vertical-align:top; }
+</style>
+</head>
+<body>
+<main>
+  <section class="card hero">
+    <img src="symbol-mono-white.svg" alt="Next Step 심볼">
+    <h1>Next Step</h1>
+    <p class="slogan">공백 말고, 준비 기간.</p>
+    <p>퇴사 후 이직을 준비하는 20대를 위한 계획·실제 기록·회고 도구의 CI 가이드</p>
+  </section>
+
+  <section class="card">
+    <h2>1. 브랜드 컨셉</h2>
+    <p>계획한 칸을 하루하루 채우다 보면, 그 칸들이 계단이 되어 <b>다음 단계(다음 회사)</b>로 이어진다. 쉬는 시간이 아니라 기록된 준비 기간이라는 확신을 주는 브랜드.</p>
+    <table style="margin-top:14px">
+      <tr><th>성격</th><td>다그치지 않는 친한 선배. 담백하고 다정하게, 작은 성취를 크게 알아봐 준다</td></tr>
+      <tr><th>약속</th><td>오늘 채운 한 칸이 증거가 된다</td></tr>
+      <tr><th>키워드</th><td>칸 · 계단 · 앞으로 · 기록 · 확신</td></tr>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>2. 심볼</h2>
+    <p class="muted">시간표의 <b>칸 세 개</b>가 아래에서 위로 올라가는 계단을 이룬다. 위로 갈수록 또렷해지는 칸은 "채워지는 준비", 맨 위 칸의 "›"는 "다음 단계로"를 뜻한다. 파랑→보라 그라데이션 둥근 사각 타일 안에 둔다.</p>
+    <div class="grid" style="margin-top:16px">
+      <div class="tile light"><img src="symbol.svg" width="88" alt="">기본 심볼</div>
+      <div class="tile dark"><img src="symbol.svg" width="88" alt="">어두운 배경</div>
+      <div class="tile grad"><img src="symbol-mono-white.svg" width="88" alt="">그라데이션 위 흰색</div>
+      <div class="tile light"><img src="symbol-mono-dark.svg" width="88" alt="">단색(인쇄·도장)</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>3. 로고타입 · 가로 조합</h2>
+    <p class="muted">Pretendard ExtraBold(800), 자간 -0.5. "Step"에 브랜드 그라데이션을 넣어 앞으로 나아가는 쪽을 강조한다.</p>
+    <div class="grid" style="margin-top:16px">
+      <div class="tile light"><img src="logo-horizontal-light.svg" width="220" alt="">밝은 배경</div>
+      <div class="tile dark"><img src="logo-horizontal-dark.svg" width="220" alt="">어두운 배경</div>
+    </div>
+    <ul style="margin-top:14px">
+      <li>최소 크기: 심볼 20px(앱 메뉴 22px), 가로 조합 120px</li>
+      <li>여백: 심볼 높이의 1/4 이상을 사방에 비운다</li>
+      <li>하지 말 것: 비율 늘이기, 그라데이션 방향 바꾸기, 다른 색 타일, 그림자·외곽선 추가, 칸 개수 바꾸기</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>4. 컬러</h2>
+    <div class="grid">
+      <div class="sw"><div style="background:#5B8CFF"></div><div><b>Step Blue</b><br><code>#5B8CFF</code> · 시작색</div></div>
+      <div class="sw"><div style="background:#8B5CF6"></div><div><b>Next Violet</b><br><code>#8B5CF6</code> · 끝색</div></div>
+      <div class="sw"><div style="background:linear-gradient(135deg,#5B8CFF,#8B5CF6)"></div><div><b>Brand Gradient</b><br><code>135° #5B8CFF→#8B5CF6</code> · 로고·주요 버튼</div></div>
+      <div class="sw"><div style="background:#22C55E"></div><div><b>Done Green</b><br><code>#22C55E→#14B8A6</code> · 진행·완료</div></div>
+      <div class="sw"><div style="background:#FF9F43"></div><div><b>Nudge Orange</b><br><code>#FF9F43→#FF5E7E</code> · 돌아보기 알림</div></div>
+      <div class="sw"><div style="background:#1F2328"></div><div><b>Ink</b><br><code>#1F2328</code> / 다크 <code>#ECECEC</code> · 글자</div></div>
+    </div>
+    <p class="muted" style="margin-top:12px">그라데이션은 주요 동작 하나와 로고에만 쓴다. 한 화면에 그라데이션 버튼은 하나가 기본.</p>
+  </section>
+
+  <section class="card">
+    <h2>5. 타이포그래피</h2>
+    <table>
+      <tr><th>서체</th><td>Pretendard (대체: Apple SD Gothic Neo, 시스템 sans-serif)</td></tr>
+      <tr><th>제목</th><td>ExtraBold 800 · 자간 -0.5 · 예: <b style="font-size:1.3rem">10월 19일 – 25일</b></td></tr>
+      <tr><th>본문</th><td>Regular 400 / Medium 500 · 줄 간격 1.6</td></tr>
+      <tr><th>숫자</th><td>표에서는 고정폭 숫자(tabular-nums)로 정렬</td></tr>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>6. 그래픽 요소 · UI</h2>
+    <ul>
+      <li>아이콘: 12px 둥근 사각 그라데이션 타일 + 흰 그림 (메뉴·알림 카드와 같은 계열)</li>
+      <li>카드: 18px 둥근 모서리, 옅은 테두리, 은은한 그림자</li>
+      <li>버튼: 알약 모양. 주요 동작은 브랜드 그라데이션, 보조는 얇은 테두리</li>
+      <li>"칸" 모티프: 빈 칸 → 채운 칸으로 진행을 표현 (빈 상태 일러스트, 로딩 등)</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>7. 보이스 · 카피</h2>
+    <table>
+      <tr><th>슬로건</th><td><b>공백 말고, 준비 기간.</b></td></tr>
+      <tr><th>서브</th><td>계획한 칸과 실제 한 칸을 나란히. 오늘 채운 한 칸이 다음 회사로 가는 길이 돼요.</td></tr>
+      <tr><th>톤</th><td>존댓말, 짧게, 다그치지 않기. 결과보다 오늘 한 칸을 칭찬</td></tr>
+      <tr><th>예시</th><td>오늘 칸, 여기까지 채웠어요. 마무리할까요? · 이번 주 7칸, 어땠는지 한 줄만 남겨요.</td></tr>
+      <tr><th>피할 말</th><td>"또 실패", "왜 안 했어요?" 같은 죄책감 주는 표현, 과한 느낌표</td></tr>
+    </table>
+  </section>
+</main>
+</body>
+</html>
