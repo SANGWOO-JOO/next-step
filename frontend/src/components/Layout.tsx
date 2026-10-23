@@ -99,7 +99,7 @@ export default function Layout() {
 
       <aside className={drawerOpen ? 'sidebar open' : 'sidebar'} aria-label="메뉴">
         <div className="side-brand">
-          <NavIcon name="schedule" />
+          <NavIcon name="brand" />
           <span className="side-label">Job Scheduler</span>
         </div>
         <nav className="side-nav">

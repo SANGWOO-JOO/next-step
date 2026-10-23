@@ -1103,3 +1103,7 @@ input[type='checkbox'] { accent-color: #6d74f7; }
 .goal-bar, .progress-track, .week-bar-track { border-radius: 999px; }
 .goal-bar-fill { background: linear-gradient(90deg, #22c55e, #14b8a6); }
 .goal-bar-fill.accent, .week-bar-fill { background: var(--grad); }
+/* 메뉴 아이콘 타일(1-4f ⑱): 평소엔 살짝 차분하게, 마우스를 올리거나 고른 메뉴는 또렷하게 */
+.nav-tile { display: block; flex: none; border-radius: 7px; filter: saturate(0.55); opacity: 0.8; transition: filter 0.15s, opacity 0.15s, transform 0.15s; }
+.side-link:hover .nav-tile, .side-link.active .nav-tile, .side-brand .nav-tile { filter: none; opacity: 1; }
+.side-link.active .nav-tile { transform: scale(1.06); }

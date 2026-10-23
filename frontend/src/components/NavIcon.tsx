@@ -1,3 +1,14 @@
+import brand from '../assets/nav/brand.svg'
+import checklist from '../assets/nav/checklist.svg'
+import dashboard from '../assets/nav/dashboard.svg'
+import log from '../assets/nav/log.svg'
+import plan from '../assets/nav/plan.svg'
+import schedule from '../assets/nav/schedule.svg'
+import settings from '../assets/nav/settings.svg'
+
+/** 메뉴는 그라데이션 아이콘 타일 이미지(1-4f ⑱, 알림 카드와 같은 스타일). 메뉴 접기 같은 도구 버튼은 선 아이콘 */
+const IMAGES: Record<string, string> = { brand, schedule, plan, log, dashboard, checklist, settings }
+
 /** 메뉴 아이콘(선 아이콘, 24 격자). 색은 글자색을 따른다 */
 const PATHS: Record<string, string> = {
   schedule: 'M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM16 3v4M8 3v4M4 11h16M8 15h2v2H8z',
@@ -14,6 +25,9 @@ const PATHS: Record<string, string> = {
 }
 
 export default function NavIcon({ name }: { name: keyof typeof PATHS | string }) {
+  if (IMAGES[name]) {
+    return <img className="nav-icon nav-tile" src={IMAGES[name]} alt="" aria-hidden="true" width={22} height={22} draggable={false} />
+  }
   return (
     <svg
       className="nav-icon"
