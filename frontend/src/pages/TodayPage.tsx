@@ -464,29 +464,25 @@ function Workload({ blocks, goals, compact = false }: { blocks: TimeBlock[]; goa
   const planned = spans.reduce((sum, x) => sum + x.end - x.start, 0)
   const ahead = spans.reduce((sum, x) => sum + Math.max(0, x.end - Math.max(x.start, now)), 0)
   const left = Math.max(0, 1440 - now)
-  const unscheduled = goals.filter((g) => g.status === 'TODO' && !spans.some((x) => x.goalId === g.id)).length
+  const unscheduled = goals.filter((g) => g.status === 'TODO' && !spans.some((x) => x.goalId === g.id))
   const over = ahead > left
   const hm = (m: number) => formatDuration(m * 60)
 
-  if (compact) {
-    return (
-      <span className={over ? 'toolbar-workload over' : 'toolbar-workload muted small'}>
-        시간 잡음 <strong>{hm(planned)}</strong> · 남은 일정 {hm(ahead)} / 자정까지 {hm(left)}
-        {unscheduled > 0 && ` · 안 잡은 할 일 ${unscheduled}개`}
-      </span>
-    )
-  }
-
+  // 평소에는 계획 합계만, 남은 계획이 오늘 남은 시간보다 많을 때만 경고(Sunsama 과다 계획 경고 방식)
   return (
-    <div className={over ? 'workload over' : 'workload'}>
-      <span className="small">
-        시간 잡음 <strong>{hm(planned)}</strong> · 남은 일정 {hm(ahead)} / 자정까지 {hm(left)}
-      </span>
-      <span className="workload-track">
-        <span className="workload-fill" style={{ width: `${Math.min(100, left ? (ahead / left) * 100 : 100)}%` }} />
-      </span>
-      {over && <span className="small">남은 시간보다 잡은 일이 많아요. 내일로 넘길 것을 골라요.</span>}
-      {!over && unscheduled > 0 && <span className="muted small">시간 안 잡은 할 일 {unscheduled}개</span>}
+    <div className={[compact ? 'toolbar-workload' : 'workload', over ? 'over' : 'muted', 'small'].join(' ')}>
+      {over ? (
+        <span>
+          ⚠ 남은 계획 <strong>{hm(ahead)}</strong>이 오늘 남은 시간({hm(left)})보다 많아요. 내일로 넘길 것을 골라요.
+        </span>
+      ) : (
+        <span>
+          계획 <strong>{hm(planned)}</strong>
+          {unscheduled.length > 0 && (
+            <span title={unscheduled.map((g) => g.content).join('\n')}> · 시간 안 잡음 {unscheduled.length}</span>
+          )}
+        </span>
+      )}
     </div>
   )
 }

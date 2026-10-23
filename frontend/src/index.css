@@ -583,10 +583,7 @@ body.immersive .app-main { padding-top: 2rem; }
 .log-chip { color: var(--up); border-color: color-mix(in srgb, var(--up) 40%, var(--border)); }
 .workload { display: grid; gap: 0.25rem; margin-bottom: 0.6rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--border); }
 .workload strong { color: var(--text); }
-.workload-track { height: 0.4rem; background: var(--border); border-radius: 999px; overflow: hidden; }
-.workload-fill { display: block; height: 100%; background: var(--up); }
 .workload.over { color: #b45309; }
-.workload.over .workload-fill { background: #f59e0b; }
 .pull-section { margin-top: 0.75rem; padding: 0.5rem 0.6rem; border: 1px dashed var(--border); border-radius: 8px; display: grid; gap: 0.35rem; }
 .pull-title { margin: 0; font-size: 0.9rem; }
 .pull-tag { font-size: 0.72rem; padding: 0 0.35rem; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
