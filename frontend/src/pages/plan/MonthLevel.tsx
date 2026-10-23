@@ -5,7 +5,6 @@ import { getDailyGoalsBetween, type DailyGoal } from '../../api/dailyGoals'
 import { formatDuration } from '../../api/focus'
 import {
   createMonthlyGoal,
-  createWeeklyGoal,
   deleteMonthlyGoal,
   toMonthlyInput,
   toWeeklyInput,
@@ -21,15 +20,14 @@ import {
   type MonthlyReview,
   type WeeklyJournalBrief,
 } from '../../api/reviews'
-import GoalCalendar from '../../components/GoalCalendar'
 import { MonthlyGoalForm } from '../../components/GoalTree'
 import MoreMenu from '../../components/MoreMenu'
 import HealthDot from '../../components/HealthDot'
 import ProgressBar from '../../components/ProgressBar'
 import ReviewCard from '../../components/ReviewCard'
-import { addMonths, mondaysOfMonth, monthLabel, shiftDate, todaySeoul, weekLabel } from '../../utils/date'
+import { addMonths, mondayOf, mondaysOfMonth, monthLabel, shiftDate, todaySeoul, weekLabel } from '../../utils/date'
 import { healthOf, monthRange } from '../../utils/health'
-import { activeGoal, allMonthlyGoals, monthlyPercent, reviewDue, type Run } from './planData'
+import { activeGoal, allMonthlyGoals, monthlyPercent, reviewDue, weeklyGoalsOf, type Run } from './planData'
 
 type Props = {
   month: string
@@ -41,12 +39,11 @@ type Props = {
 }
 
 /** [월]: 월간 목표 카드와 주차 줄(가운데) + 이 달 숫자, 지난달 반영, 월간 회고(오른쪽) */
-export default function MonthLevel({ month, goals, categories, run: parentRun, onOpenWeek, onOpenGoalLevel }: Props) {
+export default function MonthLevel({ month, goals, run: parentRun, onOpenWeek, onOpenGoalLevel }: Props) {
   const [review, setReview] = useState<MonthlyReview | null>(null)
   const [lastReview, setLastReview] = useState<MonthlyReview | null>(null)
   const [dailyGoals, setDailyGoals] = useState<DailyGoal[]>([])
   const [journals, setJournals] = useState<WeeklyJournalBrief[]>([])
-  const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -135,7 +132,7 @@ export default function MonthLevel({ month, goals, categories, run: parentRun, o
                           onChange={() => run(() => updateMonthlyGoal(m.id, { ...toMonthlyInput(m), achieved: !m.achieved }))}
                           aria-label="달성"
                         />
-                        <HealthDot health={healthOf(monthlyPercent(m), from, to, today, m.achieved)} label />
+                        <HealthDot health={healthOf(monthlyPercent(m), from, to, today, m.achieved)} />
                         <strong className={m.achieved ? 'done' : undefined}>{m.content}</strong>
                         <MoreMenu
                           label="월간 목표 동작"
@@ -153,13 +150,6 @@ export default function MonthLevel({ month, goals, categories, run: parentRun, o
                       <span className="monthly-card-metrics">
                         <span className="muted small">주간 목표</span>
                         <ProgressBar progress={m.progress} />
-                        {m.targetValue !== null && (
-                          <span className="small">
-                            <span className="muted">수치 </span>
-                            {m.currentValue ?? 0}/{m.targetValue}
-                            {m.unit ?? ''}
-                          </span>
-                        )}
                       </span>
                     </li>
                   ),
@@ -170,22 +160,38 @@ export default function MonthLevel({ month, goals, categories, run: parentRun, o
 
           <div className="card">
             <h3 className="timeline-title">주차별 주간 목표</h3>
-            <p className="muted small">날짜를 누르면 그날 하루 목표를, '주 보기'를 누르면 그 주 계획을 열어요.</p>
-            <GoalCalendar
-              embedded
-              goals={goals}
-              categories={categories}
-              month={month}
-              onMonthChange={() => undefined}
-              onToggleMonthly={() => undefined}
-              onToggleWeekly={(w) => run(() => updateWeeklyGoal(w.id, { ...toWeeklyInput(w), achieved: !w.achieved }))}
-              onAddWeekly={(monthlyGoalId, input) => run(() => createWeeklyGoal(monthlyGoalId, input))}
-              dailyGoals={dailyGoals}
-              selectedDate={selectedDate}
-              onSelectDate={setSelectedDate}
-              run={run}
-              onOpenWeek={onOpenWeek}
-            />
+            <ul className="month-weeks">
+              {mondaysOfMonth(month).map((monday) => {
+                const weekly = weeklyGoalsOf(goals, monday)
+                const days = dailyGoals.filter((d) => mondayOf(d.date) === monday)
+                return (
+                  <li key={monday} className={monday === mondayOf(today) ? 'current' : undefined}>
+                    <button className="ghost month-week-label" onClick={() => onOpenWeek(monday)} title="이 주 보기">
+                      {Number(monday.slice(5, 7))}/{Number(monday.slice(8))} 주 ›
+                    </button>
+                    <span className="month-week-goals">
+                      {weekly.length === 0 && <span className="muted small">주간 목표 없음</span>}
+                      {weekly.map((w) => (
+                        <label key={w.id} className="month-week-goal">
+                          <input
+                            type="checkbox"
+                            checked={w.achieved}
+                            onChange={() => run(() => updateWeeklyGoal(w.id, { ...toWeeklyInput(w), achieved: !w.achieved }))}
+                            aria-label="달성"
+                          />
+                          <span className={w.achieved ? 'done' : undefined}>{w.content}</span>
+                        </label>
+                      ))}
+                    </span>
+                    {days.length > 0 && (
+                      <span className="muted small" title="이 주 할 일 완료/전체">
+                        할 일 {days.filter((d) => d.status === 'DONE').length}/{days.length}
+                      </span>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
           </div>
         </div>
 

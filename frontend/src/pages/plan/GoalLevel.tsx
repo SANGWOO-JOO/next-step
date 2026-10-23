@@ -6,7 +6,7 @@ import { GoalForm } from '../../components/GoalTree'
 import HealthDot from '../../components/HealthDot'
 import MoreMenu from '../../components/MoreMenu'
 import { addMonths, currentMonthSeoul, monthLabel, todaySeoul } from '../../utils/date'
-import { elapsedPercent, healthOf, monthRange } from '../../utils/health'
+import { healthOf, monthRange } from '../../utils/health'
 import { monthlyPercent, type Run } from './planData'
 
 /** 로드맵에 기본으로 보여줄 달 수 */
@@ -61,11 +61,10 @@ export default function GoalLevel({ goals, run, onOpenMonth }: Props) {
                 />
               ) : (
                 <div className="goal-summary">
-                  <HealthDot health={healthOf(goal.progress.percent, goal.startDate, goal.targetDate, today)} label />
+                  <HealthDot health={healthOf(goal.progress.percent, goal.startDate, goal.targetDate, today)} />
                   <h2 className="goal-title">{goal.title}</h2>
                   <span className="goal-summary-line muted small">
-                    {goal.startDate} 시작 · 목표일 {goal.targetDate} · 기간 {elapsedPercent(goal.startDate, goal.targetDate, today)}% 지남 ·
-                    월간 목표 {goal.progress.achieved}/{goal.progress.total} 달성
+                    {goal.targetDate}까지 · 월간 목표 {goal.progress.achieved}/{goal.progress.total} 달성
                   </span>
                   <GoalMenu goal={goal} run={run} onEdit={() => setEditingId(goal.id)} />
                 </div>
@@ -102,7 +101,7 @@ export default function GoalLevel({ goals, run, onOpenMonth }: Props) {
               </div>
               {(hidden > 0 || showAll) && allMonths.length > ROADMAP_WINDOW && (
                 <button className="ghost add" onClick={() => setShowAll(!showAll)}>
-                  {showAll ? '지금 주변만 보기' : `나머지 ${hidden}개월도 보기`}
+                  {showAll ? '지금 주변만 보기' : '전체 기간 보기'}
                 </button>
               )}
             </div>
