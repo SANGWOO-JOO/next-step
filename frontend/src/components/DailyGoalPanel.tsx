@@ -17,6 +17,7 @@ import { createTimeBlock, type TimeBlock } from '../api/timeBlocks'
 import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, shiftDate, todaySeoul } from '../utils/date'
 import CategoryBadge from './CategoryBadge'
 import FormButtons from './FormButtons'
+import FocusStartIcon from './FocusStartIcon'
 import MoreMenu from './MoreMenu'
 import { GOAL_DRAG_TYPE } from './ScheduleView'
 import TimeBlockForm from './TimeBlockForm'
@@ -201,8 +202,8 @@ function DailyGoalItem({
       <div className="daily-row">
         <input type="checkbox" checked={done} onChange={toggleDone} aria-label="완료" />
         {onStartFocus && !done && (
-          <button className="start-focus" onClick={() => onStartFocus(goal)} title="집중 시작" aria-label="집중 시작">
-            ▶
+          <button className="play-button" onClick={() => onStartFocus(goal)} title="집중 시작" aria-label="집중 시작">
+            <FocusStartIcon size="22" />
           </button>
         )}
         <span className={done ? 'daily-content done' : 'daily-content'}>

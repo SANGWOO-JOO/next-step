@@ -11,6 +11,7 @@ import { formatDuration, type FocusSession } from '../api/focus'
 import { createTimeBlock, deleteTimeBlock, toTimeBlockInput, updateTimeBlock, type TimeBlock } from '../api/timeBlocks'
 import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, seoulIso, shiftDate, todaySeoul } from '../utils/date'
 import MoreMenu from './MoreMenu'
+import FocusStartIcon from './FocusStartIcon'
 import TimeBlockForm from './TimeBlockForm'
 
 const HOUR_PX = 48
@@ -368,8 +369,8 @@ function SchedulePopover({ popover, goals, run, onClose, onStartFocus }: Popover
       {goal && (
         <span className="row-actions">
           {goal.status === 'TODO' && onStartFocus && (
-            <button className="start-focus" onClick={() => onStartFocus(goal)}>
-              ▶ 지금 집중 시작
+            <button className="start-focus with-icon" onClick={() => onStartFocus(goal)}>
+              <FocusStartIcon size="18" /> 지금 집중 시작
             </button>
           )}
           <button
@@ -420,8 +421,8 @@ function GoalChip({ goal, run, onStartFocus, coreFull }: ChipProps) {
         aria-label="완료"
       />
       {onStartFocus && !done && (
-        <button className="chip-play" onClick={() => onStartFocus(goal)} aria-label="집중 시작" title="집중 시작">
-          ▶
+        <button className="play-button small" onClick={() => onStartFocus(goal)} aria-label="집중 시작" title="집중 시작">
+          <FocusStartIcon size="18" />
         </button>
       )}
       <span className="schedule-goal-text">

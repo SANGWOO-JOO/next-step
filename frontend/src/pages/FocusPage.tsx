@@ -26,6 +26,7 @@ import {
   type InterruptionType,
 } from '../api/focus'
 import CategoryBadge from '../components/CategoryBadge'
+import FocusStartIcon from '../components/FocusStartIcon'
 import { todaySeoul } from '../utils/date'
 
 /** 탭을 이만큼 이상 벗어나야 중단으로 기록한다 */
@@ -544,8 +545,8 @@ function StartForm({ categories, run }: { categories: Category[]; run: Run }) {
         </label>
       </span>
       <span>
-        <button type="submit" disabled={!goal && effectiveCategoryId === null}>
-          ▶ 시작
+        <button type="submit" className="with-icon" disabled={!goal && effectiveCategoryId === null}>
+          <FocusStartIcon size="20" /> 집중 시작
         </button>
       </span>
     </form>

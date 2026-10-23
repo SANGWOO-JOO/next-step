@@ -878,3 +878,20 @@ body.resizing { cursor: col-resize; user-select: none; }
 .toolbar-pull-panel .pull-section { margin-top: 0; }
 .toolbar-workload strong { color: var(--text); }
 .toolbar-workload.over { color: #b45309; }
+
+/* 집중 시작 아이콘 버튼 */
+.focus-start-icon { display: block; flex: none; filter: drop-shadow(0 2px 4px rgb(91 140 255 / 0.35)); }
+button.play-button {
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  line-height: 0;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+button.play-button:hover { transform: scale(1.12); filter: brightness(1.08); }
+button.play-button:active { transform: scale(0.94); }
+button.play-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.with-icon { display: inline-flex; align-items: center; gap: 0.4rem; }
