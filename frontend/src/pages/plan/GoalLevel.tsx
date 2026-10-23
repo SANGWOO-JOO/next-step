@@ -1,130 +1,84 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Category } from '../../api/categories'
-import { createGoal, deleteGoal, GOAL_STATUS_LABEL, updateGoal, type Goal } from '../../api/goals'
-import { GoalForm } from '../../components/GoalTree'
-import HealthDot from '../../components/HealthDot'
+import { getDailyGoalsBetween, type DailyGoal } from '../../api/dailyGoals'
+import { formatDuration } from '../../api/focus'
+import { createGoal, createMonthlyGoal, deleteGoal, GOAL_STATUS_LABEL, updateGoal, type Goal } from '../../api/goals'
+import { getStatsSummary, type StatsSummary } from '../../api/stats'
+import { GoalForm, MonthlyGoalForm } from '../../components/GoalTree'
 import MoreMenu from '../../components/MoreMenu'
-import { addMonths, currentMonthSeoul, monthLabel, todaySeoul } from '../../utils/date'
-import { healthOf, monthRange } from '../../utils/health'
-import { monthlyPercent, type Run } from './planData'
+import { currentMonthSeoul, mondayOf, monthLabel, shiftDate, todaySeoul } from '../../utils/date'
+import { elapsedPercent, HEALTH_LABELS, healthOf, monthRange } from '../../utils/health'
+import { monthlyPercent, weeklyGoalsOf, type Run } from './planData'
 
-/** 로드맵에 기본으로 보여줄 달 수 */
-const ROADMAP_WINDOW = 7
-
-type Props = { goals: Goal[]; categories: Category[]; run: Run; onOpenMonth: (month: string) => void }
-
-/** 최종 목표 기간의 달 목록 */
-function monthsOf(goal: Goal) {
-  const months: string[] = []
-  for (let m = goal.startDate.slice(0, 7); m <= goal.targetDate.slice(0, 7); m = addMonths(m, 1)) months.push(m)
-  return months
+type Props = {
+  goals: Goal[]
+  categories: Category[]
+  run: Run
+  onOpenMonth: (month: string) => void
+  onOpenWeek: (monday: string) => void
 }
 
-/** [최종]: 진행 중인 최종 목표의 월 단위 로드맵 카드(⋯로 수정·삭제). 월간 회고는 기록 페이지 [월간]에서 모아 본다 */
-export default function GoalLevel({ goals, run, onOpenMonth }: Props) {
-  const [showAll, setShowAll] = useState(false)
+const daysBetween = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000)
+
+/**
+ * [최종](docs/design.md 1-4f ⑧, Linear 프로젝트 개요·Asana Goals 참고): 상태 한 줄 + "지금"(이번 달·이번 주) +
+ * "지금까지"(시작일부터 공부) + 월간 목표 목록. 진행 중인 최종 목표는 하나뿐이다.
+ */
+export default function GoalLevel({ goals, run, onOpenMonth, onOpenWeek }: Props) {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [adding, setAdding] = useState(false)
-  const others = goals.filter((g) => g.status !== 'ACTIVE')
+  const [addingMonthly, setAddingMonthly] = useState(false)
+  const [stats, setStats] = useState<StatsSummary | null>(null)
+  const [weekGoals, setWeekGoals] = useState<DailyGoal[]>([])
   const today = todaySeoul()
-  const shown = goals.filter((g) => g.status === 'ACTIVE')
+  const monday = mondayOf(today)
+  const goal = goals.find((g) => g.status === 'ACTIVE') ?? null
+  const others = goals.filter((g) => g.status !== 'ACTIVE')
 
+  useEffect(() => {
+    if (!goal) return
+    const from = goal.startDate < today ? goal.startDate : today
+    getStatsSummary(from, today)
+      .then(setStats)
+      .catch(() => setStats(null))
+    getDailyGoalsBetween(monday, shiftDate(monday, 6))
+      .then(setWeekGoals)
+      .catch(() => setWeekGoals([]))
+  }, [goal?.id, goal?.startDate, today, monday]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const editForm = (g: Goal) => (
+    <GoalForm
+      initial={g}
+      submitLabel="저장"
+      onSubmit={(input) => run(() => updateGoal(g.id, input)).then((ok) => ok && setEditingId(null))}
+      onCancel={() => setEditingId(null)}
+    />
+  )
 
   return (
-    <div className="plan-layout single">
-      <div className="plan-main">
-        {shown.map((goal) => {
-          // 기간이 길면 지난달부터 ROADMAP_WINDOW개월만 보여주고 나머지는 접는다
-          const allMonths = monthsOf(goal)
-          const startAt = Math.max(0, allMonths.indexOf(addMonths(currentMonthSeoul(), -1)))
-          const months = showAll ? allMonths : allMonths.slice(startAt, startAt + ROADMAP_WINDOW)
-          const hidden = allMonths.length - months.length
-          return (
-            <div key={goal.id} className="card">
-              {editingId === goal.id ? (
-                <GoalForm
-                  initial={goal}
-                  submitLabel="저장"
-                  onSubmit={(input) => run(() => updateGoal(goal.id, input)).then((ok) => ok && setEditingId(null))}
-                  onCancel={() => setEditingId(null)}
-                />
-              ) : (
-                <div className="goal-summary">
-                  <HealthDot health={healthOf(goal.progress.percent, goal.startDate, goal.targetDate, today)} />
-                  <h2 className="goal-title">{goal.title}</h2>
-                  <span className="goal-summary-line muted small">
-                    {goal.targetDate}까지 · 월간 목표 {goal.progress.achieved}/{goal.progress.total} 달성
-                  </span>
-                  <GoalMenu goal={goal} run={run} onEdit={() => setEditingId(goal.id)} />
-                </div>
-              )}
-              <div className="roadmap-strip" style={{ gridTemplateColumns: `repeat(${months.length}, minmax(5.5rem, 1fr))` }}>
-                {months.map((month) => {
-                  const monthly = goal.monthlyGoals.filter((m) => m.month === month)
-                  const { from, to } = monthRange(month)
-                  const percent = monthly.length
-                    ? Math.round(monthly.reduce((sum, m) => sum + monthlyPercent(m), 0) / monthly.length)
-                    : 0
-                  const health = monthly.length
-                    ? healthOf(percent, from, to, today, monthly.every((m) => m.achieved))
-                    : null
-                  return (
-                    <button
-                      key={month}
-                      type="button"
-                      className={['roadmap-cell', month === currentMonthSeoul() ? 'current' : '', monthly.length ? '' : 'empty'].join(' ')}
-                      onClick={() => onOpenMonth(month)}
-                      title={monthly.map((m) => m.content).join(', ') || '월간 목표 없음 · 눌러서 만들기'}
-                    >
-                      <span className="roadmap-label">
-                        {monthLabel(month).slice(6)}
-                        {health && <HealthDot health={health} />}
-                      </span>
-                      <span className="roadmap-bar">
-                        <span className="roadmap-bar-fill" style={{ width: `${percent}%` }} />
-                      </span>
-                      <span className="roadmap-text small">{monthly[0]?.content ?? ''}</span>
-                    </button>
-                  )
-                })}
-              </div>
-              {(hidden > 0 || showAll) && allMonths.length > ROADMAP_WINDOW && (
-                <button className="ghost add" onClick={() => setShowAll(!showAll)}>
-                  {showAll ? '지금 주변만 보기' : '전체 기간 보기'}
-                </button>
-              )}
-            </div>
-          )
-        })}
-        {others.length > 0 && (
-          <div className="card">
-            <h3 className="timeline-title">완료·중단한 목표</h3>
-            <ul className="unfinished-list">
-              {others.map((goal) =>
-                editingId === goal.id ? (
-                  <li key={goal.id}>
-                    <GoalForm
-                      initial={goal}
-                      submitLabel="저장"
-                      onSubmit={(input) => run(() => updateGoal(goal.id, input)).then((ok) => ok && setEditingId(null))}
-                      onCancel={() => setEditingId(null)}
-                    />
-                  </li>
-                ) : (
-                  <li key={goal.id}>
-                    <span>{goal.title}</span>
-                    <span className="muted small">
-                      {GOAL_STATUS_LABEL[goal.status]} · {goal.startDate} ~ {goal.targetDate}
-                    </span>
-                    <GoalMenu goal={goal} run={run} onEdit={() => setEditingId(goal.id)} />
-                  </li>
-                ),
-              )}
-            </ul>
-          </div>
-        )}
-        {shown.length === 0 && !adding && <p className="card muted">아직 최종 목표가 없어요. 이직 목표부터 적어보세요.</p>}
-        {adding ? (
+    <div className="goal-page">
+      {goal &&
+        (editingId === goal.id ? (
+          <div className="card">{editForm(goal)}</div>
+        ) : (
+          <GoalOverview
+            goal={goal}
+            today={today}
+            monday={monday}
+            goals={goals}
+            stats={stats}
+            weekGoals={weekGoals}
+            run={run}
+            onEdit={() => setEditingId(goal.id)}
+            onOpenMonth={onOpenMonth}
+            onOpenWeek={onOpenWeek}
+            addingMonthly={addingMonthly}
+            setAddingMonthly={setAddingMonthly}
+          />
+        ))}
+
+      {!goal &&
+        (adding ? (
           <div className="card">
             <h3 className="timeline-title">새 최종 목표</h3>
             <GoalForm
@@ -133,27 +87,182 @@ export default function GoalLevel({ goals, run, onOpenMonth }: Props) {
               onCancel={() => setAdding(false)}
             />
           </div>
-        ) : shown.length > 0 ? (
-          // 진행 중인 최종 목표는 하나만(1-4f ⑥)
-          <p className="muted small">새 최종 목표는 지금 목표를 ⋯ → 수정에서 완료나 중단으로 바꾼 뒤 만들 수 있어요.</p>
         ) : (
-          <button className="ghost add goal-add" onClick={() => setAdding(true)}>
-            + 최종 목표
-          </button>
-        )}
-      </div>
+          <div className="card empty-cta">
+            <p className="muted">이직 목표를 하나 정해 보세요. 그 아래로 월간·주간 목표를 이어 가요.</p>
+            <button onClick={() => setAdding(true)}>최종 목표 만들기</button>
+          </div>
+        ))}
 
+      {others.length > 0 && (
+        <div className="card">
+          <h3 className="timeline-title">완료·중단한 목표</h3>
+          <ul className="unfinished-list">
+            {others.map((g) =>
+              editingId === g.id ? (
+                <li key={g.id}>{editForm(g)}</li>
+              ) : (
+                <li key={g.id}>
+                  <span>{g.title}</span>
+                  <span className="muted small">
+                    {GOAL_STATUS_LABEL[g.status]} · {g.startDate} ~ {g.targetDate}
+                  </span>
+                  <GoalMenu goal={g} run={run} onEdit={() => setEditingId(g.id)} />
+                </li>
+              ),
+            )}
+          </ul>
+        </div>
+      )}
     </div>
   )
 }
 
-/** 최종 목표 ⋯ 메뉴: 수정·삭제 */
+type OverviewProps = {
+  goal: Goal
+  today: string
+  monday: string
+  goals: Goal[]
+  stats: StatsSummary | null
+  weekGoals: DailyGoal[]
+  run: Run
+  onEdit: () => void
+  onOpenMonth: (month: string) => void
+  onOpenWeek: (monday: string) => void
+  addingMonthly: boolean
+  setAddingMonthly: (v: boolean) => void
+}
+
+function GoalOverview({
+  goal,
+  today,
+  monday,
+  goals,
+  stats,
+  weekGoals,
+  run,
+  onEdit,
+  onOpenMonth,
+  onOpenWeek,
+  addingMonthly,
+  setAddingMonthly,
+}: OverviewProps) {
+  const health = healthOf(goal.progress.percent, goal.startDate, goal.targetDate, today)
+  const left = daysBetween(today, goal.targetDate)
+  const month = currentMonthSeoul()
+  const thisMonth = goal.monthlyGoals.filter((m) => m.month === month)
+  const thisWeek = weeklyGoalsOf(goals, monday)
+  const weekDone = weekGoals.filter((d) => d.status === 'DONE').length
+
+  return (
+    <>
+      <div className="goal-status-line">
+        <span className={`status-chip health-${health}`} title={HEALTH_LABELS[health]}>
+          {HEALTH_LABELS[health]}
+        </span>
+        <span className="muted small">
+          {left >= 0 ? `D-${left.toLocaleString()}` : `${(-left).toLocaleString()}일 지남`} · {goal.targetDate}까지 · 기간{' '}
+          {elapsedPercent(goal.startDate, goal.targetDate, today)}% 지남 · 월간 목표 {goal.progress.achieved}/
+          {goal.progress.total} 달성
+        </span>
+        <GoalMenu goal={goal} run={run} onEdit={onEdit} />
+      </div>
+      {goal.description && <p className="muted small goal-why">{goal.description}</p>}
+
+      <div className="goal-cards">
+        <div className="card">
+          <h3 className="timeline-title">지금</h3>
+          {thisMonth.length === 0 ? (
+            <button className="ghost goal-now-row" onClick={() => onOpenMonth(month)}>
+              <span>{Number(month.slice(5))}월 월간 목표 없음</span>
+              <span className="muted small">만들기 ›</span>
+            </button>
+          ) : (
+            thisMonth.map((m) => (
+              <button key={m.id} className="ghost goal-now-row" onClick={() => onOpenMonth(month)}>
+                <span>
+                  {Number(month.slice(5))}월 · {m.content}
+                </span>
+                <span className="muted small">{monthlyPercent(m)}% ›</span>
+                <span className="goal-bar">
+                  <span className="goal-bar-fill" style={{ width: `${monthlyPercent(m)}%` }} />
+                </span>
+              </button>
+            ))
+          )}
+          <button className="ghost goal-now-row" onClick={() => onOpenWeek(monday)}>
+            <span>이번 주 · {thisWeek.length ? thisWeek.map((w) => w.content).join(', ') : '주간 목표 없음'}</span>
+            <span className="muted small">
+              할 일 {weekDone}/{weekGoals.length} ›
+            </span>
+          </button>
+        </div>
+        <div className="card">
+          <h3 className="timeline-title">
+            지금까지 ({Number(goal.startDate.slice(5, 7))}/{Number(goal.startDate.slice(8))}부터)
+          </h3>
+          <div className="goal-metrics">
+            <div className="goal-metric">
+              <span className="muted small">공부 누적</span>
+              <strong>{stats ? formatDuration(stats.totalSeconds) : '–'}</strong>
+            </div>
+            <div className="goal-metric">
+              <span className="muted small">공부한 날</span>
+              <strong>{stats ? `${stats.studyDays}일` : '–'}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <h3 className="timeline-title">월간 목표</h3>
+        <ul className="goal-milestones">
+          {goal.monthlyGoals.map((m) => {
+            const { from, to } = monthRange(m.month)
+            const percent = monthlyPercent(m)
+            const h = healthOf(percent, from, to, today, m.achieved)
+            return (
+              <li key={m.id}>
+                <button className="ghost goal-milestone" onClick={() => onOpenMonth(m.month)} title={`${monthLabel(m.month)} 보기`}>
+                  <span className="muted">{Number(m.month.slice(5))}월</span>
+                  <span className={m.achieved ? 'done' : undefined}>{m.content}</span>
+                  <span className="goal-bar">
+                    <span className="goal-bar-fill" style={{ width: `${percent}%` }} />
+                  </span>
+                  <span className="muted small">{percent}%</span>
+                  <span className={`health health-${h}`} title={HEALTH_LABELS[h]}>
+                    <span className="health-dot" />
+                  </span>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+        {addingMonthly ? (
+          <MonthlyGoalForm
+            goal={goal}
+            defaultMonth={month}
+            submitLabel="추가"
+            onSubmit={(input) => run(() => createMonthlyGoal(goal.id, input)).then((ok) => ok && setAddingMonthly(false))}
+            onCancel={() => setAddingMonthly(false)}
+          />
+        ) : (
+          <button className="ghost add" onClick={() => setAddingMonthly(true)}>
+            + 월간 목표
+          </button>
+        )}
+      </div>
+    </>
+  )
+}
+
+/** 최종 목표 ⋯ 메뉴: 수정(완료·중단도 여기서)·삭제 */
 function GoalMenu({ goal, run, onEdit }: { goal: Goal; run: Run; onEdit: () => void }) {
   return (
     <MoreMenu
       label="최종 목표 동작"
       items={[
-        { label: '수정', onClick: onEdit },
+        { label: goal.status === 'ACTIVE' ? '수정 · 완료/중단하기' : '수정', onClick: onEdit },
         {
           label: '삭제',
           danger: true,

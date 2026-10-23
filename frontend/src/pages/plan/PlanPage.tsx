@@ -125,7 +125,7 @@ export default function PlanPage() {
       {!goals ? (
         <p className="muted">불러오는 중…</p>
       ) : level === 'goal' ? (
-        <GoalLevel goals={goals} categories={categories} run={run} onOpenMonth={openMonth} />
+        <GoalLevel goals={goals} categories={categories} run={run} onOpenMonth={openMonth} onOpenWeek={(m) => go('week', m)} />
       ) : level === 'month' ? (
         <MonthLevel
           month={month}

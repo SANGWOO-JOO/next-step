@@ -952,3 +952,24 @@ body.resizing { cursor: col-resize; user-select: none; }
 button.link-button { padding: 0; border: none; background: none; color: inherit; font: inherit; cursor: pointer; }
 button.link-button:hover { color: var(--accent); text-decoration: underline; }
 .plan-layout.single { grid-template-columns: minmax(0, 1fr); }
+/* 최종 화면(1-4f ⑧) */
+.goal-page { display: grid; gap: 1rem; }
+.goal-status-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: -0.5rem; }
+.goal-status-line .more-menu { margin-left: auto; }
+.goal-status-line .more-trigger { opacity: 1; }
+.status-chip { padding: 0.1rem 0.5rem; border-radius: 6px; font-size: 0.75rem; background: color-mix(in srgb, currentColor 15%, transparent); }
+.status-chip.health-on { color: var(--up); }
+.status-chip.health-risk { color: #d97706; }
+.status-chip.health-done { color: var(--accent); }
+.status-chip.health-idle { color: var(--muted); }
+.goal-why { margin: -0.5rem 0 0; }
+.goal-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1rem; }
+.goal-now-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.25rem 0.75rem; width: 100%; text-align: left; padding: 0.45rem 0.25rem; }
+.goal-now-row .goal-bar { grid-column: 1 / -1; }
+.goal-bar { display: block; height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+.goal-bar-fill { display: block; height: 100%; background: var(--up); }
+.goal-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.goal-metric { display: grid; gap: 0.15rem; padding: 0.6rem 0.75rem; border-radius: 8px; background: color-mix(in srgb, var(--border) 35%, transparent); }
+.goal-metric strong { font-size: 1.25rem; }
+.goal-milestones { list-style: none; margin: 0; padding: 0; }
+.goal-milestone { display: grid; grid-template-columns: 2.5rem minmax(0, 1fr) 8rem 2.5rem auto; gap: 0.75rem; align-items: center; width: 100%; text-align: left; padding: 0.5rem 0.25rem; border-top: 1px solid var(--border); border-radius: 0; }
