@@ -450,7 +450,8 @@ function Workload({ blocks, goals, compact = false }: { blocks: TimeBlock[]; goa
   const over = ahead > left
   const hm = (m: number) => formatDuration(m * 60)
 
-  // 평소에는 계획 합계만, 남은 계획이 오늘 남은 시간보다 많을 때만 경고(Sunsama 과다 계획 경고 방식)
+  // 도구 줄에는 계획 합계, 목록 패널에는 넘칠 때 경고만(1-4f ㉞). Sunsama 과다 계획 경고 방식
+  if (!compact && !over) return null
   return (
     <div className={[compact ? 'toolbar-workload' : 'workload', over ? 'over' : 'muted', 'small'].join(' ')}>
       {over ? (

@@ -96,9 +96,8 @@ export default function DailyGoalPanel({
       )}
 
       {/* 한 목록으로 보여주고 핵심은 위에 ★로 표시(Todoist·Things처럼 우선순위는 줄 안의 작은 표시로) */}
-      {goals.length === 0 ? (
-        <p className="muted small">오늘 할 일을 아래에 적어 보세요. 꼭 끝낼 일은 ☆를 눌러 핵심(최대 {MAX_CORE}개)으로 정해요.</p>
-      ) : (
+      {/* 비었을 때 안내 문장은 두지 않는다(입력칸이 안내 역할, 1-4f ㉞). ☆ 설명은 마우스를 올리면 */}
+      {goals.length > 0 && (
         <div className="daily-list">
           {section('CORE', core)}
           {section('EXTRA', extra)}
