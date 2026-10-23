@@ -9,6 +9,7 @@ import {
   type CategoryInput,
 } from '../api/categories'
 import { errorMessage } from '../api/client'
+import { availableColors } from '../utils/categoryColors'
 import CategoryBadge from '../components/CategoryBadge'
 
 const toInput = (c: Category): CategoryInput => ({
@@ -96,7 +97,10 @@ function CategorySettings() {
         ))}
       </div>
 
-      <NewCategoryForm onCreate={(input) => run(() => createCategory(input))} />
+      <NewCategoryForm
+        usedColors={categories.map((c) => c.color)}
+        onCreate={(input) => run(() => createCategory(input))}
+      />
     </div>
   )
 }
@@ -176,20 +180,29 @@ function CategoryRow({ category, first, last, onMove, onSave, onDelete }: RowPro
 
 const EMPTY: CategoryInput = { name: '', color: '#64748b', targetRatio: null, weeklyTargetMinutes: null, active: true }
 
-function NewCategoryForm({ onCreate }: { onCreate: (input: CategoryInput) => Promise<boolean> }) {
+function NewCategoryForm({ usedColors, onCreate }: { usedColors: string[]; onCreate: (input: CategoryInput) => Promise<boolean> }) {
   const [draft, setDraft] = useState<CategoryInput>(EMPTY)
+  // 색을 직접 바꾸지 않았으면 안 쓴 색 계열을 기본으로(1-4f ㊷)
+  const [colorTouched, setColorTouched] = useState(false)
+  const color = colorTouched ? draft.color : availableColors(usedColors)[0]
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
-    if (await onCreate(draft)) setDraft(EMPTY)
+    if (await onCreate({ ...draft, color })) {
+      setDraft(EMPTY)
+      setColorTouched(false)
+    }
   }
 
   return (
     <form className="inline-form" onSubmit={submit}>
       <input
         type="color"
-        value={draft.color}
-        onChange={(e) => setDraft({ ...draft, color: e.target.value })}
+        value={color}
+        onChange={(e) => {
+          setDraft({ ...draft, color: e.target.value })
+          setColorTouched(true)
+        }}
         aria-label="새 분류 색"
       />
       <input

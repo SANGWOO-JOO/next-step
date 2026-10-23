@@ -1,5 +1,5 @@
-import { useState, type FormEvent, type KeyboardEvent } from 'react'
-import { createCategory, type Category } from '../api/categories'
+import { useEffect, useState, type FormEvent, type KeyboardEvent } from 'react'
+import { createCategory, getCategories, updateCategory, type Category } from '../api/categories'
 import { errorMessage } from '../api/client'
 import {
   MAX_CORE,
@@ -17,6 +17,7 @@ import { createTimeBlock, type TimeBlock } from '../api/timeBlocks'
 import { dayLabel, formatMinutes, minutesOfDay, nowMinutesSeoul, shiftDate, todaySeoul } from '../utils/date'
 import FormButtons from './FormButtons'
 import addIcon from '../assets/icons/add.svg'
+import { availableColors } from '../utils/categoryColors'
 import MoreMenu from './MoreMenu'
 import { GOAL_DRAG_TYPE } from './ScheduleView'
 import TimeBlockForm from './TimeBlockForm'
@@ -302,19 +303,34 @@ type NewFormProps = {
   onSubmit: (input: Parameters<typeof createDailyGoal>[0]) => Promise<boolean>
 }
 
-/** 새 분류 색: 아직 안 쓴 색부터 */
-const NEW_CATEGORY_COLORS = ['#3b82f6', '#ef4444', '#22c55e', '#8b5cf6', '#f97316', '#14b8a6', '#ec4899', '#eab308', '#6366f1', '#06b6d4']
+type Option =
+  | { kind: 'pick'; category: Category }
+  | { kind: 'revive'; category: Category }
+  | { kind: 'create'; name: string }
 
 /**
  * 한 줄 빠른 추가 = 분류 찾기(1-4f ㊵, Linear·Notion 속성 선택 참고). 할 일은 분류 그 자체라
  * 쓰는 글자로 분류를 찾아 고르면 내용·분류가 모두 그 분류 이름으로 바로 추가된다.
- * 맞는 분류가 없으면 그 이름으로 새 분류를 만들고 추가한다. 분류 없는 할 일은 만들지 않는다.
+ * 맞는 분류가 없으면 안 쓴 색 계열을 골라 새 분류를 만들고(㊷), 숨긴 분류면 다시 켜고 추가한다.
  */
 export function NewDailyGoalForm({ date, categories, onSubmit }: NewFormProps) {
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
+  const [focused, setFocused] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // 숨긴 분류까지 알아야 같은 이름을 다시 켤 수 있다
+  const [hidden, setHidden] = useState<Category[]>([])
+  // 새 분류 색 고르기 단계
+  const [creating, setCreating] = useState<{ name: string; colors: string[]; index: number } | null>(null)
+
+  const loadHidden = () =>
+    getCategories(true)
+      .then((all) => setHidden(all.filter((c) => !c.active)))
+      .catch(() => setHidden([]))
+  useEffect(() => {
+    loadHidden()
+  }, [])
 
   const q = query.trim()
   const lower = q.toLowerCase()
@@ -323,41 +339,37 @@ export function NewDailyGoalForm({ date, categories, onSubmit }: NewFormProps) {
     const name = c.name.toLowerCase()
     return !lower ? 0 : name.startsWith(lower) ? 0 : name.includes(lower) ? 1 : 2
   }
-  const matches = [...categories].sort((x, y) => rank(x) - rank(y))
+  const sorted = [...categories].sort((x, y) => rank(x) - rank(y))
   const matchCount = categories.filter((c) => rank(c) < 2).length
   const exact = categories.some((c) => c.name.toLowerCase() === lower)
-  const options: ({ kind: 'pick'; category: Category } | { kind: 'create'; name: string })[] = [
-    ...matches.slice(0, matchCount).map((category) => ({ kind: 'pick' as const, category })),
-    ...(q && !exact ? [{ kind: 'create' as const, name: q }] : []),
-    ...matches.slice(matchCount).map((category) => ({ kind: 'pick' as const, category })),
+  const hiddenSame = hidden.find((c) => c.name.toLowerCase() === lower)
+  const options: Option[] = [
+    ...sorted.slice(0, matchCount).map((category) => ({ kind: 'pick' as const, category })),
+    ...(q && !exact
+      ? [hiddenSame ? { kind: 'revive' as const, category: hiddenSame } : { kind: 'create' as const, name: q }]
+      : []),
+    ...sorted.slice(matchCount).map((category) => ({ kind: 'pick' as const, category })),
   ]
-  const [focused, setFocused] = useState(false)
-  const open = focused && options.length > 0
+  const open = focused && (creating !== null || options.length > 0)
   const current = Math.min(active, options.length - 1)
 
   const reset = () => {
     setQuery('')
-    setFocused(false)
     setActive(0)
     setError(null)
+    setCreating(null)
+    setFocused(false)
   }
 
   const add = (category: Category) =>
     onSubmit({ weeklyGoalId: null, date, content: category.name, firstAction: null, categoryId: category.id, type: null })
 
-  const choose = async (option: (typeof options)[number]) => {
+  const act = async (make: () => Promise<Category>) => {
     if (busy) return
     setBusy(true)
     setError(null)
     try {
-      let category: Category
-      if (option.kind === 'pick') category = option.category
-      else {
-        const used = new Set(categories.map((c) => c.color.toLowerCase()))
-        const color = NEW_CATEGORY_COLORS.find((c) => !used.has(c)) ?? NEW_CATEGORY_COLORS[categories.length % NEW_CATEGORY_COLORS.length]
-        category = await createCategory({ name: option.name, color, targetRatio: null, weeklyTargetMinutes: null, active: true })
-      }
-      if (await add(category)) reset()
+      if (await add(await make())) reset()
     } catch (e) {
       setError(errorMessage(e))
     } finally {
@@ -365,18 +377,49 @@ export function NewDailyGoalForm({ date, categories, onSubmit }: NewFormProps) {
     }
   }
 
+  const choose = (option: Option) => {
+    if (option.kind === 'pick') act(async () => option.category)
+    else if (option.kind === 'revive')
+      act(async () => {
+        const c = option.category
+        const revived = await updateCategory(c.id, {
+          name: c.name,
+          color: c.color,
+          targetRatio: c.targetRatio,
+          weeklyTargetMinutes: c.weeklyTargetMinutes,
+          active: true,
+        })
+        loadHidden()
+        return revived
+      })
+    else setCreating({ name: option.name, colors: availableColors([...categories, ...hidden].map((c) => c.color)), index: 0 })
+  }
+
+  const confirmCreate = () => {
+    if (!creating) return
+    const { name, colors, index } = creating
+    act(() => createCategory({ name, color: colors[index], targetRatio: null, weeklyTargetMinutes: null, active: true }))
+  }
+
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    if (options.length > 0 && (q || focused)) choose(options[current])
+    if (creating) confirmCreate()
+    else if (options.length > 0 && (q || focused)) choose(options[current])
   }
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Escape') reset()
-    else if (e.nativeEvent.isComposing) return
-    else if (e.key === 'ArrowDown' && open) {
+    if (e.nativeEvent.isComposing) return
+    if (e.key === 'Escape') {
+      if (creating) setCreating(null)
+      else reset()
+    } else if (creating && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      e.preventDefault()
+      const step = e.key === 'ArrowRight' ? 1 : -1
+      setCreating({ ...creating, index: (creating.index + step + creating.colors.length) % creating.colors.length })
+    } else if (!creating && e.key === 'ArrowDown' && open) {
       e.preventDefault()
       setActive((current + 1) % options.length)
-    } else if (e.key === 'ArrowUp' && open) {
+    } else if (!creating && e.key === 'ArrowUp' && open) {
       e.preventDefault()
       setActive((current - 1 + options.length) % options.length)
     }
@@ -394,6 +437,7 @@ export function NewDailyGoalForm({ date, categories, onSubmit }: NewFormProps) {
             setQuery(e.target.value)
             setActive(0)
             setFocused(true)
+            setCreating(null)
             setError(null)
           }}
           onKeyDown={onKeyDown}
@@ -403,7 +447,7 @@ export function NewDailyGoalForm({ date, categories, onSubmit }: NewFormProps) {
           role="combobox"
           aria-expanded={open}
           aria-controls="quick-add-options"
-          aria-activedescendant={open ? `quick-add-option-${current}` : undefined}
+          aria-activedescendant={open && !creating ? `quick-add-option-${current}` : undefined}
           aria-label="추가할 분류"
           disabled={busy}
         />
@@ -415,11 +459,41 @@ export function NewDailyGoalForm({ date, categories, onSubmit }: NewFormProps) {
           </button>
         )}
       </div>
-      {open && (
+      {open && creating && (
+        <div className="quick-add-options quick-add-create" onMouseDown={(e) => e.preventDefault()}>
+          <div className="quick-add-create-head">
+            <span className="category-dot" style={{ background: creating.colors[creating.index] }} aria-hidden="true" />
+            <strong>{creating.name}</strong>
+            <span className="muted small">새 분류</span>
+          </div>
+          <p className="muted small">색 (아직 안 쓴 색만)</p>
+          <div className="quick-add-swatches" role="radiogroup" aria-label="새 분류 색">
+            {creating.colors.map((color, i) => (
+              <button
+                key={color}
+                type="button"
+                role="radio"
+                aria-checked={i === creating.index}
+                aria-label={`색 ${i + 1}`}
+                className={i === creating.index ? 'swatch on' : 'swatch'}
+                style={{ background: color }}
+                onClick={() => setCreating({ ...creating, index: i })}
+              />
+            ))}
+          </div>
+          <div className="quick-add-create-foot">
+            <button type="button" onClick={confirmCreate} disabled={busy}>
+              만들고 추가
+            </button>
+            <span className="muted small">Enter · ←→ 색 바꾸기 · Esc 뒤로</span>
+          </div>
+        </div>
+      )}
+      {open && !creating && (
         <ul className="quick-add-options" id="quick-add-options" role="listbox" aria-label="분류">
           {options.map((o, i) => (
             <li
-              key={o.kind === 'pick' ? o.category.id : 'create'}
+              key={o.kind === 'create' ? 'create' : `${o.kind}-${o.category.id}`}
               id={`quick-add-option-${i}`}
               role="option"
               aria-selected={i === current}
@@ -428,16 +502,25 @@ export function NewDailyGoalForm({ date, categories, onSubmit }: NewFormProps) {
               onMouseEnter={() => setActive(i)}
               onClick={() => choose(o)}
             >
-              {o.kind === 'pick' ? (
+              {o.kind === 'pick' && (
                 <>
                   <span className="category-dot" style={{ background: o.category.color }} aria-hidden="true" />
                   {o.category.name}
                 </>
-              ) : (
+              )}
+              {o.kind === 'revive' && (
+                <>
+                  <span className="category-dot" style={{ background: o.category.color, opacity: 0.5 }} aria-hidden="true" />
+                  <span>
+                    ‘{o.category.name}’ 숨긴 분류 다시 켜고 추가
+                  </span>
+                </>
+              )}
+              {o.kind === 'create' && (
                 <>
                   <span className="quick-add-new" aria-hidden="true">+</span>
                   <span>
-                    ‘{o.name}’ 분류 만들고 추가
+                    ‘{o.name}’ 분류 만들기
                   </span>
                 </>
               )}

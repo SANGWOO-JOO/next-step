@@ -1238,3 +1238,15 @@ button.pull-all:hover { color: #7c6cf8; }
 .quick-add-new { width: 16px; text-align: center; color: #8B5CF6; font-weight: 700; }
 .quick-add-key { margin-left: auto; font-size: 11px; color: var(--text-muted, #888); border: 1px solid var(--border); border-radius: 5px; padding: 0 5px; }
 .category-row .row-actions > span { white-space: nowrap; align-self: center; }
+
+/* 새 분류 색 고르기(1-4f ㊷) */
+.quick-add-create { padding: 10px 12px; display: grid; gap: 8px; }
+.quick-add-create p { margin: 0; }
+.quick-add-create-head { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.quick-add-create-head strong { font-weight: 600; }
+.quick-add-create-head .muted { margin-left: auto; }
+.quick-add-swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+.swatch { width: 24px; height: 24px; min-height: 0; padding: 0; border-radius: 50%; border: 0; cursor: pointer; }
+.swatch.on { box-shadow: 0 0 0 2px var(--surface, #2a2a2e), 0 0 0 4px var(--text, #fff); }
+.quick-add-create-foot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.quick-add-create-foot button { padding: 6px 14px; border-radius: 999px; background: var(--grad); color: #fff; border: 0; min-height: 0; }
