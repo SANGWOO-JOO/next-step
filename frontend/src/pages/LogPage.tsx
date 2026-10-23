@@ -14,7 +14,7 @@ import { addMonths, currentMonthSeoul, dayLabel, mondayOf, mondaysOfMonth, month
 import { monthRange } from '../utils/health'
 
 type Kind = 'day' | 'week' | 'month'
-const KIND_LABELS: Record<Kind, string> = { day: '하루', week: '주간', month: '월간' }
+const KIND_LABELS: Record<Kind, string> = { day: '일', week: '주', month: '월' }
 
 /**
  * 기록(docs/design.md 6장 5-1, Sunsama의 Daily Highlights 방식): 하루 마무리 기록을 최신순 카드로 쌓아 본다.

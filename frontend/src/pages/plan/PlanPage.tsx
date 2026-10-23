@@ -12,10 +12,8 @@ import MonthLevel from './MonthLevel'
 import { activeGoal, anchorOf, firstMondayOf, type Level, type Run } from './planData'
 import WeekLevel from './WeekLevel'
 
-const LEVEL_LABELS: Record<Level, string> = { goal: '최종', month: '월', week: '주' }
-
 /**
- * 계획 화면(docs/design.md 6장 3~5): 줌 레벨 [최종][월][주] + 기간 제목과 상위 목표 한 줄.
+ * 계획 화면(docs/design.md 6장 3~5, 1-4f (51)): 최종 › 월 › 주 경로로 목표 안으로 들어간다. 첫 화면은 이번 주.
  * 주소에 level과 date(그 주의 월요일)를 남겨 새로고침·뒤로가기에도 유지한다.
  */
 export default function PlanPage() {
@@ -72,47 +70,55 @@ export default function PlanPage() {
 
   return (
     <section>
-      {/* Google Calendar처럼 왼쪽에 [오늘] ‹ › 기간 제목, 오른쪽에 보기 단위(1-4f ⑫) */}
+      {/* 목표 안으로 들어가는 경로(1-4f (51)): 큰 단위부터, 지금 단계만 알약. 기간을 바꾸는 알약 버튼(일정·기록)과 모양으로 구분 */}
       <div className="plan-header cal-header">
-        <span className="cal-nav">
+        <nav className="plan-crumbs" aria-label="계획 단계">
+          {level === 'goal' ? (
+            <span className="plan-crumb current" aria-current="page">
+              🎯 {goal?.title ?? '최종 목표'}
+            </span>
+          ) : (
+            <button className="plan-crumb" onClick={() => go('goal')}>
+              🎯 {goal?.title ?? '최종 목표'}
+            </button>
+          )}
           {level !== 'goal' && (
             <>
-              <button className="ghost" onClick={() => go(level, mondayOf(todaySeoul()))}>오늘</button>
-              <IconButton icon={chevronLeft} label={level === 'week' ? '이전 주' : '이전 달'} onClick={() => move(-1)} />
-              <IconButton icon={chevronRight} label={level === 'week' ? '다음 주' : '다음 달'} onClick={() => move(1)} />
+              <span className="plan-crumb-sep" aria-hidden="true">›</span>
+              {level === 'month' ? (
+                <span className="plan-crumb current" aria-current="page">
+                  {monthLabel(month)}
+                </span>
+              ) : (
+                <button className="plan-crumb" onClick={() => openMonth(month)} title={monthlyGoal?.content ?? '월간 목표 없음'}>
+                  {Number(month.slice(5))}월
+                </button>
+              )}
             </>
           )}
-          <div className="plan-heading">
-          <h1 className="plan-period">{periodTitle}</h1>
-          {level !== 'goal' && (
-            <p className="plan-context muted small">
-              <button className="link-button" onClick={() => go('goal')}>
-                {goal?.title ?? '최종 목표 없음'}
-              </button>
-              {level === 'month' && month === todaySeoul().slice(0, 7) && (
-                <span>
-                  {' · '}달 {Number(todaySeoul().slice(8))}/{new Date(Number(month.slice(0, 4)), Number(month.slice(5)), 0).getDate()}일 지남
-                </span>
-              )}
-              {level === 'week' && (
-                <>
-                  {' · '}
-                  <button className="link-button" onClick={() => openMonth(month)}>
-                    {Number(month.slice(5))}월: {monthlyGoal?.content ?? '월간 목표 없음'}
-                  </button>
-                </>
-              )}
-            </p>
+          {level === 'week' && (
+            <>
+              <span className="plan-crumb-sep" aria-hidden="true">›</span>
+              <span className="plan-crumb current" aria-current="page">
+                {periodTitle}
+              </span>
+            </>
           )}
-        </div>
-        </span>
-        <span className="segmented" role="group" aria-label="보기 단위">
-          {(Object.keys(LEVEL_LABELS) as Level[]).map((l) => (
-            <button key={l} className={level === l ? 'active' : ''} onClick={() => go(l)}>
-              {LEVEL_LABELS[l]}
+          {level === 'month' && (
+            <span className="plan-crumb-hint muted small" aria-hidden="true">
+              › 주 고르기
+            </span>
+          )}
+        </nav>
+        {level !== 'goal' && (
+          <span className="cal-nav">
+            <button className="ghost" onClick={() => go(level, mondayOf(todaySeoul()))}>
+              오늘
             </button>
-          ))}
-        </span>
+            <IconButton icon={chevronLeft} label={level === 'week' ? '이전 주' : '이전 달'} onClick={() => move(-1)} />
+            <IconButton icon={chevronRight} label={level === 'week' ? '다음 주' : '다음 달'} onClick={() => move(1)} />
+          </span>
+        )}
       </div>
       {error && (
         <p className="error-banner" role="alert">

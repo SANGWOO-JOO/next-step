@@ -1385,3 +1385,12 @@ button.schedule-date.selected { box-shadow: none; background: color-mix(in srgb,
 .schedule-scroll { overflow-x: hidden; }
 [data-tip]:not(:hover):not(:focus-visible)::after { display: none; }
 .allday-add[data-tip]::after { left: auto; right: 0; transform: none; }
+
+/* 계획 경로(1-4f (51)) */
+.plan-header.cal-header { align-items: center; justify-content: space-between; }
+.plan-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; font-size: 15px; }
+.plan-crumb { min-height: 0; padding: 4px 10px; border: 0; border-radius: 999px; background: transparent; color: var(--text-muted, var(--muted)); font: inherit; font-weight: 600; cursor: pointer; max-width: 22rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--border) 50%, transparent)); color: var(--text); }
+.plan-crumb.current { cursor: default; color: var(--text); font-weight: 700; font-size: 17px; background: color-mix(in srgb, #8B5CF6 18%, transparent); }
+.plan-crumb-sep { color: var(--text-muted, var(--muted)); opacity: 0.6; }
+.plan-crumb-hint { margin-left: 4px; opacity: 0.6; }
