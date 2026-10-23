@@ -930,7 +930,6 @@ body.resizing { cursor: col-resize; user-select: none; }
 .actual-kinds button { padding: 0.25rem 0.6rem; }
 .schedule.week .schedule-block.plan-lane { font-size: 0.68rem; right: calc(50% + 3px); }
 .schedule.week .actual-entry { font-size: 0.68rem; }
-.unlinked { white-space: nowrap; font-size: 0.7rem; }
 .plan-card input[type="checkbox"] { margin: 0; flex: none; }
 .plan-content.done { text-decoration: line-through; opacity: 0.6; }
 .core-mark { color: #f5b301; }
@@ -1227,3 +1226,4 @@ button.pull-all:hover { color: #7c6cf8; }
 /* 빠른 추가 보내기(1-4f ㊱): 꽉 찬 보라 원 + ↑ */
 .quick-add-submit { flex: none; width: 32px; height: 32px; min-height: 0; padding: 0; border: 0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--grad); color: #fff; }
 .quick-add-submit:hover { filter: brightness(1.08); }
+.quick-add-detail > select { flex: 0 0 auto; width: auto; min-width: 9rem; }

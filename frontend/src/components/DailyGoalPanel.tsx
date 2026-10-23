@@ -1,11 +1,10 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import type { Category } from '../api/categories'
 import {
   MAX_CORE,
   changeDailyGoalType,
   createDailyGoal,
   deleteDailyGoal,
-  linkDailyGoal,
   moveDailyGoal,
   reorderDailyGoals,
   toDailyGoalUpdateInput,
@@ -13,9 +12,8 @@ import {
   type DailyGoal,
   type DailyGoalType,
 } from '../api/dailyGoals'
-import { getWeeklyGoalsOfWeek, type WeeklyGoal } from '../api/goals'
 import { createTimeBlock, type TimeBlock } from '../api/timeBlocks'
-import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, shiftDate, todaySeoul } from '../utils/date'
+import { dayLabel, formatMinutes, minutesOfDay, nowMinutesSeoul, shiftDate, todaySeoul } from '../utils/date'
 import FormButtons from './FormButtons'
 import addIcon from '../assets/icons/add.svg'
 import moreIcon from '../assets/icons/more.svg'
@@ -31,7 +29,6 @@ type Props = {
   /** 그날의 하루 목표 */
   goals: DailyGoal[]
   /** 그 주의 주간 목표 (하루 목표를 연결할 대상) */
-  weeklyGoals: WeeklyGoal[]
   categories: Category[]
   run: Run
   title?: string
@@ -45,7 +42,6 @@ type Props = {
 export default function DailyGoalPanel({
   date,
   goals,
-  weeklyGoals,
   categories,
   run,
   title,
@@ -68,7 +64,6 @@ export default function DailyGoalPanel({
         run={run}
         onNotice={setNotice}
         blocks={timeBlocks?.filter((b) => b.dailyGoalId === goal.id)}
-        weeklyGoals={weeklyGoals}
         nextBlockStart={nextBlockStart(date, timeBlocks)}
       />
     ))
@@ -107,7 +102,6 @@ export default function DailyGoalPanel({
       <NewDailyGoalForm
         key={date}
         date={date}
-        weeklyGoals={weeklyGoals}
         categories={categories}
         onSubmit={(input) => run(() => createDailyGoal(input))}
       />
@@ -137,7 +131,6 @@ type ItemProps = {
   /** undefined면 시간 블록 기능을 숨긴다 */
   blocks?: TimeBlock[]
   /** 그 주의 주간 목표(연결할 대상) */
-  weeklyGoals: WeeklyGoal[]
   nextBlockStart: number
 }
 
@@ -150,10 +143,9 @@ function DailyGoalItem({
   run,
   onNotice,
   blocks,
-  weeklyGoals,
   nextBlockStart,
 }: ItemProps) {
-  const [mode, setMode] = useState<'view' | 'edit' | 'move' | 'block' | 'link'>('view')
+  const [mode, setMode] = useState<'view' | 'edit' | 'move' | 'block'>('view')
   const done = goal.status === 'DONE'
   const tomorrow = shiftDate(goal.date, 1)
 
@@ -214,9 +206,7 @@ function DailyGoalItem({
         </button>
         <span
           className={done ? 'daily-content done' : 'daily-content'}
-          title={[goal.firstAction && `첫 행동: ${goal.firstAction}`, goal.weeklyGoalContent ? `주간 목표: ${goal.weeklyGoalContent}` : '주간 목표에 연결 안 됨']
-            .filter(Boolean)
-            .join('\n')}
+          title={goal.firstAction ? `첫 행동: ${goal.firstAction}` : undefined}
         >
           {goal.content}
           {goal.carryCount > 0 && (
@@ -225,11 +215,6 @@ function DailyGoalItem({
             </span>
           )}
         </span>
-        {goal.weeklyGoalId === null && !done && (
-          <span className="unlinked muted small" title="주간 목표에 연결하지 않은 할 일이에요. ⋯ 메뉴에서 연결해요">
-            연결 안 됨
-          </span>
-        )}
         {blocks && blocks.length > 0 && (
           <span
             className="daily-time muted small"
@@ -253,7 +238,6 @@ function DailyGoalItem({
           items={[
             { label: '+ 시간 잡기', onClick: () => setMode('block'), show: !!blocks && !done },
             { label: '내일로', onClick: moveTomorrow, show: !done },
-            { label: goal.weeklyGoalId === null ? '주간 목표에 연결' : '주간 목표 바꾸기', onClick: () => setMode('link') },
             { label: '다른 날로 옮기기', onClick: () => setMode('move'), show: !done },
             { label: '위로', onClick: () => onMoveUp?.(), disabled: !onMoveUp },
             { label: '아래로', onClick: () => onMoveDown?.(), disabled: !onMoveDown },
@@ -274,32 +258,8 @@ function DailyGoalItem({
           onCancel={() => setMode('view')}
         />
       )}
-      {mode === 'link' && (
-        <form
-          className="inline-form tree-form"
-          onSubmit={(e) => {
-            e.preventDefault()
-            const value = (e.currentTarget.elements.namedItem('weekly') as HTMLSelectElement).value
-            run(() => linkDailyGoal(goal.id, value === '' ? null : Number(value))).then((ok) => ok && setMode('view'))
-          }}
-        >
-          <select name="weekly" defaultValue={goal.weeklyGoalId ?? ''} aria-label="연결할 주간 목표">
-            <option value="">연결 안 함</option>
-            {weeklyGoals.map((w) => (
-              <option key={w.id} value={w.id}>
-                {w.content}
-              </option>
-            ))}
-          </select>
-          <button type="submit">저장</button>
-          <button type="button" className="ghost" onClick={() => setMode('view')}>
-            취소
-          </button>
-        </form>
-      )}
       {mode === 'move' && (
         <MoveForm
-          goal={goal}
           initialDate={tomorrow}
           onSubmit={(date, weeklyGoalId) => move(date, weeklyGoalId).then((ok) => ok && setMode('view'))}
           onCancel={() => setMode('view')}
@@ -310,68 +270,24 @@ function DailyGoalItem({
 }
 
 type MoveFormProps = {
-  goal: DailyGoal
   initialDate: string
   onSubmit: (date: string, weeklyGoalId: number | null) => void
   onCancel: () => void
 }
 
-/** 날짜를 고르고, 다른 주면 그 주의 주간 목표를 고른다. */
-function MoveForm({ goal, initialDate, onSubmit, onCancel }: MoveFormProps) {
+/** 날짜만 고른다. 주간 목표 연결은 주간 계획 화면에서(1-4f ㊲) */
+function MoveForm({ initialDate, onSubmit, onCancel }: MoveFormProps) {
   const [date, setDate] = useState(initialDate)
-  const [weekly, setWeekly] = useState<{ weekStart: string; goals: WeeklyGoal[] } | null>(null)
-  const [pickedId, setPickedId] = useState<number | null>(null)
-  const otherWeek = date !== '' && mondayOf(date) !== mondayOf(goal.date)
-  const weekStart = date === '' ? '' : mondayOf(date)
-
-  // 다른 주를 고르면 그 주의 주간 목표를 불러온다
-  useEffect(() => {
-    if (!otherWeek) return
-    let cancelled = false
-    getWeeklyGoalsOfWeek(weekStart)
-      .catch(() => [] as WeeklyGoal[])
-      .then((goals) => {
-        if (!cancelled) setWeekly({ weekStart, goals })
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [otherWeek, weekStart])
-
-  // 불러오는 중이면 null
-  const weekGoals = weekly?.weekStart === weekStart ? weekly.goals : null
-  const weeklyGoalId = weekGoals?.find((w) => w.id === pickedId)?.id ?? null
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    onSubmit(date, otherWeek ? weeklyGoalId : null)
+    onSubmit(date, null)
   }
 
   return (
     <form className="inline-form tree-form" onSubmit={submit}>
       <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required aria-label="넘길 날짜" />
-      {otherWeek &&
-        (weekGoals === null ? (
-          <span className="muted small">주간 목표 불러오는 중…</span>
-        ) : weekGoals.length > 0 ? (
-          <select
-            value={weeklyGoalId ?? ''}
-            onChange={(e) => setPickedId(e.target.value === '' ? null : Number(e.target.value))}
-            aria-label="연결할 주간 목표"
-          >
-            <option value="">주간 목표 연결 안 함</option>
-            {weekGoals.map((w) => (
-              <option key={w.id} value={w.id}>
-                {w.content}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <span className="muted small">그 주에 주간 목표가 없어 연결 없이 넘겨요.</span>
-        ))}
-      <button type="submit">
-        넘기기
-      </button>
+      <button type="submit">넘기기</button>
       <button type="button" className="ghost" onClick={onCancel}>
         취소
       </button>
@@ -381,7 +297,6 @@ function MoveForm({ goal, initialDate, onSubmit, onCancel }: MoveFormProps) {
 
 type NewFormProps = {
   date: string
-  weeklyGoals: WeeklyGoal[]
   categories: Category[]
   /** 성공하면 true. 입력란을 비우고 다음 것을 바로 쓸 수 있게 한다 */
   onSubmit: (input: Parameters<typeof createDailyGoal>[0]) => Promise<boolean>
@@ -392,13 +307,11 @@ type NewFormProps = {
  * 첫 번째 주간 목표에 연결하고, 분류는 주간 목표에서 물려받고, 핵심 자리가 있으면 핵심으로 넣는다.
  * '자세히'를 누르면 첫 행동·주간 목표·분류·유형을 고를 수 있다.
  */
-export function NewDailyGoalForm({ date, weeklyGoals, categories, onSubmit }: NewFormProps) {
-  // 주간 목표가 있으면 첫 번째에 연결해 두고, "연결 안 함"도 고를 수 있다(1-4f)
-  const [weeklyGoalId, setWeeklyGoalId] = useState<number | null>(weeklyGoals[0]?.id ?? null)
+export function NewDailyGoalForm({ date, categories, onSubmit }: NewFormProps) {
+  // 오늘 할 일은 주간 목표와 잇지 않는다. 연결은 주간 계획 화면에서(1-4f ㊲)
   const [content, setContent] = useState('')
   const [categoryId, setCategoryId] = useState<number | null>(null)
   const [detailed, setDetailed] = useState(false)
-  const inherited = weeklyGoals.find((w) => w.id === weeklyGoalId)?.category
 
   const reset = () => {
     setContent('')
@@ -409,7 +322,7 @@ export function NewDailyGoalForm({ date, weeklyGoals, categories, onSubmit }: Ne
   const submit = (e: FormEvent) => {
     e.preventDefault()
     if (!content.trim()) return
-    onSubmit({ weeklyGoalId, date, content, firstAction: null, categoryId, type: null }).then(
+    onSubmit({ weeklyGoalId: null, date, content, firstAction: null, categoryId, type: null }).then(
       (ok) => ok && reset(),
     )
   }
@@ -436,7 +349,7 @@ export function NewDailyGoalForm({ date, weeklyGoals, categories, onSubmit }: Ne
           onClick={() => setDetailed(!detailed)}
           aria-expanded={detailed}
           aria-label={detailed ? '간단히' : '자세히'}
-          title={detailed ? '간단히' : '자세히 (첫 행동, 주간 목표, 분류, 유형)'}
+          title={detailed ? '간단히' : '자세히 (분류)'}
         >
           <img src={moreIcon} alt="" aria-hidden="true" width={26} height={26} draggable={false} />
         </button>
@@ -448,36 +361,16 @@ export function NewDailyGoalForm({ date, weeklyGoals, categories, onSubmit }: Ne
           </button>
         )}
       </div>
-      {/* 상세는 주간 목표·분류만(1-4f ㉟). 첫 행동은 수정에서, 핵심은 ☆로 */}
+      {/* 상세는 분류만(1-4f ㉟·㊲). 첫 행동은 수정에서, 핵심은 ☆로 */}
       {detailed && (
         <div className="inline-form quick-add-detail">
-          <select
-            value={weeklyGoalId ?? ''}
-            onChange={(e) => setWeeklyGoalId(e.target.value === '' ? null : Number(e.target.value))}
-            aria-label="연결할 주간 목표"
-          >
-            <option value="">주간 목표 없음</option>
-            {weeklyGoals.map((w) => (
-              <option key={w.id} value={w.id}>
-                {w.content}
-              </option>
-            ))}
-          </select>
           <CategorySelect
             categories={categories}
             value={categoryId}
             onChange={setCategoryId}
-            emptyLabel={inherited ? `분류: ${inherited.name}` : '분류 없음'}
+            emptyLabel="분류 없음"
           />
         </div>
-      )}
-      {!detailed && content && (
-        <p className="muted small quick-add-hint">
-          {weeklyGoalId === null
-            ? '주간 목표 연결 없음'
-            : `주간 “${weeklyGoals.find((w) => w.id === weeklyGoalId)?.content}”에 연결`}{' '}
-          · 분류 {inherited?.name ?? '없음'} · 핵심 자리가 있으면 핵심
-        </p>
       )}
     </form>
   )

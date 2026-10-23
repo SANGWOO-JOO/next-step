@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { getCategories, type Category } from '../api/categories'
 import { errorMessage } from '../api/client'
 import { createDailyGoal, getDailyGoalsBetween, getUnfinishedDailyGoals, type DailyGoal } from '../api/dailyGoals'
-import { getWeeklyGoalsOfWeek, type WeeklyGoal } from '../api/goals'
+import { getWeeklyGoalsOfWeek } from '../api/goals'
 import { formatDuration } from '../api/focus'
 import { getHealth } from '../api/health'
 import { getActualLogsBetween, type ActualLog } from '../api/actualLogs'
@@ -41,7 +41,6 @@ export default function TodayPage() {
       return 'day'
     }
   })
-  const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[] | null>(null)
   /** 이번 주(오늘이 속한 주)에 주간 목표가 있는지. 알림 칸용(보는 주와 다를 수 있음) */
   const [thisWeekHasWeekly, setThisWeekHasWeekly] = useState<boolean | null>(null)
   const [unfinished, setUnfinished] = useState<DailyGoal[]>([])
@@ -146,7 +145,6 @@ export default function TodayPage() {
         setThisWeekHasWeekly((thisWeek ?? w).length > 0)
         setActuals(actual)
         setWeekGoals(d)
-        setWeeklyGoals(w)
         setUnfinished(u)
         setCategories(c)
         setBlocks(b)
@@ -229,7 +227,6 @@ export default function TodayPage() {
             date={selected}
             title={isToday ? '오늘 할 일' : `${dayLabel(selected)} 할 일`}
             goals={weekGoals.filter((g) => g.date === selected)}
-            weeklyGoals={weeklyGoals ?? []}
             categories={categories}
             run={run}
             timeBlocks={blocks.filter((b) => b.date === selected)}
@@ -308,7 +305,6 @@ export default function TodayPage() {
                 <NewDailyGoalForm
                   key={selected}
                   date={selected}
-                  weeklyGoals={weeklyGoals ?? []}
                   categories={categories}
                   onSubmit={(input) => run(() => createDailyGoal(input))}
                 />
