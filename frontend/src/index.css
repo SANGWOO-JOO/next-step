@@ -1013,8 +1013,11 @@ button.link-button:hover { color: var(--accent); text-decoration: underline; }
 .plan-header.cal-header .cal-nav { align-items: flex-start; }
 .plan-header.cal-header .cal-nav > button { margin-top: 0.2rem; }
 /* 오른쪽 위 알림 카드(1-4f ⑬): 작업을 막지 않고 닫거나 끝낼 때까지 남는다 */
-.reminder-stack { position: fixed; top: 1rem; right: 1rem; z-index: 50; display: grid; gap: 0.6rem; width: min(22rem, calc(100vw - 2rem)); }
+.reminder-stack { position: fixed; top: 4.25rem; right: 1rem; z-index: 50; display: grid; gap: 0.6rem; width: min(22rem, calc(100vw - 2rem)); }
 .reminder-card { position: relative; display: grid; gap: 0.35rem; padding: 0.85rem 1rem; border: 1px solid var(--border); border-left: 3px solid #d97706; border-radius: 10px; background: var(--surface); box-shadow: 0 8px 24px rgb(0 0 0 / 0.25); }
 .reminder-card p { margin: 0; }
 .reminder-card .row-actions { margin-top: 0.25rem; }
 .reminder-close { position: absolute; top: 0.4rem; right: 0.4rem; }
+.reminder-card.now { border-left-color: var(--accent); }
+.page-head-tools { display: inline-flex; align-items: center; gap: 0.75rem; margin-left: auto; }
+.today-page .page-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }

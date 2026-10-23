@@ -15,7 +15,7 @@ import ShutdownDialog from '../components/today/ShutdownDialog'
 import { COLLAPSE_EVENT } from '../components/Layout'
 import ScheduleView from '../components/ScheduleView'
 import { refreshReminders } from '../utils/reminders'
-import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, shiftDate, todaySeoul, weekDates } from '../utils/date'
+import { dayLabel, minutesOfDay, mondayOf, nowMinutesSeoul, shiftDate, todaySeoul, weekDates } from '../utils/date'
 import { plannedKey } from './plan/planData'
 
 export default function TodayPage() {
@@ -157,10 +157,10 @@ export default function TodayPage() {
         <h1>
           일정 <span className="page-date muted">{dayLabel(today)}</span>
         </h1>
-        <div className="status-bar">
-          <NowNext blocks={blocks.filter((b) => b.date === today)} />
+        {/* 상태 줄 상자를 없애고 오늘 숫자와 하루 마무리는 제목 줄 오른쪽에(1-4f ⑭). 지금·곧 할 일은 오른쪽 위 알림 카드 */}
+        <div className="page-head-tools">
           {dailyLog && (
-            <span className="muted" title="지나간 계획 시간 중 계획과 같은 일을 실제로 한 비율">
+            <span className="muted small" title="지나간 계획 시간 중 계획과 같은 일을 실제로 한 비율">
               실제 공부 <strong className="status-strong">{formatDuration(dailyLog.summary.plan.actualStudyMinutes * 60)}</strong>
               {dailyLog.summary.plan.asPlannedPercent != null && (
                 <>
@@ -170,14 +170,15 @@ export default function TodayPage() {
               )}
             </span>
           )}
-          <span className="status-end">
-            {dailyLog?.saved && (
-              <button className="ghost log-chip" onClick={() => setShutdown(true)} title="오늘 기록 보기·고치기">
-                오늘 기록 ✓ {dailyLog.condition ? CONDITION_LABELS[dailyLog.condition] : ''}
-              </button>
-            )}
-            {!dailyLog?.saved && <button onClick={() => setShutdown(true)}>🌙 하루 마무리</button>}
-          </span>
+          {dailyLog?.saved ? (
+            <button className="ghost log-chip" onClick={() => setShutdown(true)} title="오늘 기록 보기·고치기">
+              오늘 기록 ✓ {dailyLog.condition ? CONDITION_LABELS[dailyLog.condition] : ''}
+            </button>
+          ) : (
+            <button className="ghost" onClick={() => setShutdown(true)}>
+              🌙 하루 마무리
+            </button>
+          )}
         </div>
       </div>
       {error && (
@@ -361,37 +362,6 @@ export default function TodayPage() {
 }
 
 /** 지금 걸친 시간 블록, 없으면 다음 블록을 한 줄로 알려준다(Structured의 지금/다음 강조 참고) */
-function NowNext({ blocks }: { blocks: TimeBlock[] }) {
-  const [now, setNow] = useState(nowMinutesSeoul)
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(nowMinutesSeoul()), 30_000)
-    return () => window.clearInterval(timer)
-  }, [])
-  const today = todaySeoul()
-  const spans = blocks
-    .map((b) => ({ b, start: minutesOfDay(b.startAt, today), end: minutesOfDay(b.endAt, today) }))
-    .sort((a, c) => a.start - c.start)
-  const current = spans.find((x) => x.start <= now && now < x.end)
-  const next = spans.find((x) => x.start > now)
-
-  if (current) {
-    return (
-      <span className="status-now">
-        지금 <strong>{current.b.label}</strong> · {formatMinutes(current.end)}까지 ({current.end - now}분 남음)
-      </span>
-    )
-  }
-  if (next) {
-    const gap = next.start - now
-    return (
-      <span className="status-next">
-        다음 <strong>{formatMinutes(next.start)} {next.b.label}</strong> ·{' '}
-        {gap >= 60 ? `${Math.floor(gap / 60)}시간 ${gap % 60}분` : `${gap}분`} 뒤
-      </span>
-    )
-  }
-  return <span className="muted">오늘 남은 시간 블록이 없어요.</span>
-}
 
 /**
  * 알림 한 칸(docs/design.md 6장 1-4d): 주간 목표 없음 > 월요일 계획하기.
