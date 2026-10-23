@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Category } from '../../api/categories'
 import { getDailyGoalsBetween, type DailyGoal } from '../../api/dailyGoals'
-import { formatDuration } from '../../api/focus'
 import { createGoal, createMonthlyGoal, deleteGoal, GOAL_STATUS_LABEL, updateGoal, type Goal } from '../../api/goals'
-import { getStatsSummary, type StatsSummary } from '../../api/stats'
 import { GoalForm, MonthlyGoalForm } from '../../components/GoalTree'
 import MoreMenu from '../../components/MoreMenu'
 import { currentMonthSeoul, mondayOf, monthLabel, shiftDate, todaySeoul } from '../../utils/date'
@@ -21,14 +19,13 @@ type Props = {
 const daysBetween = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000)
 
 /**
- * [최종](docs/design.md 1-4f ⑧, Linear 프로젝트 개요·Asana Goals 참고): 상태 한 줄 + "지금"(이번 달·이번 주) +
- * "지금까지"(시작일부터 공부) + 월간 목표 목록. 진행 중인 최종 목표는 하나뿐이다.
+ * [최종](docs/design.md 1-4f ⑧·⑳, Linear 프로젝트 개요·Asana Goals 참고): 상태 한 줄 + "지금"(이번 달·이번 주) +
+ * 월간 목표 목록. 공부 통계는 대시보드에서. 진행 중인 최종 목표는 하나뿐이다.
  */
 export default function GoalLevel({ goals, run, onOpenMonth, onOpenWeek }: Props) {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [adding, setAdding] = useState(false)
   const [addingMonthly, setAddingMonthly] = useState(false)
-  const [stats, setStats] = useState<StatsSummary | null>(null)
   const [weekGoals, setWeekGoals] = useState<DailyGoal[]>([])
   const today = todaySeoul()
   const monday = mondayOf(today)
@@ -37,10 +34,6 @@ export default function GoalLevel({ goals, run, onOpenMonth, onOpenWeek }: Props
 
   useEffect(() => {
     if (!goal) return
-    const from = goal.startDate < today ? goal.startDate : today
-    getStatsSummary(from, today)
-      .then(setStats)
-      .catch(() => setStats(null))
     getDailyGoalsBetween(monday, shiftDate(monday, 6))
       .then(setWeekGoals)
       .catch(() => setWeekGoals([]))
@@ -66,7 +59,6 @@ export default function GoalLevel({ goals, run, onOpenMonth, onOpenWeek }: Props
             today={today}
             monday={monday}
             goals={goals}
-            stats={stats}
             weekGoals={weekGoals}
             run={run}
             onEdit={() => setEditingId(goal.id)}
@@ -123,7 +115,6 @@ type OverviewProps = {
   today: string
   monday: string
   goals: Goal[]
-  stats: StatsSummary | null
   weekGoals: DailyGoal[]
   run: Run
   onEdit: () => void
@@ -138,7 +129,6 @@ function GoalOverview({
   today,
   monday,
   goals,
-  stats,
   weekGoals,
   run,
   onEdit,
@@ -196,21 +186,6 @@ function GoalOverview({
               할 일 {weekDone}/{weekGoals.length} ›
             </span>
           </button>
-        </div>
-        <div className="card">
-          <h3 className="timeline-title">
-            지금까지 ({Number(goal.startDate.slice(5, 7))}/{Number(goal.startDate.slice(8))}부터)
-          </h3>
-          <div className="goal-metrics">
-            <div className="goal-metric">
-              <span className="muted small">공부 누적</span>
-              <strong>{stats ? formatDuration(stats.totalSeconds) : '–'}</strong>
-            </div>
-            <div className="goal-metric">
-              <span className="muted small">공부한 날</span>
-              <strong>{stats ? `${stats.studyDays}일` : '–'}</strong>
-            </div>
-          </div>
         </div>
       </div>
 

@@ -4,6 +4,7 @@ import { errorMessage } from '../api/client'
 import { formatDuration } from '../api/focus'
 import { CONDITION_LABELS, getDailyLogs, type DailyLog } from '../api/records'
 import NoteInbox from '../components/NoteInbox'
+import ReviewWriter from '../components/ReviewWriter'
 import { getMonthlyReviews, getWeeklyJournals, type MonthlyReviewBrief, type WeeklyJournalBrief } from '../api/reviews'
 import { addMonths, currentMonthSeoul, dayLabel, mondayOf, mondaysOfMonth, monthLabel, shiftDate, todaySeoul, weekLabel } from '../utils/date'
 import { monthRange } from '../utils/health'
@@ -29,6 +30,8 @@ export default function LogPage() {
   const [dayView, setDayView] = useState<'list' | 'calendar'>('list')
   /** 달력에서 고른 날. 목록에서 그 카드로 스크롤하고 강조한다 */
   const [focusDate, setFocusDate] = useState<string | null>(null)
+  /** 일지·회고를 저장하면 목록을 다시 불러온다 */
+  const [version, setVersion] = useState(0)
 
   useEffect(() => {
     setError(null)
@@ -46,7 +49,7 @@ export default function LogPage() {
         .then((list) => setMonths([...list].reverse()))
         .catch(fail)
     }
-  }, [kind, month, year])
+  }, [kind, month, year, version])
 
   const move = (delta: number) => set(kind, kind === 'month' ? `${Number(year) + delta}-${month.slice(5)}` : addMonths(month, delta))
   const list = kind === 'day' ? days : kind === 'week' ? weeks : months
@@ -75,6 +78,7 @@ export default function LogPage() {
       <p className="muted">하루 마무리, 주간 일지, 월간 회고를 최신순으로 모아 봐요.</p>
       {error && <p className="error-banner">{error}</p>}
       {kind === 'day' && <NoteInbox />}
+      {kind !== 'day' && <ReviewWriter key={kind} kind={kind} onSaved={() => setVersion((v) => v + 1)} />}
 
       {list === null ? (
         <p className="muted">불러오는 중…</p>
@@ -87,9 +91,11 @@ export default function LogPage() {
                 ? '이 달에는 주간 일지가 없어요.'
                 : '이 해에는 월간 회고가 없어요.'}
           </p>
-          <Link className="button-link" to={kind === 'day' ? '/' : kind === 'week' ? '/plan?level=week' : '/plan?level=month'}>
-            {kind === 'day' ? '일정에서 하루 마무리하기' : kind === 'week' ? '이번 주 일지 쓰러 가기' : '이번 달 회고 쓰러 가기'}
-          </Link>
+          {kind === 'day' && (
+            <Link className="button-link" to="/?shutdown=1">
+              일정에서 하루 마무리하기
+            </Link>
+          )}
         </div>
       ) : (
         <div className="log-list">

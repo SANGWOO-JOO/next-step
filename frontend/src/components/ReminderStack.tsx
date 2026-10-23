@@ -49,7 +49,6 @@ export default function ReminderStack() {
   })
   const [hidden, setHidden] = useState<Kind[]>([])
   const today = todaySeoul()
-  const monday = mondayOf(today)
 
   const check = useCallback(() => {
     const date = todaySeoul()
@@ -151,7 +150,7 @@ export default function ReminderStack() {
           body="이번 주를 돌아보고 다음 주에 바꿀 한 가지를 정해요."
           actions={
             <>
-              <Link className="reminder-btn primary" to={`/plan?level=week&date=${monday}#journal`} onClick={() => dismiss('weekly')}>
+              <Link className="reminder-btn primary" to="/log?kind=week#journal" onClick={() => dismiss('weekly')}>
                 주간 일지 쓰기
               </Link>
               <button className="reminder-btn" onClick={() => dismiss('weekly')}>
