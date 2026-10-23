@@ -18,6 +18,7 @@ import asPlannedIcon from '../assets/icons/as-planned.svg'
 import ActualPopover from './ActualPopover'
 import MoreMenu from './MoreMenu'
 import TimeBlockForm from './TimeBlockForm'
+import TopicField from './TopicField'
 
 const HOUR_PX = 48
 /** 드래그는 15분 단위로 맞춘다 */
@@ -120,6 +121,9 @@ export default function ScheduleView({
   const [popover, setPopover] = useState<Popover>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [alldayOpen, setAlldayOpen] = useState(false)
+  // 막 놓은 블록의 주제 입력(1-4f ㊽)
+  const [topicFor, setTopicFor] = useState<number | null>(null)
+  const [topicDraft, setTopicDraft] = useState('')
   // [주] 목표 줄 접기. 다음에 열 때도 기억한다
   const [goalsCollapsed, setGoalsCollapsed] = useState(() => {
     try {
@@ -272,9 +276,22 @@ export default function ScheduleView({
     }
     const start = Math.min(minuteAt(e, e.currentTarget), DAY - SNAP)
     setNotice(null)
+    // 놓자마자 그 블록에 주제 입력칸을 연다(1-4f ㊽)
     run(() =>
-      createTimeBlock({ dailyGoalId: id, startAt: seoulIso(date, start), endAt: seoulIso(date, Math.min(start + 60, DAY)) }),
+      createTimeBlock({ dailyGoalId: id, startAt: seoulIso(date, start), endAt: seoulIso(date, Math.min(start + 60, DAY)) }).then(
+        (created) => {
+          setTopicDraft('')
+          setTopicFor(created.id)
+        },
+      ),
     )
+  }
+
+  const saveTopic = (b: TimeBlock, value: string) => {
+    setTopicFor(null)
+    const title = value.trim() || null
+    if (title === (b.title ?? null)) return
+    run(() => updateTimeBlock(b.id, { ...toTimeBlockInput(b, b.startAt, b.endAt), title }))
   }
 
   const week = dates.length > 1
@@ -433,6 +450,7 @@ export default function ScheduleView({
                         date === today && start <= now && now < end ? 'now' : '',
                         split ? 'plan-lane' : '',
                         unrecorded ? 'unrecorded' : '',
+                        topicFor === b.id ? 'topic-open' : '',
                       ].join(' ')}
                       style={{
                         top: toPx(start),
@@ -443,18 +461,40 @@ export default function ScheduleView({
                       onPointerDown={(e) => onBlockPointerDown(e, b, date)}
                       title="끌어서 옮기기 · 눌러서 고치기"
                     >
-                      <span className="schedule-block-title" title={`${b.label} · ${formatMinutes(start)}~${formatMinutes(end)}`}>
+                      <span
+                        className="schedule-block-title"
+                        title={`${b.dailyGoalId !== null && b.title ? `${b.title} · ` : ''}${b.label} · ${formatMinutes(start)}~${formatMinutes(end)}`}
+                      >
                         {b.category?.icon && (
                           <span className="schedule-block-icon" aria-hidden="true">
                             {b.category.icon}
                           </span>
                         )}
-                        <span className="schedule-block-label">{b.label}</span>
+                        {/* 할 일 블록에 주제가 있으면 주제를 제목으로, 할 일 이름은 아래 작은 줄로(1-4f ㊽) */}
+                        <span className="schedule-block-label">{b.dailyGoalId !== null && b.title ? b.title : b.label}</span>
                       </span>
                       {size !== 'tiny' && (
                         <span className="schedule-block-time">
+                          {b.dailyGoalId !== null && b.title && `${b.label} · `}
                           {formatMinutes(start)}~{formatMinutes(end)}
                         </span>
+                      )}
+                      {topicFor === b.id && (
+                        <div
+                          className="topic-pop"
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <TopicField
+                            categoryId={b.category?.id ?? null}
+                            value={topicDraft}
+                            onChange={setTopicDraft}
+                            onEnter={(v) => saveTopic(b, v)}
+                            onEscape={() => setTopicFor(null)}
+                            autoFocus
+                          />
+                          <span className="topic-pop-hint muted small">Enter 저장 · Esc 건너뛰기</span>
+                        </div>
                       )}
                       {unrecorded && (
                         <button

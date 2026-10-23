@@ -36,6 +36,10 @@ class TimeBlockController(private val timeBlockService: TimeBlockService) {
         return timeBlockService.list(start, date ?: to ?: start)
     }
 
+    /** 같은 분류에서 최근 쓴 주제(자동완성용, 1-4f ㊽) */
+    @GetMapping("/topics")
+    fun topics(@RequestParam categoryId: Long): List<String> = timeBlockService.recentTopics(categoryId)
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     fun create(@Valid @RequestBody req: TimeBlockRequest): TimeBlockResponse = timeBlockService.create(req)

@@ -75,6 +75,14 @@ class ActualLogServiceTest(
     }
 
     @Test
+    fun `계획대로는 블록의 주제도 실제 기록에 옮긴다`() {
+        val block = timeBlockService.create(TimeBlockRequest(resume.id, title = "경력기술서", startAt = at(9), endAt = at(10)))
+        val logs = service.fromBlock(block.id)
+        assertEquals("경력기술서", logs[0].title)
+        assertEquals("이력서 작성", logs[0].label)
+    }
+
+    @Test
     fun `가운데 딴짓을 덧붙이면 기존 기록이 둘로 나뉜다`() {
         goalLog(9, 0, 12, 0)
         val logs = distraction(10, 0, 10, 15)

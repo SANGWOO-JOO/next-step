@@ -24,6 +24,7 @@ class TimeBlockService(
     companion object {
         private val ZONE: ZoneId = ZoneId.of(JobSchedulerApplication.APP_ZONE)
         const val MAX_RANGE_DAYS = 62L
+        const val TOPIC_LIMIT = 8
         private val COLOR = Regex("^#[0-9A-Fa-f]{6}$")
     }
 
@@ -71,17 +72,29 @@ class TimeBlockService(
 
     private data class Target(val dailyGoal: DailyGoal?, val title: String?, val date: LocalDate)
 
-    /** 하루 목표가 있으면 그 날짜를, 없으면(밥 먹기 같은 일정) 제목과 날짜를 받는다. */
+    /**
+     * 하루 목표가 있으면 그 날짜를 쓰고, 제목은 그 시간의 주제(예: CS 공부 → 데이터 통신, 1-4f ㊽)로 둔다.
+     * 없으면(밥 먹기 같은 일정) 제목과 날짜를 받는다.
+     */
     private fun resolve(req: TimeBlockRequest, current: TimeBlock?): Target {
+        val title = req.title?.trim()?.ifEmpty { null }
         if (req.dailyGoalId != null) {
             val goal = current?.dailyGoal?.takeIf { it.id == req.dailyGoalId } ?: getDailyGoal(req.dailyGoalId)
-            return Target(goal, null, goal.date)
+            return Target(goal, title, goal.date)
         }
-        val title = req.title?.trim()?.ifEmpty { null }
+        title
             ?: throw BusinessRuleException("하루 목표를 고르거나 제목을 입력해주세요.", "GOAL_OR_TITLE_REQUIRED")
         val date = req.date ?: throw BusinessRuleException("날짜가 필요해요.", "DATE_REQUIRED")
         return Target(null, title, date)
     }
+
+    /** 같은 분류의 할 일 블록에 최근 쓴 주제(겹치지 않게, 최근 순). 주제 입력칸 자동완성용 */
+    @Transactional(readOnly = true)
+    fun recentTopics(categoryId: Long, limit: Int = TOPIC_LIMIT): List<String> =
+        timeBlockRepository.findTop100ByDailyGoal_Category_IdAndTitleIsNotNullOrderByIdDesc(categoryId)
+            .mapNotNull { it.title }
+            .distinct()
+            .take(limit)
 
     fun delete(id: Long) {
         timeBlockRepository.delete(getEntity(id))

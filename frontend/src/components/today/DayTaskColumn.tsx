@@ -45,6 +45,15 @@ export default function DayTaskColumn({ date, goals, blocks, run, addForm }: Pro
         {sorted.map((goal) => {
           const done = goal.status === 'DONE'
           const minutes = minutesOf(goal)
+          // 그날 이 할 일 블록에 단 주제를 시간 순으로 한 줄에(1-4f ㊽)
+          const topics = [
+            ...new Set(
+              blocks
+                .filter((b) => b.dailyGoalId === goal.id && b.title)
+                .sort((a, b) => a.startAt.localeCompare(b.startAt))
+                .map((b) => b.title!),
+            ),
+          ]
           return (
             <li
               key={goal.id}
@@ -62,7 +71,10 @@ export default function DayTaskColumn({ date, goals, blocks, run, addForm }: Pro
                 aria-label="완료"
               />
               <span className="category-dot" style={{ background: goal.category?.color ?? 'var(--muted)' }} aria-hidden="true" />
-              <span className="day-task-text">{goal.content}</span>
+              <span className="day-task-text">
+                {goal.content}
+                {topics.length > 0 && <span className="day-task-topics muted small">{topics.join(' · ')}</span>}
+              </span>
               {minutes > 0 ? (
                 <span className="day-task-time muted small">{planned(minutes)}</span>
               ) : (

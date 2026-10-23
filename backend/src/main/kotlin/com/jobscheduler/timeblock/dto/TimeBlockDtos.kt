@@ -9,7 +9,7 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 
 data class TimeBlockRequest(
-    /** 비우면 목표가 아닌 일정. 이때 title과 date가 필요하다 */
+    /** 비우면 목표가 아닌 일정. 이때 title과 date가 필요하다. 있으면 title은 그 시간의 주제 */
     val dailyGoalId: Long? = null,
     @field:Size(max = 100, message = "제목은 100자 이하로 입력해주세요.")
     val title: String? = null,
@@ -28,7 +28,7 @@ data class TimeBlockResponse(
     val dailyGoalContent: String?,
     val dailyGoalType: DailyGoalType?,
     val dailyGoalStatus: DailyGoalStatus?,
-    /** 목표 없는 블록의 제목 */
+    /** 목표 없는 블록의 제목, 또는 할 일 블록의 주제(1-4f ㊽) */
     val title: String?,
     /** 화면에 보여줄 이름: 하루 목표 내용 또는 제목 */
     val label: String,

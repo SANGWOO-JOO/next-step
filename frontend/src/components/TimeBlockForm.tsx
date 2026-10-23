@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import type { DailyGoal } from '../api/dailyGoals'
 import type { TimeBlockInput } from '../api/timeBlocks'
 import { formatMinutes, parseTime, seoulIso } from '../utils/date'
+import TopicField from './TopicField'
 
 type Props = {
   date: string
@@ -9,7 +10,7 @@ type Props = {
   goals: DailyGoal[]
   /** null이면 목표가 아닌 일정 */
   dailyGoalId: number | null
-  /** 목표 없는 일정의 제목 */
+  /** 목표 없는 일정의 제목, 또는 할 일 블록의 주제 */
   title?: string | null
   /** true면 '목표 아닌 일정' 선택지를 보여준다 */
   allowFree?: boolean
@@ -47,7 +48,8 @@ export default function TimeBlockForm({
     const endMin = end === '00:00' ? 1440 : parseTime(end)
     onSubmit({
       dailyGoalId,
-      title: dailyGoalId === null ? title.trim() : null,
+      // 할 일 블록이면 제목은 그 시간의 주제(1-4f ㊽). 비우면 없음
+      title: title.trim() || null,
       date,
       startAt: seoulIso(date, startMin),
       endAt: seoulIso(date, endMin),
@@ -68,6 +70,13 @@ export default function TimeBlockForm({
           </option>
         ))}
       </select>
+      {dailyGoalId !== null && (
+        <TopicField
+          categoryId={goals.find((g) => g.id === dailyGoalId)?.category?.id ?? null}
+          value={title}
+          onChange={setTitle}
+        />
+      )}
       {dailyGoalId === null && (
         <input
           value={title}

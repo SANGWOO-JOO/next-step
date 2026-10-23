@@ -9,6 +9,7 @@ export type TimeBlock = {
   dailyGoalContent: string | null
   dailyGoalType: DailyGoalType | null
   dailyGoalStatus: DailyGoalStatus | null
+  /** 목표 없는 일정의 제목, 또는 할 일 블록의 주제(1-4f ㊽) */
   title: string | null
   /** 화면에 보여줄 이름: 하루 목표 내용 또는 제목 */
   label: string
@@ -50,6 +51,9 @@ export const setTimeBlockColor = (id: number, color: string | null) =>
   api.patch<TimeBlock>(`/api/time-blocks/${id}/color`, { color })
 
 export const deleteTimeBlock = (id: number) => api.delete<void>(`/api/time-blocks/${id}`)
+
+/** 같은 분류에서 최근 쓴 주제(자동완성용) */
+export const getTopics = (categoryId: number) => api.get<string[]>(`/api/time-blocks/topics?categoryId=${categoryId}`)
 
 export const getTimeBlocksBetween = (from: string, to: string) =>
   api.get<TimeBlock[]>(`/api/time-blocks?from=${from}&to=${to}`)

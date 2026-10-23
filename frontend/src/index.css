@@ -1345,3 +1345,16 @@ button.schedule-date.selected { box-shadow: none; background: color-mix(in srgb,
 .schedule-block { background: color-mix(in srgb, color-mix(in srgb, var(--block, var(--muted)) 60%, #fff) 20%, transparent); }
 .actual-entry.actual-goal, .actual-entry.actual-study { background: color-mix(in srgb, color-mix(in srgb, var(--block, var(--muted)) 60%, #fff) 24%, transparent); }
 .segmented.lane-switch { overflow: visible; }
+
+/* 시간 블록 주제(1-4f ㊽) */
+.schedule-block.topic-open { overflow: visible; z-index: 20; }
+.topic-pop { position: absolute; top: calc(100% + 6px); left: 0; width: max(100%, 260px); display: grid; gap: 6px; padding: 10px; border-radius: 12px; background: var(--surface, #222); border: 1px solid color-mix(in srgb, #8B5CF6 35%, var(--border)); box-shadow: 0 10px 28px rgb(0 0 0 / 0.35); color: var(--text); cursor: default; }
+.topic-field { display: grid; gap: 6px; }
+.topic-field input { width: 100%; font-size: 14px; }
+.topic-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.topic-chip { min-height: 0; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text); font-size: 12px; font-weight: 500; }
+.topic-chip:hover { border-color: #8B5CF6; background: color-mix(in srgb, #8B5CF6 14%, transparent); }
+.topic-pop-hint { font-size: 11px; }
+.block-form .topic-field { min-width: 14rem; }
+.day-task-text { display: grid; }
+.day-task-topics { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -10,4 +10,5 @@ interface TimeBlockRepository : JpaRepository<TimeBlock, Long> {
 
     fun findAllByDate(date: LocalDate): List<TimeBlock>
     fun findAllByDailyGoalId(dailyGoalId: Long): List<TimeBlock>
+    fun findTop100ByDailyGoal_Category_IdAndTitleIsNotNullOrderByIdDesc(categoryId: Long): List<TimeBlock>
 }

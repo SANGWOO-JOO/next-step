@@ -59,6 +59,19 @@ class TimeBlockServiceTest(
         timeBlockService.create(TimeBlockRequest(goal.id, startAt = start, endAt = end))
 
     @Test
+    fun `할 일 블록에 주제를 달고 같은 분류의 최근 주제를 겹치지 않게 돌려준다`() {
+        val first = timeBlockService.create(TimeBlockRequest(cs.id, title = " 데이터 통신 ", startAt = at(9, 30), endAt = at(11)))
+        assertEquals("데이터 통신", first.title)
+        assertEquals("운영체제", first.label)
+        timeBlockService.create(TimeBlockRequest(cs.id, title = "알고리즘", startAt = at(12, 30), endAt = at(14, 30)))
+        timeBlockService.create(TimeBlockRequest(cs.id, title = "데이터 통신", startAt = at(15), endAt = at(16)))
+        timeBlockService.create(TimeBlockRequest(cs.id, startAt = at(17), endAt = at(18)))
+
+        val topics = timeBlockService.recentTopics(cs.category!!.id)
+        assertEquals(listOf("데이터 통신", "알고리즘"), topics)
+    }
+
+    @Test
     fun `시간 블록을 만들고 시작 시각 순으로 조회한다`() {
         block(cs, at(14), at(15))
         val morning = block(resume, at(9), at(10, 30))

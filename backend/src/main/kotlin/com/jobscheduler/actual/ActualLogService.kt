@@ -80,7 +80,8 @@ class ActualLogService(
             kind = if (goal != null) ActualKind.GOAL else ActualKind.OTHER,
             dailyGoal = goal,
             category = goal?.category,
-            title = if (goal == null) block.title else null,
+            // 할 일 블록이면 주제를 그대로 옮긴다(1-4f ㊽)
+            title = block.title,
             timeBlockId = block.id,
         )
         return place(log)
@@ -150,7 +151,7 @@ class ActualLogService(
                 if (goal.date != req.date) throw BusinessRuleException("그날의 하루 목표만 고를 수 있어요.", "GOAL_DATE_MISMATCH")
                 log.dailyGoal = goal
                 log.category = goal.category
-                log.title = null
+                log.title = title
             }
             ActualKind.STUDY -> {
                 val categoryId = req.categoryId ?: throw BusinessRuleException("공부한 분류를 골라주세요.", "CATEGORY_REQUIRED")
