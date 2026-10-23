@@ -458,7 +458,7 @@ function Workload({ blocks, goals, compact = false }: { blocks: TimeBlock[]; goa
         </span>
       ) : (
         <span className="workload-line" title="오늘 계획한 시간">
-          {compact ? <img className="inline-icon" src={clockIcon} alt="계획" width={16} height={16} draggable={false} /> : '계획 '}
+          <img className="inline-icon" src={clockIcon} alt="계획" width={26} height={26} draggable={false} />
           <strong>{hm(planned)}</strong>
           {unscheduled.length > 0 && (
             <span title={unscheduled.map((g) => g.content).join('\n')}> · 시간 안 잡음 {unscheduled.length}</span>

@@ -1205,3 +1205,4 @@ button.icon-only img { display: block; }
 .icon-badge { position: absolute; top: -3px; right: -5px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: #FF9F43; color: #1d1d1f; font-size: 10px; font-weight: 800; line-height: 16px; }
 .workload-line { display: inline-flex; align-items: center; gap: 0.3rem; }
 img.inline-icon { display: block; }
+.workload-line { gap: 0.15rem; } .workload-line strong { font-variant-numeric: tabular-nums; }
