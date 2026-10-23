@@ -190,7 +190,12 @@ function GoalMenu({ goal, run, onEdit }: { goal: Goal; run: Run; onEdit: () => v
         {
           label: '삭제',
           danger: true,
-          onClick: () => confirm(`'${goal.title}' 최종 목표를 삭제할까요?`) && run(() => deleteGoal(goal.id)),
+          onClick: () =>
+            confirm(
+              goal.monthlyGoals.length > 0
+                ? `'${goal.title}' 최종 목표와 그 아래 월간 목표 ${goal.monthlyGoals.length}개를 삭제할까요?`
+                : `'${goal.title}' 최종 목표를 삭제할까요?`,
+            ) && run(() => deleteGoal(goal.id)),
         },
       ]}
     />

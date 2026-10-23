@@ -53,11 +53,17 @@ class GoalService(
         return get(id)
     }
 
+    /** 주간 목표가 없는 월간 목표는 함께 지운다. 주간 목표가 연결된 월간 목표가 있으면 지울 수 없다. */
     fun delete(id: Long) {
         val goal = getEntity(id)
-        if (monthlyGoalRepository.existsByGoalId(id)) {
-            throw BusinessRuleException("월간 목표가 연결된 최종 목표는 삭제할 수 없어요.", "HAS_CHILDREN")
+        val monthlyGoals = monthlyGoalRepository.findAllByGoalIdInOrderByMonthStartAscIdAsc(listOf(id))
+        if (monthlyGoals.any { weeklyGoalRepository.existsByMonthlyGoalId(it.id!!) }) {
+            throw BusinessRuleException(
+                "주간 목표가 연결된 월간 목표가 있어 삭제할 수 없어요. [주] 보기에서 주간 목표를 먼저 지워 주세요.",
+                "HAS_CHILDREN",
+            )
         }
+        monthlyGoalRepository.deleteAll(monthlyGoals)
         goalRepository.delete(goal)
     }
 

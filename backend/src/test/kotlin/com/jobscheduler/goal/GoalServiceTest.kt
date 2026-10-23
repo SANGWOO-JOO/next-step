@@ -120,10 +120,11 @@ class GoalServiceTest(
         assertEquals("HAS_CHILDREN", assertThrows<BusinessRuleException> { goalService.delete(goal.id) }.code)
         assertEquals("HAS_CHILDREN", assertThrows<BusinessRuleException> { monthlyGoalService.delete(oct.id) }.code)
 
+        // 주간 목표가 없어지면 남은 빈 월간 목표는 최종 목표와 함께 지운다
         weeklyGoalService.delete(weekly.id)
-        monthlyGoalService.delete(oct.id)
         goalService.delete(goal.id)
         assertThrows<NotFoundException> { goalService.get(goal.id) }
+        assertThrows<NotFoundException> { monthlyGoalService.delete(oct.id) }
     }
 
     @Test
