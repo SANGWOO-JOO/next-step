@@ -4,6 +4,9 @@ import { getCategories, type Category } from '../../api/categories'
 import { errorMessage } from '../../api/client'
 import { getGoals, type Goal } from '../../api/goals'
 import { addMonths, mondayOf, mondaysOfMonth, monthLabel, shiftDate, todaySeoul } from '../../utils/date'
+import chevronLeft from '../../assets/icons/chevron-left.svg'
+import chevronRight from '../../assets/icons/chevron-right.svg'
+import IconButton from '../../components/IconButton'
 import GoalLevel from './GoalLevel'
 import MonthLevel from './MonthLevel'
 import { activeGoal, anchorOf, firstMondayOf, type Level, type Run } from './planData'
@@ -75,12 +78,8 @@ export default function PlanPage() {
           {level !== 'goal' && (
             <>
               <button className="ghost" onClick={() => go(level, mondayOf(todaySeoul()))}>오늘</button>
-              <button className="icon" onClick={() => move(-1)} aria-label={level === 'week' ? '이전 주' : '이전 달'} title={level === 'week' ? '이전 주' : '이전 달'}>
-                ‹
-              </button>
-              <button className="icon" onClick={() => move(1)} aria-label={level === 'week' ? '다음 주' : '다음 달'} title={level === 'week' ? '다음 주' : '다음 달'}>
-                ›
-              </button>
+              <IconButton icon={chevronLeft} label={level === 'week' ? '이전 주' : '이전 달'} onClick={() => move(-1)} />
+              <IconButton icon={chevronRight} label={level === 'week' ? '다음 주' : '다음 달'} onClick={() => move(1)} />
             </>
           )}
           <div className="plan-heading">

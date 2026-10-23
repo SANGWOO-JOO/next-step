@@ -5,6 +5,9 @@ import { formatDuration } from '../api/focus'
 import { CONDITION_LABELS, getDailyLogs, type DailyLog } from '../api/records'
 import NoteInbox from '../components/NoteInbox'
 import ReviewWriter from '../components/ReviewWriter'
+import IconButton from '../components/IconButton'
+import chevronLeft from '../assets/icons/chevron-left.svg'
+import chevronRight from '../assets/icons/chevron-right.svg'
 import DayWrapUp from '../components/today/DayWrapUp'
 import { getMonthlyReviews, getWeeklyJournals, type MonthlyReviewBrief, type WeeklyJournalBrief } from '../api/reviews'
 import { addMonths, currentMonthSeoul, dayLabel, mondayOf, mondaysOfMonth, monthLabel, shiftDate, todaySeoul, weekLabel } from '../utils/date'
@@ -63,12 +66,8 @@ export default function LogPage() {
       {/* 다른 화면과 같은 머리: 왼쪽 ‹ › 기간, 오른쪽 [하루|주간|월간](1-4f ㉒) */}
       <div className="cal-header">
         <span className="cal-nav">
-          <button className="icon" onClick={() => move(-1)} aria-label="이전" title="이전">
-            ‹
-          </button>
-          <button className="icon" onClick={() => move(1)} aria-label="다음" title="다음">
-            ›
-          </button>
+          <IconButton icon={chevronLeft} label={kind === 'month' ? '이전 해' : '이전 달'} onClick={() => move(-1)} />
+          <IconButton icon={chevronRight} label={kind === 'month' ? '다음 해' : '다음 달'} onClick={() => move(1)} />
           <h1 className="cal-title">{kind === 'month' ? `${year}년` : monthLabel(month)}</h1>
         </span>
         <span className="segmented" role="group" aria-label="기록 종류">

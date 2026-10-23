@@ -13,7 +13,17 @@ import PullSection from '../components/today/PullSection'
 import DayWrapUp from '../components/today/DayWrapUp'
 import { COLLAPSE_EVENT } from '../components/Layout'
 import ScheduleView, { type Lanes } from '../components/ScheduleView'
+import chevronLeft from '../assets/icons/chevron-left.svg'
+import chevronRight from '../assets/icons/chevron-right.svg'
 import clockIcon from '../assets/icons/clock.svg'
+import fitDayOnIcon from '../assets/icons/fit-day-on.svg'
+import fitDayIcon from '../assets/icons/fit-day.svg'
+import lanesActual from '../assets/icons/lanes-actual.svg'
+import lanesBoth from '../assets/icons/lanes-both.svg'
+import lanesPlan from '../assets/icons/lanes-plan.svg'
+import narrowIcon from '../assets/icons/narrow.svg'
+import wideIcon from '../assets/icons/wide.svg'
+import IconButton from '../components/IconButton'
 import pullIcon from '../assets/icons/pull.svg'
 import { dayLabel, minutesOfDay, mondayOf, nowMinutesSeoul, shiftDate, todaySeoul, weekDates } from '../utils/date'
 import { plannedKey } from './plan/planData'
@@ -251,41 +261,33 @@ export default function TodayPage() {
               <button className="ghost" onClick={() => setSelected(today)} disabled={view === 'week' ? viewMonday === thisMonday : isToday}>
                 오늘
               </button>
-              <button
-                className="icon"
+              <IconButton
+                icon={chevronLeft}
+                label={view === 'week' ? '지난주' : '전날'}
                 onClick={() => setSelected(shiftDate(selected, view === 'week' ? -7 : -1))}
-                aria-label={view === 'week' ? '지난주' : '전날'}
-                title={view === 'week' ? '지난주' : '전날'}
-              >
-                ‹
-              </button>
-              <button
-                className="icon"
+              />
+              <IconButton
+                icon={chevronRight}
+                label={view === 'week' ? '다음 주' : '다음 날'}
                 onClick={() => setSelected(shiftDate(selected, view === 'week' ? 7 : 1))}
-                aria-label={view === 'week' ? '다음 주' : '다음 날'}
-                title={view === 'week' ? '다음 주' : '다음 날'}
-              >
-                ›
-              </button>
+              />
               <h3 className="cal-title">{view === 'week' ? weekTitle(viewMonday) : dayLabel(selected)}</h3>
             </span>
             <span className="cal-tools">
-              <button
-                className="ghost lanes-toggle"
+              <IconButton
+                icon={LANE_ICONS[lanes]}
+                label={`보기 줄: ${LANE_LABELS[lanes]}`}
+                title={`보기 줄: 지금 ${LANE_LABELS[lanes]} → 누르면 ${LANE_LABELS[nextLanes(lanes)]}`}
                 onClick={cycleLanes}
-                title={`보기 줄 바꾸기: 지금 ${LANE_LABELS[lanes]} → 누르면 ${LANE_LABELS[nextLanes(lanes)]}`}
-                aria-label={`보기 줄: ${LANE_LABELS[lanes]}`}
-              >
-                {LANE_LABELS[lanes]}
-              </button>
-              <button
-                className={fitDay ? 'ghost fit-day-toggle on' : 'ghost fit-day-toggle'}
+              />
+              <IconButton
+                icon={fitDay ? fitDayOnIcon : fitDayIcon}
+                label="24시간 한눈에"
+                title={fitDay ? '24시간 한눈에 끄기: 시간표를 원래 크기로' : '24시간 한눈에: 0시~24시를 스크롤 없이 한 화면에'}
                 onClick={toggleFitDay}
-                aria-pressed={fitDay}
-                title={fitDay ? '시간표를 원래 크기로' : '0시~24시를 스크롤 없이 한 화면에'}
-              >
-                24시간
-              </button>
+                on={fitDay}
+                pressed={fitDay}
+              />
               <span className="segmented">
                 {(['day', 'week'] as const).map((v) => (
                   <button key={v} className={view === v ? 'active' : ''} onClick={() => changeView(v)}>
@@ -293,15 +295,14 @@ export default function TodayPage() {
                   </button>
                 ))}
               </span>
-              <button
-                className="icon wide-toggle"
+              <IconButton
+                icon={wideSchedule ? narrowIcon : wideIcon}
+                label={wideSchedule ? '목록 보기' : '넓게 보기'}
+                title={wideSchedule ? '목록 다시 보기' : '넓게 보기: 목록을 접고 시간표만'}
                 onClick={toggleWide}
-                aria-pressed={wideSchedule}
-                aria-label={wideSchedule ? '목록 보기' : '넓게 보기'}
-                title={wideSchedule ? '목록 다시 보기' : '목록을 접고 시간표만 넓게 보기'}
-              >
-                {wideSchedule ? '⤡' : '⤢'}
-              </button>
+                on={wideSchedule}
+                pressed={wideSchedule}
+              />
             </span>
           </div>
           {wideSchedule && (
@@ -497,6 +498,7 @@ const WIDE_KEY = 'today.wideSchedule'
 const FIT_DAY_KEY = 'today.fitDay'
 const LANES_KEY = 'today.lanes'
 const LANE_LABELS: Record<Lanes, string> = { both: '계획·실제', plan: '계획만', actual: '실제만' }
+const LANE_ICONS: Record<Lanes, string> = { both: lanesBoth, plan: lanesPlan, actual: lanesActual }
 const nextLanes = (l: Lanes): Lanes => (l === 'both' ? 'plan' : l === 'plan' ? 'actual' : 'both')
 const DEFAULT_LEFT_WIDTH = 380
 const MIN_LEFT_WIDTH = 300
