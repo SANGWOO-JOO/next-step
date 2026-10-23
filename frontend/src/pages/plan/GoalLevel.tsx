@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { Category } from '../../api/categories'
 import { createGoal, deleteGoal, GOAL_STATUS_LABEL, updateGoal, type Goal } from '../../api/goals'
-import { getMonthlyReviews, type MonthlyReviewBrief } from '../../api/reviews'
 import { GoalForm } from '../../components/GoalTree'
 import HealthDot from '../../components/HealthDot'
 import MoreMenu from '../../components/MoreMenu'
@@ -21,28 +20,18 @@ function monthsOf(goal: Goal) {
   return months
 }
 
-/** [최종]: 최종 목표마다 월 단위 로드맵 카드(⋯로 수정·삭제) + 월간 회고 목록(오른쪽). 월간·주간 편집은 [월]·[주]에서 */
+/** [최종]: 진행 중인 최종 목표의 월 단위 로드맵 카드(⋯로 수정·삭제). 월간 회고는 기록 페이지 [월간]에서 모아 본다 */
 export default function GoalLevel({ goals, run, onOpenMonth }: Props) {
-  const [reviews, setReviews] = useState<MonthlyReviewBrief[]>([])
   const [showAll, setShowAll] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [adding, setAdding] = useState(false)
   const others = goals.filter((g) => g.status !== 'ACTIVE')
   const today = todaySeoul()
   const shown = goals.filter((g) => g.status === 'ACTIVE')
-  const span = shown.length
-    ? { from: shown.map((g) => g.startDate.slice(0, 7)).sort()[0], to: shown.map((g) => g.targetDate.slice(0, 7)).sort().reverse()[0] }
-    : null
 
-  useEffect(() => {
-    if (!span) return
-    getMonthlyReviews(span.from, span.to)
-      .then(setReviews)
-      .catch(() => setReviews([]))
-  }, [span?.from, span?.to]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="plan-layout">
+    <div className="plan-layout single">
       <div className="plan-main">
         {shown.map((goal) => {
           // 기간이 길면 지난달부터 ROADMAP_WINDOW개월만 보여주고 나머지는 접는다
@@ -154,31 +143,6 @@ export default function GoalLevel({ goals, run, onOpenMonth }: Props) {
         )}
       </div>
 
-      <aside className="plan-side">
-        <div className="card">
-          <h3 className="timeline-title">월간 회고 모음</h3>
-          {reviews.length === 0 ? (
-            <div className="empty-cta">
-              <p className="muted small">아직 쓴 월간 회고가 없어요. 달의 마지막 주에 [월] 보기에서 써요.</p>
-              <button className="ghost" onClick={() => onOpenMonth(currentMonthSeoul())}>
-                {monthLabel(currentMonthSeoul()).slice(6)} 보기로 가기
-              </button>
-            </div>
-          ) : (
-            <ul className="review-list">
-              {reviews.map((r) => (
-                <li key={r.month}>
-                  <button className="ghost" onClick={() => onOpenMonth(r.month)}>
-                    {monthLabel(r.month)}
-                  </button>
-                  {r.review && <p className="small">{r.review}</p>}
-                  {r.nextDirection && <p className="small muted">→ 다음 달: {r.nextDirection}</p>}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </aside>
     </div>
   )
 }

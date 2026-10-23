@@ -951,3 +951,4 @@ body.resizing { cursor: col-resize; user-select: none; }
 .plan-nav { display: inline-flex; align-items: center; gap: 0.5rem; }
 button.link-button { padding: 0; border: none; background: none; color: inherit; font: inherit; cursor: pointer; }
 button.link-button:hover { color: var(--accent); text-decoration: underline; }
+.plan-layout.single { grid-template-columns: minmax(0, 1fr); }
