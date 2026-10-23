@@ -416,7 +416,7 @@ button.add { justify-self: start; padding: 0.2rem 0.6rem; font-size: 0.85rem; }
   z-index: 1;
 }
 .schedule-block.short { flex-direction: row; gap: 0.4rem; align-items: center; }
-.schedule-block.dragging { opacity: 0.85; box-shadow: 0 4px 14px rgb(0 0 0 / 0.25); cursor: grabbing; z-index: 3; }
+.schedule-block.dragging, .actual-entry.dragging { opacity: 0.85; box-shadow: 0 4px 14px rgb(0 0 0 / 0.25); cursor: grabbing; z-index: 3; }
 .schedule-block.done .schedule-block-title { text-decoration: line-through; opacity: 0.6; }
 .schedule-block.preview { border: 1px dashed var(--accent); border-left-width: 4px; border-left-color: var(--accent); background: color-mix(in srgb, var(--accent) 18%, transparent); pointer-events: none; }
 .schedule-block-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
