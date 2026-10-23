@@ -1,13 +1,15 @@
 import brand from '../assets/nav/brand.svg'
 import checklist from '../assets/nav/checklist.svg'
+import collapse from '../assets/nav/collapse.svg'
 import dashboard from '../assets/nav/dashboard.svg'
+import expand from '../assets/nav/expand.svg'
 import log from '../assets/nav/log.svg'
 import plan from '../assets/nav/plan.svg'
 import schedule from '../assets/nav/schedule.svg'
 import settings from '../assets/nav/settings.svg'
 
-/** 메뉴는 그라데이션 아이콘 타일 이미지(1-4f ⑱, 알림 카드와 같은 스타일). 메뉴 접기 같은 도구 버튼은 선 아이콘 */
-const IMAGES: Record<string, string> = { brand, schedule, plan, log, dashboard, checklist, settings }
+/** 메뉴는 그라데이션 아이콘 타일 이미지(1-4f ⑱, 알림 카드와 같은 스타일). 모바일 메뉴 버튼만 선 아이콘 */
+const IMAGES: Record<string, string> = { brand, schedule, plan, log, dashboard, checklist, settings, collapse, expand }
 
 /** 메뉴 아이콘(선 아이콘, 24 격자). 색은 글자색을 따른다 */
 const PATHS: Record<string, string> = {
