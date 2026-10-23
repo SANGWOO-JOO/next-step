@@ -1107,3 +1107,4 @@ input[type='checkbox'] { accent-color: #6d74f7; }
 .nav-tile { display: block; flex: none; border-radius: 7px; filter: saturate(0.55); opacity: 0.8; transition: filter 0.15s, opacity 0.15s, transform 0.15s; }
 .side-link:hover .nav-tile, .side-link.active .nav-tile, .side-brand .nav-tile { filter: none; opacity: 1; }
 .side-link.active .nav-tile { transform: scale(1.06); }
+.brand-logo { display: block; height: 28px; width: auto; }

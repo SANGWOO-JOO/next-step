@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import logoDark from '../assets/brand/logo-horizontal-dark.svg'
+import logoLight from '../assets/brand/logo-horizontal-light.svg'
 import NavIcon from './NavIcon'
 import ReminderStack from './ReminderStack'
 
@@ -98,9 +100,16 @@ export default function Layout() {
       {drawerOpen && <div className="drawer-scrim" onClick={() => setDrawerOpen(false)} />}
 
       <aside className={drawerOpen ? 'sidebar open' : 'sidebar'} aria-label="메뉴">
-        <div className="side-brand">
-          <NavIcon name="brand" />
-          <span className="side-label">Next Step</span>
+        {/* CI 가로 로고(docs/brand). 다크 모드는 흰 글자, 라이트 모드는 검은 글자. 접으면 심볼만 */}
+        <div className="side-brand" aria-label="Next Step">
+          {collapsed ? (
+            <NavIcon name="brand" />
+          ) : (
+            <picture>
+              <source srcSet={logoDark} media="(prefers-color-scheme: dark)" />
+              <img className="brand-logo" src={logoLight} alt="Next Step" height={28} draggable={false} />
+            </picture>
+          )}
         </div>
         <nav className="side-nav">
           {GROUPS.map((g) => (
