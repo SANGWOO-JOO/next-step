@@ -24,6 +24,7 @@ class TimeBlockService(
     companion object {
         private val ZONE: ZoneId = ZoneId.of(JobSchedulerApplication.APP_ZONE)
         const val MAX_RANGE_DAYS = 62L
+        private val COLOR = Regex("^#[0-9A-Fa-f]{6}$")
     }
 
     @Transactional(readOnly = true)
@@ -54,6 +55,17 @@ class TimeBlockService(
         block.date = target.date
         block.startAt = req.startAt
         block.endAt = req.endAt
+        return TimeBlockResponse.from(block)
+    }
+
+    /** 블록 색만 바꾼다(1-4f ㉘). 분류는 그대로 둔다 */
+    fun setColor(id: Long, color: String?): TimeBlockResponse {
+        val block = getEntity(id)
+        val value = color?.trim()?.ifEmpty { null }
+        if (value != null && !COLOR.matches(value)) {
+            throw BusinessRuleException("색은 #RRGGBB 형식이어야 해요.", "INVALID_COLOR")
+        }
+        block.color = value?.uppercase()
         return TimeBlockResponse.from(block)
     }
 

@@ -19,6 +19,9 @@ data class TimeBlockRequest(
     val endAt: OffsetDateTime,
 )
 
+/** 블록 색 바꾸기. null이면 분류 색으로 되돌린다 */
+data class TimeBlockColorRequest(val color: String?)
+
 data class TimeBlockResponse(
     val id: Long,
     val dailyGoalId: Long?,
@@ -30,6 +33,8 @@ data class TimeBlockResponse(
     /** 화면에 보여줄 이름: 하루 목표 내용 또는 제목 */
     val label: String,
     val category: CategoryRef?,
+    /** 직접 고른 색(#RRGGBB). 없으면 분류 색을 쓴다 */
+    val color: String?,
     val date: LocalDate,
     val startAt: OffsetDateTime,
     val endAt: OffsetDateTime,
@@ -44,6 +49,7 @@ data class TimeBlockResponse(
             title = b.title,
             label = b.label,
             category = b.dailyGoal?.category?.let(CategoryRef::from),
+            color = b.color,
             date = b.date,
             startAt = b.startAt,
             endAt = b.endAt,

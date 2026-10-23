@@ -26,6 +26,8 @@ class TimeBlock(
     var date: LocalDate,
     var startAt: OffsetDateTime,
     var endAt: OffsetDateTime,
+    /** 직접 고른 색(#RRGGBB). 없으면 분류 색 */
+    var color: String? = null,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

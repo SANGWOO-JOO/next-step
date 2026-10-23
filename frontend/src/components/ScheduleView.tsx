@@ -9,7 +9,7 @@ import {
 } from '../api/dailyGoals'
 import { actualFromBlock, updateActualLog, type ActualLog } from '../api/actualLogs'
 import type { Category } from '../api/categories'
-import { createTimeBlock, deleteTimeBlock, toTimeBlockInput, updateTimeBlock, type TimeBlock } from '../api/timeBlocks'
+import { createTimeBlock, deleteTimeBlock, setTimeBlockColor, toTimeBlockInput, updateTimeBlock, type TimeBlock } from '../api/timeBlocks'
 import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, seoulIso, shiftDate, todaySeoul } from '../utils/date'
 import ActualPopover from './ActualPopover'
 import MoreMenu from './MoreMenu'
@@ -342,7 +342,7 @@ export default function ScheduleView({
                   const start = dragging?.start ?? minutesOfDay(b.startAt, date)
                   const end = dragging?.end ?? minutesOfDay(b.endAt, date)
                   // 목표 아닌 일정은 회색 점선 테두리로 구분한다
-                  const color = b.category?.color ?? 'var(--muted)'
+                  const color = b.color ?? b.category?.color ?? 'var(--muted)'
                   // 칸 높이에 맞춰 줄인다(1-4f ㉖): 한 줄이 안 되면 tiny, 세 줄이 안 되면 short(제목·시간 한 줄)
                   const px = toPx(end - start)
                   const size = px < 30 ? 'tiny' : px < 66 ? 'short' : ''
@@ -360,7 +360,7 @@ export default function ScheduleView({
                       className={[
                         'schedule-block',
                         b.dailyGoalStatus === 'DONE' ? 'done' : '',
-                        b.dailyGoalId === null ? 'free' : '',
+                        b.dailyGoalId === null && !b.color ? 'free' : '',
                         dragging ? 'dragging' : '',
                         size,
                         date === today && start <= now && now < end ? 'now' : '',
@@ -581,6 +581,13 @@ function SchedulePopover({ popover, goals, run, onClose }: PopoverProps) {
             : undefined
         }
       />
+      {popover.kind === 'edit' && (
+        <BlockColorPicker
+          value={popover.block.color}
+          fallback={popover.block.category?.color ?? null}
+          onPick={(color) => run(() => setTimeBlockColor(popover.block.id, color))}
+        />
+      )}
       {goal && (
         <span className="row-actions">
           <button
@@ -595,6 +602,53 @@ function SchedulePopover({ popover, goals, run, onClose }: PopoverProps) {
           </button>
         </span>
       )}
+    </div>
+  )
+}
+
+/** 블록 색 고르기(1-4f ㉘): 8색 + 분류 색으로 되돌리기. 분류는 바꾸지 않는다 */
+const BLOCK_COLORS = ['#5B8CFF', '#8B5CF6', '#EC4899', '#EF4444', '#FF9F43', '#FACC15', '#22C55E', '#14B8A6']
+
+function BlockColorPicker({
+  value,
+  fallback,
+  onPick,
+}: {
+  value: string | null
+  fallback: string | null
+  onPick: (color: string | null) => void
+}) {
+  // 창이 열려 있는 동안 고른 색을 바로 표시한다(창의 블록 값은 다시 열 때 갱신됨)
+  const [current, setCurrent] = useState(value)
+  const pick = (c: string | null) => {
+    setCurrent(c)
+    onPick(c)
+  }
+  return (
+    <div className="block-colors" role="radiogroup" aria-label="블록 색">
+      <span className="muted small">색</span>
+      <button
+        type="button"
+        role="radio"
+        aria-checked={current === null}
+        className={current === null ? 'color-dot auto selected' : 'color-dot auto'}
+        style={{ background: fallback ?? 'var(--muted)' }}
+        onClick={() => pick(null)}
+        title="분류 색(기본)"
+        aria-label="분류 색"
+      />
+      {BLOCK_COLORS.map((c) => (
+        <button
+          key={c}
+          type="button"
+          role="radio"
+          aria-checked={current === c}
+          className={current === c ? 'color-dot selected' : 'color-dot'}
+          style={{ background: c }}
+          onClick={() => pick(c)}
+          aria-label={c}
+        />
+      ))}
     </div>
   )
 }

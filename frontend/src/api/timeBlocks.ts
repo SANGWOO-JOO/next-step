@@ -13,6 +13,8 @@ export type TimeBlock = {
   /** 화면에 보여줄 이름: 하루 목표 내용 또는 제목 */
   label: string
   category: CategoryRef | null
+  /** 직접 고른 색(#RRGGBB). null이면 분류 색 */
+  color: string | null
   date: string
   startAt: string
   endAt: string
@@ -42,6 +44,10 @@ export const createTimeBlock = (input: TimeBlockInput) => api.post<TimeBlock>('/
 
 export const updateTimeBlock = (id: number, input: TimeBlockInput) =>
   api.put<TimeBlock>(`/api/time-blocks/${id}`, input)
+
+/** 블록 색 바꾸기(null이면 분류 색으로) */
+export const setTimeBlockColor = (id: number, color: string | null) =>
+  api.patch<TimeBlock>(`/api/time-blocks/${id}/color`, { color })
 
 export const deleteTimeBlock = (id: number) => api.delete<void>(`/api/time-blocks/${id}`)
 

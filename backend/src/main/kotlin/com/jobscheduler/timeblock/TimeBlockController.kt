@@ -1,6 +1,7 @@
 package com.jobscheduler.timeblock
 
 import com.jobscheduler.common.BusinessRuleException
+import com.jobscheduler.timeblock.dto.TimeBlockColorRequest
 import com.jobscheduler.timeblock.dto.TimeBlockRequest
 import com.jobscheduler.timeblock.dto.TimeBlockResponse
 import jakarta.validation.Valid
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -41,6 +43,11 @@ class TimeBlockController(private val timeBlockService: TimeBlockService) {
     @PutMapping("/{id}")
     fun update(@PathVariable id: Long, @Valid @RequestBody req: TimeBlockRequest): TimeBlockResponse =
         timeBlockService.update(id, req)
+
+    /** 블록 색 바꾸기(1-4f ㉘). color가 null이면 분류 색으로 */
+    @PatchMapping("/{id}/color")
+    fun setColor(@PathVariable id: Long, @RequestBody req: TimeBlockColorRequest): TimeBlockResponse =
+        timeBlockService.setColor(id, req.color)
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)

@@ -133,4 +133,20 @@ class TimeBlockServiceTest(
         assertEquals("산책", changed.label)
         assertEquals(null, changed.dailyGoalId)
     }
+
+    @Test
+    fun `블록 색을 고르고 분류 색으로 되돌리며 시각을 옮겨도 색은 유지된다`() {
+        val b = block(resume, at(9), at(10))
+        val categoryBefore = b.category?.id
+
+        val colored = timeBlockService.setColor(b.id, "#ff9f43")
+        assertEquals("#FF9F43", colored.color)
+        assertEquals(categoryBefore, colored.category?.id)
+
+        val moved = timeBlockService.update(b.id, TimeBlockRequest(resume.id, startAt = at(11), endAt = at(12)))
+        assertEquals("#FF9F43", moved.color)
+
+        assertEquals("INVALID_COLOR", assertThrows<BusinessRuleException> { timeBlockService.setColor(b.id, "orange") }.code)
+        assertEquals(null, timeBlockService.setColor(b.id, null).color)
+    }
 }
