@@ -1223,3 +1223,7 @@ button.pull-all { color: var(--muted); }
 button.pull-all:hover { color: #7c6cf8; }
 .quick-add-detail { margin-top: 0.5rem; gap: 0.4rem; padding-left: 0; margin-right: 2.4rem; }
 .quick-add-detail select { flex: 1 1 8rem; min-width: 0; font-size: 13px; }
+
+/* 빠른 추가 보내기(1-4f ㊱): 꽉 찬 보라 원 + ↑ */
+.quick-add-submit { flex: none; width: 32px; height: 32px; min-height: 0; padding: 0; border: 0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--grad); color: #fff; }
+.quick-add-submit:hover { filter: brightness(1.08); }

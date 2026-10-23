@@ -440,7 +440,13 @@ export function NewDailyGoalForm({ date, weeklyGoals, categories, onSubmit }: Ne
         >
           <img src={moreIcon} alt="" aria-hidden="true" width={26} height={26} draggable={false} />
         </button>
-        {(detailed || content) && <button type="submit">추가</button>}
+        {(detailed || content) && (
+          <button type="submit" className="quick-add-submit" aria-label="추가" title="추가 (Enter)">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 19V5M5.5 11.5 12 5l6.5 6.5" />
+            </svg>
+          </button>
+        )}
       </div>
       {/* 상세는 주간 목표·분류만(1-4f ㉟). 첫 행동은 수정에서, 핵심은 ☆로 */}
       {detailed && (
