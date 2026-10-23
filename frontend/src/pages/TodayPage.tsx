@@ -12,7 +12,7 @@ import DailyGoalPanel, { NewDailyGoalForm } from '../components/DailyGoalPanel'
 import PullSection from '../components/today/PullSection'
 import DayWrapUp from '../components/today/DayWrapUp'
 import { COLLAPSE_EVENT } from '../components/Layout'
-import ScheduleView from '../components/ScheduleView'
+import ScheduleView, { type Lanes } from '../components/ScheduleView'
 import { dayLabel, minutesOfDay, mondayOf, nowMinutesSeoul, shiftDate, todaySeoul, weekDates } from '../utils/date'
 import { plannedKey } from './plan/planData'
 
@@ -56,6 +56,20 @@ export default function TodayPage() {
       return false
     }
   })
+  /** 계획·실제 → 계획만 → 실제만 순서로 돌아가며 바꾼다(1-4f ㉗). 기억한다 */
+  const [lanes, setLanes] = useState<Lanes>(() => {
+    try {
+      const v = localStorage.getItem(LANES_KEY)
+      return v === 'plan' || v === 'actual' ? v : 'both'
+    } catch {
+      return 'both'
+    }
+  })
+  const cycleLanes = () => {
+    const next = nextLanes(lanes)
+    setLanes(next)
+    writeValue(LANES_KEY, next)
+  }
   const toggleFitDay = () => {
     setFitDay(!fitDay)
     writeValue(FIT_DAY_KEY, fitDay ? '0' : '1')
@@ -255,6 +269,14 @@ export default function TodayPage() {
             </span>
             <span className="cal-tools">
               <button
+                className="ghost lanes-toggle"
+                onClick={cycleLanes}
+                title={`보기 줄 바꾸기: 지금 ${LANE_LABELS[lanes]} → 누르면 ${LANE_LABELS[nextLanes(lanes)]}`}
+                aria-label={`보기 줄: ${LANE_LABELS[lanes]}`}
+              >
+                {LANE_LABELS[lanes]}
+              </button>
+              <button
                 className={fitDay ? 'ghost fit-day-toggle on' : 'ghost fit-day-toggle'}
                 onClick={toggleFitDay}
                 aria-pressed={fitDay}
@@ -324,6 +346,7 @@ export default function TodayPage() {
             actuals={actuals}
             categories={categories}
             fitDay={fitDay}
+            lanes={lanes}
           />
         </div>
       </div>
@@ -462,6 +485,9 @@ const weekTitle = (monday: string) => {
 const LEFT_WIDTH_KEY = 'today.leftWidth'
 const WIDE_KEY = 'today.wideSchedule'
 const FIT_DAY_KEY = 'today.fitDay'
+const LANES_KEY = 'today.lanes'
+const LANE_LABELS: Record<Lanes, string> = { both: '계획·실제', plan: '계획만', actual: '실제만' }
+const nextLanes = (l: Lanes): Lanes => (l === 'both' ? 'plan' : l === 'plan' ? 'actual' : 'both')
 const DEFAULT_LEFT_WIDTH = 380
 const MIN_LEFT_WIDTH = 300
 const MAX_LEFT_WIDTH = 560

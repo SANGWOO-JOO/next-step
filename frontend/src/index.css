@@ -1161,3 +1161,7 @@ button.fit-day-toggle.on { color: #fff; border-color: transparent; background: v
 .schedule-block.short .schedule-block-time, .actual-entry.short .schedule-block-time { white-space: nowrap; font-size: 0.68rem; opacity: 0.8; }
 .actual-entry.tiny .schedule-block-time { display: none; }
 .as-planned.compact { margin: 0 0 0 auto; padding: 0 0.4rem; line-height: 1.4; flex: none; }
+/* 계획만·실제만 보기(1-4f ㉗): 남은 한 줄이 칸 전체를 쓴다 */
+.actual-entry.full, .schedule-block.preview.actual-lane.full { left: 2px; right: 10px; }
+.lane-labels.single { grid-template-columns: 1fr; }
+button.lanes-toggle { min-width: 5.2rem; padding: 0.25rem 0.75rem; font-size: 0.82rem; }

@@ -40,7 +40,11 @@ type Props = {
   categories?: Category[]
   /** 켜면 0시~24시가 스크롤 없이 한 화면에 들어오게 한 시간 높이를 줄인다 */
   fitDay?: boolean
+  /** 두 줄일 때 어느 줄을 보여줄지: 둘 다 / 계획만 / 실제만 */
+  lanes?: Lanes
 }
+
+export type Lanes = 'both' | 'plan' | 'actual'
 
 /** 드래그 중 상태. create는 빈 칸을 끌어 범위를 고르는 중, move/resize는 블록을 옮기거나 늘이는 중 */
 type Lane = 'plan' | 'actual'
@@ -93,8 +97,13 @@ export default function ScheduleView({
   actuals,
   categories = [],
   fitDay = false,
+  lanes = 'both',
 }: Props) {
   const twoLane = actuals !== undefined
+  // 보기 줄(1-4f ㉗): 계획+실제 / 계획만 / 실제만. 하나만 볼 때는 그 줄이 칸 전체를 쓴다
+  const showPlan = !twoLane || lanes !== 'actual'
+  const showActual = twoLane && lanes !== 'plan'
+  const split = twoLane && lanes === 'both'
   // 24시간 한눈에: 스크롤 영역 높이에 맞춰 한 시간 높이를 정한다(최소 16px)
   const [fitHour, setFitHour] = useState(HOUR_PX)
   hourPx = fitDay ? fitHour : HOUR_PX
@@ -137,7 +146,7 @@ export default function ScheduleView({
     const m = Math.min(minuteAt(e, e.currentTarget), DAY - SNAP)
     // 두 줄일 때는 오른쪽 반이 "실제" 줄
     const rect = e.currentTarget.getBoundingClientRect()
-    const lane: Lane = twoLane && e.clientX - rect.left > rect.width / 2 ? 'actual' : 'plan'
+    const lane: Lane = split ? (e.clientX - rect.left > rect.width / 2 ? 'actual' : 'plan') : showActual && !showPlan ? 'actual' : 'plan'
     setPopover(null)
     setDrag({ kind: 'create', lane, date, anchor: m, start: m, end: m + SNAP })
   }
@@ -280,9 +289,9 @@ export default function ScheduleView({
           <>
             <span />
             {dates.map((d) => (
-              <span key={d} className="lane-labels muted">
-                <span>계획</span>
-                <span>실제</span>
+              <span key={d} className={split ? 'lane-labels muted' : 'lane-labels single muted'}>
+                {showPlan && <span>계획</span>}
+                {showActual && <span>실제</span>}
               </span>
             ))}
           </>
@@ -316,7 +325,7 @@ export default function ScheduleView({
           {dates.map((date) => (
             <div
               key={date}
-              className={['schedule-column', date === today ? 'today' : '', twoLane ? 'two-lane' : ''].join(' ')}
+              className={['schedule-column', date === today ? 'today' : '', split ? 'two-lane' : ''].join(' ')}
               style={{ backgroundSize: `100% ${hourPx}px, 100% ${hourPx / 2}px` }}
               onPointerDown={(e) => onColumnPointerDown(e, date)}
               onPointerMove={onColumnPointerMove}
@@ -325,7 +334,8 @@ export default function ScheduleView({
               onDragOver={(e) => e.dataTransfer.types.includes(GOAL_DRAG_TYPE) && e.preventDefault()}
               onDrop={(e) => onDrop(e, date)}
             >
-              {blocks
+              {showPlan &&
+                blocks
                 .filter((b) => b.date === date)
                 .map((b) => {
                   const dragging = (drag?.kind === 'move' || drag?.kind === 'resize') && drag.block.id === b.id ? drag : null
@@ -354,7 +364,7 @@ export default function ScheduleView({
                         dragging ? 'dragging' : '',
                         size,
                         date === today && start <= now && now < end ? 'now' : '',
-                        twoLane ? 'plan-lane' : '',
+                        split ? 'plan-lane' : '',
                         unrecorded ? 'unrecorded' : '',
                       ].join(' ')}
                       style={{
@@ -391,7 +401,7 @@ export default function ScheduleView({
                   )
                 })}
 
-              {twoLane &&
+              {showActual &&
                 actuals!
                   .filter((a) => a.date === date)
                   .map((a) => {
@@ -414,6 +424,7 @@ export default function ScheduleView({
                         key={a.id}
                         className={[
                           'actual-entry',
+                          split ? '' : 'full',
                           `actual-${a.kind.toLowerCase()}`,
                           toPx(end - start) < 30 ? 'tiny' : toPx(end - start) < 44 ? 'short' : '',
                           dragging ? 'dragging' : '',
@@ -466,7 +477,7 @@ export default function ScheduleView({
 
               {drag?.kind === 'create' && drag.date === date && (
                 <div
-                  className={['schedule-block preview', twoLane ? (drag.lane === 'actual' ? 'actual-lane' : 'plan-lane') : ''].join(' ')}
+                  className={['schedule-block preview', twoLane ? (drag.lane === 'actual' ? 'actual-lane' : split ? 'plan-lane' : '') : '', split ? '' : 'full'].join(' ')}
                   style={{ top: toPx(drag.start), height: toPx(drag.end - drag.start) }}
                 >
                   <span className="schedule-block-time">
