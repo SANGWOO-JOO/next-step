@@ -1,6 +1,9 @@
 # job-scheduler 설계 (v4, 2026-10-20)
 
 ## 1. 개요
+
+서비스 이름: **Next Step** (2026-10-24 사용자 결정. 컨셉 "공백 말고, 준비 기간", 계획한 칸을 채워 다음 단계로 간다는 뜻). 화면에 보이는 이름만 바꾸고 저장소·패키지·코드 이름은 job-scheduler 그대로
+
 - 위치: `/Users/sangwoo/Desktop/github/job-scheduler`
 - 목적: 퇴직 후 이직 준비용 개인 도구. "계획이 불명확 → 시작이 어려움 → 딴짓으로 샘" 문제 해결 + 어디에 시간을 썼는지 파악
 - 스택: Kotlin Spring Boot(JPA) / React + TypeScript(Vite) / PostgreSQL(Docker Compose), 테스트는 H2

@@ -93,14 +93,14 @@ export default function Layout() {
         <button className="icon" onClick={() => setDrawerOpen(true)} aria-label="메뉴 열기">
           <NavIcon name="menu" />
         </button>
-        <strong>{current?.label ?? 'Job Scheduler'}</strong>
+        <strong>{current?.label ?? 'Next Step'}</strong>
       </header>
       {drawerOpen && <div className="drawer-scrim" onClick={() => setDrawerOpen(false)} />}
 
       <aside className={drawerOpen ? 'sidebar open' : 'sidebar'} aria-label="메뉴">
         <div className="side-brand">
           <NavIcon name="brand" />
-          <span className="side-label">Job Scheduler</span>
+          <span className="side-label">Next Step</span>
         </div>
         <nav className="side-nav">
           {GROUPS.map((g) => (

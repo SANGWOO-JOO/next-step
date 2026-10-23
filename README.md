@@ -1,6 +1,7 @@
-# job-scheduler
+# Next Step
 
-퇴직 후 이직 준비를 위한 개인 계획·집중·회고 도구.
+공백 말고, 준비 기간. 퇴직 후 이직 준비를 위한 개인 계획·실제 기록·회고 도구.
+(저장소·패키지 이름은 job-scheduler 그대로)
 
 - Backend: Kotlin + Spring Boot 3.5 (JPA, Flyway), Java 21
 - Frontend: React + TypeScript (Vite)
