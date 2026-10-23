@@ -1381,3 +1381,7 @@ button.schedule-date.selected { box-shadow: none; background: color-mix(in srgb,
 .schedule-allday.collapsed { padding-right: 28px; }
 .schedule-head { overflow: visible; }
 .schedule.week .schedule-allday { padding-right: 28px; }
+/* 가로 스크롤 막기: 숨은 툴팁(⊕ "할 일 추가")이 오른쪽 끝을 넘어 옆으로 밀리던 것(1-4f ㊿ 보완) */
+.schedule-scroll { overflow-x: hidden; }
+[data-tip]:not(:hover):not(:focus-visible)::after { display: none; }
+.allday-add[data-tip]::after { left: auto; right: 0; transform: none; }
