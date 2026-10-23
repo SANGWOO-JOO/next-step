@@ -144,6 +144,9 @@ export default function GoalLevel({ goals, run, onOpenMonth }: Props) {
               onCancel={() => setAdding(false)}
             />
           </div>
+        ) : shown.length > 0 ? (
+          // 진행 중인 최종 목표는 하나만(1-4f ⑥)
+          <p className="muted small">새 최종 목표는 지금 목표를 ⋯ → 수정에서 완료나 중단으로 바꾼 뒤 만들 수 있어요.</p>
         ) : (
           <button className="ghost add goal-add" onClick={() => setAdding(true)}>
             + 최종 목표

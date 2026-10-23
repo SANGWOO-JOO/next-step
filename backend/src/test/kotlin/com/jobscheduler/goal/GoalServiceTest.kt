@@ -164,4 +164,24 @@ class GoalServiceTest(
         assertEquals(nov.id, weeklyGoalService.carryOver(next.id, nov.id).monthlyGoalId)
         assertEquals(true, weeklyGoalService.list(oct.id, null).first { it.id == w.id }.carriedOver)
     }
+
+    @Test
+    fun `진행 중인 최종 목표는 하나만 둘 수 있다`() {
+        val first = createGoal()
+        assertEquals("ONE_ACTIVE_GOAL", assertThrows<BusinessRuleException> { createGoal() }.code)
+
+        // 중단한 목표는 따로 만들 수 있지만, 다시 진행 중으로 바꿀 수는 없다
+        val paused = goalService.create(
+            GoalRequest(title = "중단한 목표", startDate = first.startDate, targetDate = first.targetDate, status = GoalStatus.DROPPED),
+        )
+        val reopen = GoalRequest(title = paused.title, startDate = paused.startDate, targetDate = paused.targetDate)
+        assertEquals("ONE_ACTIVE_GOAL", assertThrows<BusinessRuleException> { goalService.update(paused.id, reopen) }.code)
+
+        // 지금 목표를 완료하면 새 목표를 진행할 수 있다
+        goalService.update(
+            first.id,
+            GoalRequest(title = first.title, startDate = first.startDate, targetDate = first.targetDate, status = GoalStatus.DONE),
+        )
+        assertEquals(GoalStatus.ACTIVE, goalService.update(paused.id, reopen).status)
+    }
 }

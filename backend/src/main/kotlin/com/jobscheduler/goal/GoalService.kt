@@ -25,6 +25,7 @@ class GoalService(
 
     fun create(req: GoalRequest): GoalResponse {
         GoalRules.requirePeriod(req.startDate, req.targetDate)
+        if (req.status == GoalStatus.ACTIVE && goalRepository.existsByStatus(GoalStatus.ACTIVE)) throw oneActive()
         val goal = goalRepository.save(
             Goal(
                 title = req.title.trim(),
@@ -40,6 +41,7 @@ class GoalService(
     fun update(id: Long, req: GoalRequest): GoalResponse {
         val goal = getEntity(id)
         GoalRules.requirePeriod(req.startDate, req.targetDate)
+        if (req.status == GoalStatus.ACTIVE && goalRepository.existsByStatusAndIdNot(GoalStatus.ACTIVE, id)) throw oneActive()
         // 기간을 줄여도 이미 연결된 월간 목표는 기간 안에 남아 있어야 한다
         monthlyGoalRepository.findAllByGoalIdInOrderByMonthStartAscIdAsc(listOf(id)).forEach {
             GoalRules.requireMonthInPeriod(it.month, req.startDate, req.targetDate)
@@ -66,6 +68,10 @@ class GoalService(
         monthlyGoalRepository.deleteAll(monthlyGoals)
         goalRepository.delete(goal)
     }
+
+    /** 진행 중인 최종 목표는 하나만(docs/design.md 1-4f ⑥) */
+    private fun oneActive() =
+        BusinessRuleException("진행 중인 최종 목표는 하나만 둘 수 있어요. 지금 목표를 완료하거나 중단한 뒤 만들어 주세요.", "ONE_ACTIVE_GOAL")
 
     private fun getEntity(id: Long): Goal =
         goalRepository.findByIdOrNull(id) ?: throw NotFoundException("최종 목표를 찾을 수 없어요: $id")

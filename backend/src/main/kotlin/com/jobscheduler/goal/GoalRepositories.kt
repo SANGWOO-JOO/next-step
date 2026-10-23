@@ -6,6 +6,8 @@ import java.time.LocalDate
 
 interface GoalRepository : JpaRepository<Goal, Long> {
     fun findAllByOrderByStartDateAscIdAsc(): List<Goal>
+    fun existsByStatusAndIdNot(status: GoalStatus, id: Long): Boolean
+    fun existsByStatus(status: GoalStatus): Boolean
 }
 
 interface MonthlyGoalRepository : JpaRepository<MonthlyGoal, Long> {
