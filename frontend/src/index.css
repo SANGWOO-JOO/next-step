@@ -1226,4 +1226,10 @@ button.pull-all:hover { color: #7c6cf8; }
 /* 빠른 추가 보내기(1-4f ㊱): 꽉 찬 보라 원 + ↑ */
 .quick-add-submit { flex: none; width: 32px; height: 32px; min-height: 0; padding: 0; border: 0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--grad); color: #fff; }
 .quick-add-submit:hover { filter: brightness(1.08); }
-.quick-add-detail > select { flex: 0 0 auto; width: auto; min-width: 9rem; }
+
+/* 빠른 추가 분류 색 칩(1-4f ㊳): 입력칸 폭에 맞춰 한 줄, 넘치면 줄바꿈 */
+.quick-add-detail.category-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0.5rem calc(32px + 30px + 0.8rem) 0 0; padding: 0; }
+.category-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 0; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text-muted, inherit); font-size: 13px; font-weight: 500; white-space: nowrap; }
+.category-chip:hover { border-color: var(--text-muted, #888); }
+.category-chip.on { border-color: #8B5CF6; background: color-mix(in srgb, #8B5CF6 18%, transparent); color: var(--text); }
+.category-chip .category-dot { width: 8px; height: 8px; }

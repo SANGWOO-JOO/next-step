@@ -361,15 +361,21 @@ export function NewDailyGoalForm({ date, categories, onSubmit }: NewFormProps) {
           </button>
         )}
       </div>
-      {/* 상세는 분류만(1-4f ㉟·㊲). 첫 행동은 수정에서, 핵심은 ☆로 */}
+      {/* 상세는 분류 색 칩만(1-4f ㉟·㊲·㊳). 다시 누르면 분류 없음. 첫 행동은 수정에서, 핵심은 ☆로 */}
       {detailed && (
-        <div className="inline-form quick-add-detail">
-          <CategorySelect
-            categories={categories}
-            value={categoryId}
-            onChange={setCategoryId}
-            emptyLabel="분류 없음"
-          />
+        <div className="quick-add-detail category-chips" role="group" aria-label="분류">
+          {categories.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              className={categoryId === c.id ? 'category-chip on' : 'category-chip'}
+              aria-pressed={categoryId === c.id}
+              onClick={() => setCategoryId(categoryId === c.id ? null : c.id)}
+            >
+              <span className="category-dot" style={{ background: c.color }} aria-hidden="true" />
+              {c.name}
+            </button>
+          ))}
         </div>
       )}
     </form>
