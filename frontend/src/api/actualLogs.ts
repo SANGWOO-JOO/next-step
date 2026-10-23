@@ -49,3 +49,27 @@ export const actualFromBlock = (blockId: number) => api.post<ActualLog[]>(`/api/
 
 export const getDistractionTitles = (q = '') =>
   api.get<string[]>(`/api/actual-logs/distraction-titles${q ? `?q=${encodeURIComponent(q)}` : ''}`)
+
+export type UnrecordedBlock = {
+  blockId: number
+  label: string
+  dailyGoalId: number | null
+  startAt: string
+  endAt: string
+}
+
+/** 그날 계획 vs 실제(docs/design.md 1-4e) */
+export type PlanComparison = {
+  plannedMinutes: number
+  /** 지금까지 지나간 계획 분. 계획대로 %의 분모 */
+  plannedSoFarMinutes: number
+  asPlannedMinutes: number
+  asPlannedPercent: number | null
+  actualStudyMinutes: number
+  actualDistractionMinutes: number
+  actualOtherMinutes: number
+  /** 지나갔는데 실제 기록이 없는 계획 블록 */
+  unrecordedBlocks: UnrecordedBlock[]
+}
+
+export const getPlanComparison = (date: string) => api.get<PlanComparison>(`/api/actual-logs/compare?date=${date}`)

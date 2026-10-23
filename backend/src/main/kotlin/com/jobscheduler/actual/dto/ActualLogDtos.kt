@@ -49,3 +49,29 @@ data class ActualLogResponse(
         )
     }
 }
+
+/** 계획(시간 블록)과 실제 기록 비교(docs/design.md 1-4e) */
+data class PlanComparison(
+    /** 그날 계획한 전체 분 */
+    val plannedMinutes: Long,
+    /** 지금까지 지나간 계획 분(오늘은 지금 시각까지, 지난 날은 전체). 계획대로 %의 분모 */
+    val plannedSoFarMinutes: Long,
+    /** 계획과 같은 일을 실제로 한 분 */
+    val asPlannedMinutes: Long,
+    /** 계획대로 % (지난 계획이 없으면 null) */
+    val asPlannedPercent: Int?,
+    /** 실제 공부(하루 목표 + 분류 공부) 분 */
+    val actualStudyMinutes: Long,
+    val actualDistractionMinutes: Long,
+    val actualOtherMinutes: Long,
+    /** 지나갔는데 실제 기록이 하나도 없는 계획 블록(하루 마무리 "실제 채우기" 목록) */
+    val unrecordedBlocks: List<UnrecordedBlock>,
+)
+
+data class UnrecordedBlock(
+    val blockId: Long,
+    val label: String,
+    val dailyGoalId: Long?,
+    val startAt: OffsetDateTime,
+    val endAt: OffsetDateTime,
+)

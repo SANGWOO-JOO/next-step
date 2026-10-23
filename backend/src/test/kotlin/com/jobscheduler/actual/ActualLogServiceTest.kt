@@ -139,4 +139,21 @@ class ActualLogServiceTest(
         assertEquals(listOf("09:00-10:00 이력서 작성"), spans(logs))
         assertEquals(ActualKind.OTHER, logs[0].kind)
     }
+
+    @Test
+    fun `계획 대비 실제를 비교하고 기록 없는 지난 블록을 돌려준다`() {
+        timeBlockService.create(TimeBlockRequest(resume.id, startAt = at(9), endAt = at(11)))
+        val lunch = timeBlockService.create(TimeBlockRequest(null, title = "점심", date = day, startAt = at(12), endAt = at(13)))
+        goalLog(9, 0, 10, 0)
+        distraction(10, 0, 10, 30)
+
+        val c = service.compare(day)
+        assertEquals(180, c.plannedMinutes)
+        assertEquals(180, c.plannedSoFarMinutes)
+        assertEquals(60, c.asPlannedMinutes)
+        assertEquals(33, c.asPlannedPercent)
+        assertEquals(60, c.actualStudyMinutes)
+        assertEquals(30, c.actualDistractionMinutes)
+        assertEquals(listOf(lunch.id), c.unrecordedBlocks.map { it.blockId })
+    }
 }

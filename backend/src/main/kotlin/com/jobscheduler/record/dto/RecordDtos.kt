@@ -1,5 +1,6 @@
 package com.jobscheduler.record.dto
 
+import com.jobscheduler.actual.dto.PlanComparison
 import com.jobscheduler.goal.dto.CategoryRef
 import com.jobscheduler.record.ManualStudyLog
 import jakarta.validation.constraints.Max
@@ -46,6 +47,8 @@ data class DailySummary(
     val manualMinutes: Int,
     val goalsDone: Int,
     val goalsTotal: Int,
+    /** 계획 vs 실제(1-4e) */
+    val plan: PlanComparison,
 )
 
 data class DailyLogResponse(

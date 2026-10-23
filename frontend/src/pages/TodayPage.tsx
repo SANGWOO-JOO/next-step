@@ -158,7 +158,6 @@ export default function TodayPage() {
 
   const goals = weekGoals.filter((g) => g.date === today)
   const pullCount = unfinished.length + plans.filter((p) => !goals.some((g) => g.content === p.content)).length
-  const sessions = weekSessions.filter((s) => s.date === today)
   const changeView = (v: 'day' | 'week') => {
     setView(v)
     try {
@@ -168,8 +167,6 @@ export default function TodayPage() {
     }
   }
 
-  // 진행 중 세션은 서버가 응답 시각까지 계산한 값이다
-  const focusTotal = sessions.reduce((sum, s) => sum + s.focusSeconds, 0)
 
   return (
     <section className="today-page">
@@ -188,9 +185,17 @@ export default function TodayPage() {
             </span>
           ) : null}
           <NowNext blocks={blocks.filter((b) => b.date === today)} />
-          <span className="muted">
-            오늘 집중 <strong className="status-strong">{formatDuration(focusTotal)}</strong> ({sessions.length}회)
-          </span>
+          {dailyLog && (
+            <span className="muted" title="지나간 계획 시간 중 계획과 같은 일을 실제로 한 비율">
+              실제 공부 <strong className="status-strong">{formatDuration(dailyLog.summary.plan.actualStudyMinutes * 60)}</strong>
+              {dailyLog.summary.plan.asPlannedPercent != null && (
+                <>
+                  {' '}
+                  · 계획대로 <strong className="status-strong">{dailyLog.summary.plan.asPlannedPercent}%</strong>
+                </>
+              )}
+            </span>
+          )}
           {uncheckedNotes > 0 && <Link to="/focus#notes">확인 안 한 메모 {uncheckedNotes}개</Link>}
           {!current && <Link to="/focus">분류만으로 집중하기</Link>}
           <span className="status-end">

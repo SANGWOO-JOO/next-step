@@ -3,6 +3,8 @@ package com.jobscheduler.actual
 import com.jobscheduler.JobSchedulerApplication
 import com.jobscheduler.actual.dto.ActualLogRequest
 import com.jobscheduler.actual.dto.ActualLogResponse
+import com.jobscheduler.actual.dto.PlanComparison
+import com.jobscheduler.actual.dto.UnrecordedBlock
 import com.jobscheduler.category.CategoryService
 import com.jobscheduler.common.BusinessRuleException
 import com.jobscheduler.common.NotFoundException
@@ -11,6 +13,7 @@ import com.jobscheduler.timeblock.TimeBlockRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Clock
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneId
@@ -27,6 +30,7 @@ class ActualLogService(
     private val dailyGoalRepository: DailyGoalRepository,
     private val timeBlockRepository: TimeBlockRepository,
     private val categoryService: CategoryService,
+    private val clock: Clock,
 ) {
     companion object {
         private val ZONE: ZoneId = ZoneId.of(JobSchedulerApplication.APP_ZONE)
@@ -80,6 +84,51 @@ class ActualLogService(
             timeBlockId = block.id,
         )
         return place(log)
+    }
+
+    /**
+     * 그날 계획 vs 실제. 실제 기록이 계획 블록과 같은 일(그 블록에서 만든 기록, 같은 하루 목표, 같은 제목의 일정)이면
+     * 겹친 시간만큼 "계획대로"로 센다.
+     */
+    @Transactional(readOnly = true)
+    fun compare(date: LocalDate): PlanComparison {
+        val blocks = timeBlockRepository.findAllByDate(date).sortedBy { it.startAt }
+        val logs = actualLogRepository.findAllByDate(date)
+        val now = OffsetDateTime.now(clock)
+        val dayStart = date.atStartOfDay(ZONE).toOffsetDateTime()
+        val cut = when {
+            now.isBefore(dayStart) -> dayStart
+            now.isAfter(dayStart.plusDays(1)) -> dayStart.plusDays(1)
+            else -> now
+        }
+        fun minutes(from: OffsetDateTime, to: OffsetDateTime) = maxOf(0L, ChronoUnit.MINUTES.between(from, to))
+        fun overlap(aFrom: OffsetDateTime, aTo: OffsetDateTime, bFrom: OffsetDateTime, bTo: OffsetDateTime) =
+            minutes(maxOf(aFrom, bFrom), minOf(aTo, bTo))
+
+        val asPlanned = blocks.sumOf { b ->
+            logs.filter { a ->
+                a.timeBlockId == b.id ||
+                    (a.dailyGoal != null && a.dailyGoal?.id == b.dailyGoal?.id) ||
+                    (b.dailyGoal == null && a.kind == ActualKind.OTHER && a.title == b.title)
+            }.sumOf { a -> overlap(a.startAt, a.endAt, b.startAt, b.endAt) }
+        }
+        val plannedSoFar = blocks.sumOf { overlap(it.startAt, it.endAt, dayStart, cut) }
+        val unrecorded = blocks
+            .filter { !it.endAt.isAfter(cut) }
+            .filter { b -> logs.none { a -> a.startAt.isBefore(b.endAt) && a.endAt.isAfter(b.startAt) } }
+            .map { UnrecordedBlock(it.id!!, it.label, it.dailyGoal?.id, it.startAt, it.endAt) }
+        fun sumOf(vararg kinds: ActualKind) = logs.filter { it.kind in kinds }.sumOf { minutes(it.startAt, it.endAt) }
+
+        return PlanComparison(
+            plannedMinutes = blocks.sumOf { minutes(it.startAt, it.endAt) },
+            plannedSoFarMinutes = plannedSoFar,
+            asPlannedMinutes = asPlanned,
+            asPlannedPercent = if (plannedSoFar > 0) ((asPlanned * 100) / plannedSoFar).toInt().coerceAtMost(100) else null,
+            actualStudyMinutes = sumOf(ActualKind.GOAL, ActualKind.STUDY),
+            actualDistractionMinutes = sumOf(ActualKind.DISTRACTION),
+            actualOtherMinutes = sumOf(ActualKind.OTHER),
+            unrecordedBlocks = unrecorded,
+        )
     }
 
     /** 전에 쓴 딴짓 제목(최근 순, 겹치지 않게, 최대 10개). prefix로 거른다 */

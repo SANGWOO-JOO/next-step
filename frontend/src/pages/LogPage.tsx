@@ -168,6 +168,13 @@ function DayCard({ log, focused }: { log: DailyLog; focused: boolean }) {
             목표 {s.goalsDone}/{s.goalsTotal}
           </span>
         </div>
+        {(s.plan.plannedMinutes > 0 || s.plan.actualStudyMinutes > 0) && (
+          <p className="muted small log-compare">
+            계획 {formatDuration(s.plan.plannedMinutes * 60)} → 실제 공부 {formatDuration(s.plan.actualStudyMinutes * 60)}
+            {s.plan.asPlannedPercent != null && ` · 계획대로 ${s.plan.asPlannedPercent}%`}
+            {s.plan.actualDistractionMinutes > 0 && ` · 딴짓 ${formatDuration(s.plan.actualDistractionMinutes * 60)}`}
+          </p>
+        )}
         {log.doneGoals.length > 0 && (
           <ul className="note-list">
             {log.doneGoals.map((g) => (

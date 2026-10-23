@@ -1,3 +1,4 @@
+import type { PlanComparison } from './actualLogs'
 import { api } from './client'
 import type { CategoryRef } from './goals'
 
@@ -12,6 +13,8 @@ export type DailySummary = {
   manualMinutes: number
   goalsDone: number
   goalsTotal: number
+  /** 계획 vs 실제(1-4e) */
+  plan: PlanComparison
 }
 
 export type DailyLog = {

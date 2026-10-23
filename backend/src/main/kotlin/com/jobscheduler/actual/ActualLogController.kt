@@ -2,6 +2,7 @@ package com.jobscheduler.actual
 
 import com.jobscheduler.actual.dto.ActualLogRequest
 import com.jobscheduler.actual.dto.ActualLogResponse
+import com.jobscheduler.actual.dto.PlanComparison
 import com.jobscheduler.common.BusinessRuleException
 import jakarta.validation.Valid
 import org.springframework.format.annotation.DateTimeFormat
@@ -51,6 +52,10 @@ class ActualLogController(private val actualLogService: ActualLogService) {
     @PostMapping("/from-block/{blockId}")
     @ResponseStatus(HttpStatus.CREATED)
     fun fromBlock(@PathVariable blockId: Long): List<ActualLogResponse> = actualLogService.fromBlock(blockId)
+
+    /** 그날 계획 vs 실제 비교와 실제 채우기 목록 */
+    @GetMapping("/compare")
+    fun compare(@RequestParam @DateTimeFormat(iso = ISO.DATE) date: LocalDate): PlanComparison = actualLogService.compare(date)
 
     /** 딴짓 제목 자동완성 */
     @GetMapping("/distraction-titles")

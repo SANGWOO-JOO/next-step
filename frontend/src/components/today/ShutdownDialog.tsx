@@ -7,8 +7,9 @@ import { CONDITION_LABELS, deleteManualLog, saveDailyLog, type DailyLog, type Ma
 import { dayLabel, mondayOf, shiftDate } from '../../utils/date'
 import CategoryBadge from '../CategoryBadge'
 import ManualLogForm from '../ManualLogForm'
+import FillActuals from './FillActuals'
 
-const STEPS = ['오늘 결과', '못 끝낸 일', '컨디션·메모'] as const
+const STEPS = ['실제 채우기', '오늘 결과', '못 끝낸 일', '컨디션·메모'] as const
 
 type Props = {
   date: string
@@ -22,7 +23,7 @@ type Props = {
   onClose: () => void
 }
 
-/** 하루 마무리 3단계(docs/design.md 6장 1-4d, Sunsama·Akiflow의 하루 마무리 의식) */
+/** 하루 마무리 4단계(docs/design.md 6장 1-4d·1-4e, Sunsama·Akiflow의 하루 마무리 의식) */
 export default function ShutdownDialog({ date, log, goals, manualLogs, categories, plannedMinutes, run, onClose }: Props) {
   const [step, setStep] = useState(0)
   const [kept, setKept] = useState<number[]>([])
@@ -78,7 +79,9 @@ export default function ShutdownDialog({ date, log, goals, manualLogs, categorie
         {error && <p className="error">{error}</p>}
 
         <div className="wizard-body">
-          {step === 0 && s && (
+          {step === 0 && s && <FillActuals date={date} blocks={s.plan.unrecordedBlocks} run={run} />}
+
+          {step === 1 && s && (
             <>
               <div className="stat-cards">
                 <div className="card stat-card">
@@ -88,16 +91,21 @@ export default function ShutdownDialog({ date, log, goals, manualLogs, categorie
                   </strong>
                 </div>
                 <div className="card stat-card">
-                  <span className="muted small">공부 (집중 + 수동)</span>
-                  <strong className="stat-value">{formatDuration(s.focusSeconds + s.manualMinutes * 60)}</strong>
+                  <span className="muted small">계획대로</span>
+                  <strong className="stat-value">{s.plan.asPlannedPercent == null ? '–' : `${s.plan.asPlannedPercent}%`}</strong>
+                </div>
+                <div className="card stat-card">
+                  <span className="muted small">실제 공부</span>
+                  <strong className="stat-value">{formatDuration(s.plan.actualStudyMinutes * 60)}</strong>
                 </div>
                 <div className="card stat-card">
                   <span className="muted small">딴짓</span>
-                  <strong className="stat-value">{formatDuration(s.distractionSeconds)}</strong>
+                  <strong className="stat-value">{formatDuration(s.plan.actualDistractionMinutes * 60)}</strong>
                 </div>
               </div>
               <p className="muted small">
-                시간표에 잡은 {formatDuration(plannedMinutes * 60)} 중 집중 {formatDuration(s.focusSeconds)} ({s.sessionCount}회)
+                계획 {formatDuration(plannedMinutes * 60)} 중 계획대로 {formatDuration(s.plan.asPlannedMinutes * 60)}
+                {s.plan.unrecordedBlocks.length > 0 && ` · 기록 없는 계획 ${s.plan.unrecordedBlocks.length}개`}
               </p>
               {done.length > 0 && (
                 <ul className="note-list">
@@ -109,7 +117,7 @@ export default function ShutdownDialog({ date, log, goals, manualLogs, categorie
             </>
           )}
 
-          {step === 1 &&
+          {step === 2 &&
             (pending.length === 0 ? (
               <p className="muted">못 끝낸 일이 없어요. 다음 단계로 가요.</p>
             ) : (
@@ -136,7 +144,7 @@ export default function ShutdownDialog({ date, log, goals, manualLogs, categorie
               </>
             ))}
 
-          {step === 2 && (
+          {step === 3 && (
             <>
               <span className="inline-form condition-picker" role="radiogroup" aria-label="컨디션">
                 <span className="muted small">컨디션</span>

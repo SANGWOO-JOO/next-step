@@ -1,5 +1,6 @@
 package com.jobscheduler.record
 
+import com.jobscheduler.actual.ActualLogService
 import com.jobscheduler.daily.DailyGoalRepository
 import com.jobscheduler.daily.DailyGoalStatus
 import com.jobscheduler.focus.FocusSessionRepository
@@ -24,6 +25,7 @@ class DailyLogService(
     private val manualLogRepository: ManualStudyLogRepository,
     private val focusSessionRepository: FocusSessionRepository,
     private val dailyGoalRepository: DailyGoalRepository,
+    private val actualLogService: ActualLogService,
     private val clock: Clock,
 ) {
     companion object {
@@ -72,6 +74,7 @@ class DailyLogService(
             manualMinutes = manualLogRepository.findAllByDateOrderByCreatedAtAscIdAsc(date).sumOf { it.minutes },
             goalsDone = goals.count { it.status == DailyGoalStatus.DONE },
             goalsTotal = goals.size,
+            plan = actualLogService.compare(date),
         )
     }
 
