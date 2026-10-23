@@ -1193,3 +1193,4 @@ button.color-dot.auto::after { content: 'A'; position: absolute; inset: 0; displ
 .as-planned.compact { align-self: flex-start; margin-top: 0; }
 .schedule-block.tiny { align-items: center; }
 .schedule-block.tiny .as-planned.compact { align-self: center; }
+.actual-mark-icon { display: inline-block; width: 14px; height: 14px; vertical-align: -2px; margin-right: 1px; }

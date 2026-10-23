@@ -11,6 +11,9 @@ import { actualFromBlock, updateActualLog, type ActualLog } from '../api/actualL
 import type { Category } from '../api/categories'
 import { createTimeBlock, deleteTimeBlock, setTimeBlockColor, toTimeBlockInput, updateTimeBlock, type TimeBlock } from '../api/timeBlocks'
 import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, seoulIso, shiftDate, todaySeoul } from '../utils/date'
+import markDistraction from '../assets/icons/actual-distraction.svg'
+import markPlanned from '../assets/icons/actual-planned.svg'
+import markUnplanned from '../assets/icons/actual-unplanned.svg'
 import asPlannedIcon from '../assets/icons/as-planned.svg'
 import ActualPopover from './ActualPopover'
 import MoreMenu from './MoreMenu'
@@ -420,7 +423,13 @@ export default function ScheduleView({
                         minutesOfDay(b.startAt, date) < end &&
                         minutesOfDay(b.endAt, date) > start,
                     )
-                    const mark = a.kind === 'DISTRACTION' ? '⚠' : planned ? '✓' : '＋'
+                    // 얇은 원 테두리 아이콘(1-4f ㉚): 계획대로 한 일 / 계획에 없던 일 / 딴짓
+                    const mark =
+                      a.kind === 'DISTRACTION'
+                        ? { src: markDistraction, label: '딴짓' }
+                        : planned
+                          ? { src: markPlanned, label: '계획대로 한 일' }
+                          : { src: markUnplanned, label: '계획에 없던 일' }
                     return (
                       <div
                         key={a.id}
@@ -467,7 +476,8 @@ export default function ScheduleView({
                         title={`실제: ${a.label} ${formatMinutes(start)}~${formatMinutes(end)} · 누르면 고치기, 끌면 옮기기, 아래 끝을 끌면 늘이기, Shift+끌기는 그 위에 새로 기록`}
                       >
                         <span className="schedule-block-title">
-                          <span className="actual-mark">{mark}</span> {a.label}
+                          <img className="actual-mark-icon" src={mark.src} alt={mark.label} title={mark.label} width={14} height={14} draggable={false} />{' '}
+                          {a.label}
                         </span>
                         <span className="schedule-block-time">
                           {formatMinutes(start)}~{formatMinutes(end)}
