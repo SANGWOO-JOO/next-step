@@ -15,7 +15,6 @@ import {
 import { getWeeklyGoalsOfWeek, type WeeklyGoal } from '../api/goals'
 import { createTimeBlock, type TimeBlock } from '../api/timeBlocks'
 import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, shiftDate, todaySeoul } from '../utils/date'
-import CategoryBadge from './CategoryBadge'
 import FormButtons from './FormButtons'
 import MoreMenu from './MoreMenu'
 import { GOAL_DRAG_TYPE } from './ScheduleView'
@@ -92,15 +91,15 @@ export default function DailyGoalPanel({
         </p>
       )}
 
-      <h4 className="muted small">
-        핵심 ({core.length}/{MAX_CORE})
-      </h4>
-      {core.length === 0 && <p className="muted small">꼭 끝낼 일을 3개 이내로 골라보세요.</p>}
-      {section('CORE', core)}
-
-      <h4 className="muted small">추가</h4>
-      {extra.length === 0 && <p className="muted small">여유가 있으면 할 일</p>}
-      {section('EXTRA', extra)}
+      {/* 한 목록으로 보여주고 핵심은 위에 ★로 표시(Todoist·Things처럼 우선순위는 줄 안의 작은 표시로) */}
+      {goals.length === 0 ? (
+        <p className="muted small">오늘 할 일을 아래에 적어 보세요. 꼭 끝낼 일은 ☆를 눌러 핵심(최대 {MAX_CORE}개)으로 정해요.</p>
+      ) : (
+        <div className="daily-list">
+          {section('CORE', core)}
+          {section('EXTRA', extra)}
+        </div>
+      )}
 
       {weeklyGoals.length === 0 ? (
         <p className="muted small">이 주의 주간 목표가 없어요. 먼저 주간 목표를 추가해야 하루 목표를 연결할 수 있어요.</p>
@@ -116,6 +115,10 @@ export default function DailyGoalPanel({
     </div>
   )
 }
+
+/** 잡은 시간 합계: 90 → '1시간 30분' */
+const formatPlanned = (minutes: number) =>
+  [Math.floor(minutes / 60) && `${Math.floor(minutes / 60)}시간`, minutes % 60 && `${minutes % 60}분`].filter(Boolean).join(' ')
 
 /** 새 블록의 기본 시작: 오늘이면 지금 이후 30분 단위, 아니면 09:00. 그날 마지막 블록 뒤로 밀어준다. */
 function nextBlockStart(date: string, blocks: TimeBlock[] | undefined) {
@@ -195,7 +198,25 @@ function DailyGoalItem({
     >
       <div className="daily-row">
         <input type="checkbox" checked={done} onChange={toggleDone} aria-label="완료" />
-        <span className={done ? 'daily-content done' : 'daily-content'}>
+        <button
+          type="button"
+          className={goal.type === 'CORE' ? 'core-toggle on' : 'core-toggle'}
+          onClick={() => run(() => changeDailyGoalType(goal.id, goal.type === 'CORE' ? 'EXTRA' : 'CORE'))}
+          disabled={goal.type === 'EXTRA' && !canBeCore}
+          aria-pressed={goal.type === 'CORE'}
+          aria-label="핵심 목표"
+          title={
+            goal.type === 'CORE' ? '핵심 목표 (누르면 해제)' : canBeCore ? '핵심 목표로 정하기' : `핵심은 ${MAX_CORE}개까지예요`
+          }
+        >
+          {goal.type === 'CORE' ? '★' : '☆'}
+        </button>
+        <span
+          className={done ? 'daily-content done' : 'daily-content'}
+          title={[goal.firstAction && `첫 행동: ${goal.firstAction}`, `주간 목표: ${goal.weeklyGoalContent}`]
+            .filter(Boolean)
+            .join('\n')}
+        >
           {goal.content}
           {goal.carryCount > 0 && (
             <span className="carry" title={`${goal.carryCount}번 넘긴 목표`}>
@@ -203,10 +224,23 @@ function DailyGoalItem({
             </span>
           )}
         </span>
-        {goal.category ? (
-          <CategoryBadge name={goal.category.name} color={goal.category.color} inactive={!goal.category.active} />
-        ) : (
-          <span className="muted small">미분류</span>
+        {blocks && blocks.length > 0 && (
+          <span
+            className="daily-time muted small"
+            title={blocks
+              .map((b) => `${formatMinutes(minutesOfDay(b.startAt, goal.date))}~${formatMinutes(minutesOfDay(b.endAt, goal.date))}`)
+              .join('\n')}
+          >
+            {formatPlanned(blocks.reduce((sum, b) => sum + minutesOfDay(b.endAt, goal.date) - minutesOfDay(b.startAt, goal.date), 0))}
+          </span>
+        )}
+        {goal.category && (
+          <span
+            className="category-dot"
+            style={{ background: goal.category.color }}
+            title={goal.category.name}
+            aria-label={`분류: ${goal.category.name}`}
+          />
         )}
         <MoreMenu
           label="목표 동작"
@@ -214,29 +248,12 @@ function DailyGoalItem({
             { label: '+ 시간 잡기', onClick: () => setMode('block'), show: !!blocks && !done },
             { label: '내일로', onClick: moveTomorrow, show: !done },
             { label: '다른 날로 옮기기', onClick: () => setMode('move'), show: !done },
-            goal.type === 'EXTRA'
-              ? {
-                  label: '핵심으로',
-                  onClick: () => run(() => changeDailyGoalType(goal.id, 'CORE')),
-                  disabled: !canBeCore,
-                  title: canBeCore ? undefined : `핵심은 ${MAX_CORE}개까지예요`,
-                }
-              : { label: '추가로', onClick: () => run(() => changeDailyGoalType(goal.id, 'EXTRA')) },
             { label: '위로', onClick: () => onMoveUp?.(), disabled: !onMoveUp },
             { label: '아래로', onClick: () => onMoveDown?.(), disabled: !onMoveDown },
             { label: '수정', onClick: () => setMode('edit') },
             { label: '삭제', onClick: remove, danger: true },
           ]}
         />
-      </div>
-      <div className="daily-meta muted small">
-        {goal.firstAction && <span>→ 첫 행동: {goal.firstAction}</span>}
-        <span>주간: {goal.weeklyGoalContent}</span>
-        {blocks?.map((b) => (
-          <span key={b.id} className="block-chip">
-            🕘 {formatMinutes(minutesOfDay(b.startAt, goal.date))}~{formatMinutes(minutesOfDay(b.endAt, goal.date))}
-          </span>
-        ))}
       </div>
       {mode === 'block' && (
         <TimeBlockForm
