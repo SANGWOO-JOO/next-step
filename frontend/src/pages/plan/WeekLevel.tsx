@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Category } from '../../api/categories'
 import { errorMessage } from '../../api/client'
-import { getDailyGoalsBetween, type DailyGoal } from '../../api/dailyGoals'
+import { getDailyGoalsBetween, moveDailyGoal, type DailyGoal } from '../../api/dailyGoals'
 import type { Goal } from '../../api/goals'
 import { getWeeklyJournal, saveWeeklyJournal, type WeeklyJournal } from '../../api/reviews'
-import { getWeeklyPlans, updateWeeklyPlan, type WeeklyPlan } from '../../api/weeklyPlans'
 import { DayColumn, WeekGoalChips, WeekSummary } from '../../components/plan/WeekParts'
 import ReviewCard from '../../components/ReviewCard'
 import { mondayOf, shiftDate, todaySeoul, weekDates } from '../../utils/date'
@@ -15,7 +14,6 @@ type Props = { monday: string; goals: Goal[]; categories: Category[]; run: Run }
 
 /** [주]: 주간 목표 칩 + 월~일 7열 보드(가운데) + 지난주 반영, 요일별 기록, 주간 일지(아래) */
 export default function WeekLevel({ monday, goals, categories, run: parentRun }: Props) {
-  const [plans, setPlans] = useState<WeeklyPlan[]>([])
   const [dailyGoals, setDailyGoals] = useState<DailyGoal[]>([])
   const [journal, setJournal] = useState<WeeklyJournal | null>(null)
   const [lastJournal, setLastJournal] = useState<WeeklyJournal | null>(null)
@@ -28,13 +26,11 @@ export default function WeekLevel({ monday, goals, categories, run: parentRun }:
 
   const load = useCallback(() => {
     Promise.all([
-      getWeeklyPlans(monday),
       getDailyGoalsBetween(monday, shiftDate(monday, 6)),
       getWeeklyJournal(monday),
       getWeeklyJournal(shiftDate(monday, -7)),
     ])
-      .then(([p, d, j, last]) => {
-        setPlans(p)
+      .then(([d, j, last]) => {
         setDailyGoals(d)
         setJournal(j)
         setLastJournal(last)
@@ -49,10 +45,11 @@ export default function WeekLevel({ monday, goals, categories, run: parentRun }:
 
   const weeklyGoals = weeklyGoalsOf(goals, monday)
 
-  const movePlan = (planId: number, date: string) => {
-    const plan = plans.find((p) => p.id === planId)
-    if (!plan || plan.date === date) return
-    run(() => updateWeeklyPlan(planId, { date, content: plan.content }))
+  // 같은 주 안으로 옮기면 주간 목표 연결은 그대로다
+  const moveGoal = (goalId: number, date: string) => {
+    const goal = dailyGoals.find((g) => g.id === goalId)
+    if (!goal || goal.date === date) return
+    run(() => moveDailyGoal(goalId, date))
   }
 
   return (
@@ -64,7 +61,6 @@ export default function WeekLevel({ monday, goals, categories, run: parentRun }:
           weeklyGoals={weeklyGoals}
           monthlyGoals={monthlyGoalsOfWeek(goals, monday)}
           dailyGoals={dailyGoals}
-          plans={plans}
           categories={categories}
           run={run}
           selectedId={highlight}
@@ -81,17 +77,15 @@ export default function WeekLevel({ monday, goals, categories, run: parentRun }:
             key={date}
             date={date}
             today={date === today}
-            plans={plans.filter((p) => p.date === date)}
             dailyGoals={dailyGoals.filter((d) => d.date === date)}
             weeklyGoals={weeklyGoals}
-            weekDates={dates}
             run={run}
             highlightGoalId={highlight}
-            onDropPlan={movePlan}
+            onDropGoal={moveGoal}
           />
         ))}
       </div>
-      <p className="muted small board-hint">계획 카드를 다른 요일로 끌어 옮기고, 위쪽 목표를 누르면 그 목표의 계획만 보여요.</p>
+      <p className="muted small board-hint">요일 칸에 적은 할 일은 그날 할 일 목록에 바로 들어가요. 카드를 다른 요일로 끌어 옮기고, 위쪽 목표를 누르면 그 목표의 할 일만 보여요.</p>
 
       <div className="week-bottom">
         {lastJournal?.nextAction && (
@@ -126,7 +120,6 @@ export default function WeekLevel({ monday, goals, categories, run: parentRun }:
           monday={monday}
           goals={goals}
           categories={categories}
-          plans={plans}
           dailyGoals={dailyGoals}
           lastJournal={lastJournal}
           run={run}

@@ -5,7 +5,6 @@ import type { DailyGoal } from '../../api/dailyGoals'
 import { formatDuration } from '../../api/focus'
 import { carryOverWeeklyGoal, type Goal, type WeeklyGoal } from '../../api/goals'
 import { saveWeeklyJournal, studySeconds, type WeeklyJournal } from '../../api/reviews'
-import type { WeeklyPlan } from '../../api/weeklyPlans'
 import { DayColumn, WeekGoalList } from '../../components/plan/WeekParts'
 import ReviewFields from '../../components/ReviewFields'
 import { shiftDate, todaySeoul, weekDates, weekLabel } from '../../utils/date'
@@ -17,7 +16,6 @@ type Props = {
   monday: string
   goals: Goal[]
   categories: Category[]
-  plans: WeeklyPlan[]
   dailyGoals: DailyGoal[]
   lastJournal: WeeklyJournal | null
   run: Run
@@ -25,7 +23,7 @@ type Props = {
 }
 
 /** 주간 계획하기 4단계 안내(docs/design.md 1-4c, Sunsama의 주간 계획 흐름 참고) */
-export default function WeeklyPlanningWizard({ monday, goals, categories, plans, dailyGoals, lastJournal, run, onClose }: Props) {
+export default function WeeklyPlanningWizard({ monday, goals, categories, dailyGoals, lastJournal, run, onClose }: Props) {
   const [step, setStep] = useState(0)
   const lastMonday = shiftDate(monday, -7)
   const dates = weekDates(monday)
@@ -94,17 +92,15 @@ export default function WeeklyPlanningWizard({ monday, goals, categories, plans,
           )}
           {step === 3 && (
             <>
-              <p className="muted small">요일마다 할 일을 적어요. 그날이 되면 오늘 화면에서 하루 목표로 바꿀 수 있어요.</p>
+              <p className="muted small">요일마다 할 일을 적어요. 적은 것은 그날 할 일 목록에 바로 들어가요. 꼭 끝낼 일(핵심)은 그날 정해요.</p>
               <div className="week-grid">
                 {dates.map((date) => (
                   <DayColumn
                     key={date}
                     date={date}
                     today={date === today}
-                    plans={plans.filter((p) => p.date === date)}
                     dailyGoals={dailyGoals.filter((d) => d.date === date)}
                     weeklyGoals={weeklyGoals}
-                    weekDates={dates}
                     run={run}
                   />
                 ))}

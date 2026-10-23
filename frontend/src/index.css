@@ -931,3 +931,6 @@ body.resizing { cursor: col-resize; user-select: none; }
 .schedule.week .schedule-block.plan-lane { font-size: 0.68rem; right: calc(50% + 3px); }
 .schedule.week .actual-entry { font-size: 0.68rem; }
 .unlinked { white-space: nowrap; font-size: 0.7rem; }
+.plan-card input[type="checkbox"] { margin: 0; flex: none; }
+.plan-content.done { text-decoration: line-through; opacity: 0.6; }
+.core-mark { color: #f5b301; }

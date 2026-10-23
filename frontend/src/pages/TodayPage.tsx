@@ -8,7 +8,6 @@ import { formatDuration } from '../api/focus'
 import { getHealth } from '../api/health'
 import { CONDITION_LABELS, getDailyLog, getManualLogs, type DailyLog, type ManualStudyLog } from '../api/records'
 import { getWeeklyJournals } from '../api/reviews'
-import { getWeeklyPlansOfDate, type WeeklyPlan } from '../api/weeklyPlans'
 import { getActualLogsBetween, type ActualLog } from '../api/actualLogs'
 import { getTimeBlocksBetween, type TimeBlock } from '../api/timeBlocks'
 import DailyGoalPanel, { NewDailyGoalForm } from '../components/DailyGoalPanel'
@@ -38,7 +37,6 @@ export default function TodayPage() {
   const [blocks, setBlocks] = useState<TimeBlock[]>([])
   /** 이번 주 실제 기록(시간표 "실제" 줄) */
   const [actuals, setActuals] = useState<ActualLog[]>([])
-  const [plans, setPlans] = useState<WeeklyPlan[]>([])
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null)
   const [manualLogs, setManualLogs] = useState<ManualStudyLog[]>([])
   const [shutdown, setShutdown] = useState(false)
@@ -91,13 +89,11 @@ export default function TodayPage() {
       getCategories(),
       getTimeBlocksBetween(thisMonday, sunday),
       getActualLogsBetween(thisMonday, sunday),
-      getWeeklyPlansOfDate(today),
       getDailyLog(today),
       getManualLogs(today),
     ])
-      .then(([d, w, u, c, b, actual, p, log, manual]) => {
+      .then(([d, w, u, c, b, actual, log, manual]) => {
         setActuals(actual)
-        setPlans(p)
         setDailyLog(log)
         setManualLogs(manual)
         setWeekGoals(d)
@@ -125,7 +121,7 @@ export default function TodayPage() {
   }
 
   const goals = weekGoals.filter((g) => g.date === today)
-  const pullCount = unfinished.length + plans.filter((p) => !goals.some((g) => g.content === p.content)).length
+  const pullCount = unfinished.length
   const changeView = (v: 'day' | 'week') => {
     setView(v)
     try {
@@ -220,8 +216,6 @@ export default function TodayPage() {
           <PullSection
             today={today}
             unfinished={unfinished}
-            plans={plans}
-            goals={goals}
             run={run}
           />
           )}
@@ -275,8 +269,6 @@ export default function TodayPage() {
                       <PullSection
                         today={today}
                         unfinished={unfinished}
-                        plans={plans}
-                        goals={goals}
                         run={run}
                       />
                     </div>

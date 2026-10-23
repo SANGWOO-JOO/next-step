@@ -1,26 +1,18 @@
 import { moveDailyGoal, type DailyGoal } from '../../api/dailyGoals'
-import type { WeeklyPlan } from '../../api/weeklyPlans'
-import WeeklyPlanItem from '../WeeklyPlanItem'
 
 type Props = {
   today: string
   /** 지난 날짜의 미완료 하루 목표 */
   unfinished: DailyGoal[]
-  /** 이번 주 계획 중 오늘 날짜의 것 */
-  plans: WeeklyPlan[]
-  /** 오늘 하루 목표(계획을 이미 목표로 만들었는지 확인용) */
-  goals: DailyGoal[]
   run: (action: () => Promise<unknown>) => Promise<boolean>
 }
 
 /**
- * 오늘로 가져올 것: 지난 미완료 + 이번 주 계획 중 오늘 것(docs/design.md 6장 1-4d, Todoist의 기한 지남 구역 참고).
+ * 오늘로 가져올 것: 지난 미완료 하루 목표(docs/design.md 6장 1-4d·1-4f, Todoist의 기한 지남 구역 참고).
  * 하나도 없으면 숨기고, 있으면 펼친 채로 보여준다.
  */
-export default function PullSection({ today, unfinished, plans, goals, run }: Props) {
-  const pendingPlans = plans.filter((p) => !goals.some((g) => g.content === p.content))
-  const count = unfinished.length + pendingPlans.length
-  if (count === 0) return null
+export default function PullSection({ today, unfinished, run }: Props) {
+  if (unfinished.length === 0) return null
 
   // 지난주 목표는 오늘로 오면 주간 목표 연결이 풀린다(1-4f, 나중에 ⋯ 메뉴로 연결)
   const moveToToday = (g: DailyGoal) => moveDailyGoal(g.id, today, null)
@@ -37,7 +29,7 @@ export default function PullSection({ today, unfinished, plans, goals, run }: Pr
   return (
     <div className="pull-section">
       <div className="daily-panel-head">
-        <h4 className="pull-title">가져올 것 {count}</h4>
+        <h4 className="pull-title">가져올 것 {unfinished.length}</h4>
         {unfinished.length > 1 && (
           <button className="ghost" onClick={moveAll}>
             미완료 모두 오늘로
@@ -56,9 +48,6 @@ export default function PullSection({ today, unfinished, plans, goals, run }: Pr
               오늘로
             </button>
           </li>
-        ))}
-        {pendingPlans.map((p) => (
-          <WeeklyPlanItem key={p.id} plan={p} hasDailyGoal={false} run={run} />
         ))}
       </ul>
     </div>
