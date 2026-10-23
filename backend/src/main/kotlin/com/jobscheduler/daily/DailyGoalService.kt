@@ -51,8 +51,8 @@ class DailyGoalService(
             .map(DailyGoalResponse::from)
 
     fun create(req: DailyGoalCreateRequest): DailyGoalResponse {
-        val weeklyGoal = getWeeklyGoal(req.weeklyGoalId)
-        requireDateInWeek(req.date, weeklyGoal)
+        val weeklyGoal = req.weeklyGoalId?.let(::getWeeklyGoal)
+        weeklyGoal?.let { requireDateInWeek(req.date, it) }
 
         val coreCount = dailyGoalRepository.countByDateAndType(req.date, DailyGoalType.CORE)
         val type = req.type ?: if (coreCount < MAX_CORE) DailyGoalType.CORE else DailyGoalType.EXTRA
@@ -64,8 +64,8 @@ class DailyGoalService(
                 date = req.date,
                 content = req.content.trim(),
                 firstAction = req.firstAction?.trim()?.ifEmpty { null },
-                // 분류를 고르지 않으면 주간 목표의 분류를 물려받는다
-                category = req.categoryId?.let(categoryService::getAssignable) ?: weeklyGoal.category,
+                // 분류를 고르지 않으면 연결한 주간 목표의 분류를 물려받는다
+                category = req.categoryId?.let(categoryService::getAssignable) ?: weeklyGoal?.category,
                 type = type,
                 sortOrder = nextSortOrder(req.date, type),
             ),
@@ -99,8 +99,18 @@ class DailyGoalService(
         dailyGoalRepository.delete(dailyGoal)
     }
 
+    /** 주간 목표에 연결하거나(같은 주만) 연결을 푼다(1-4f). 분류가 없으면 주간 목표의 분류를 물려받는다 */
+    fun link(id: Long, weeklyGoalId: Long?): DailyGoalResponse {
+        val dailyGoal = getEntity(id)
+        val weeklyGoal = weeklyGoalId?.let(::getWeeklyGoal)
+        weeklyGoal?.let { requireDateInWeek(dailyGoal.date, it) }
+        dailyGoal.weeklyGoal = weeklyGoal
+        if (dailyGoal.category == null) dailyGoal.category = weeklyGoal?.category
+        return DailyGoalResponse.from(dailyGoal)
+    }
+
     /**
-     * 다른 날로 넘긴다. 같은 주면 주간 목표를 그대로 두고, 다른 주면 그 주의 주간 목표를 받아야 한다.
+     * 다른 날로 넘긴다. 같은 주면 주간 목표를 그대로 두고, 다른 주면 받은 그 주의 주간 목표에 연결하거나 연결을 푼다.
      * 넘길 날에 핵심이 이미 3개면 추가(EXTRA)로 넣는다. 원래 날의 시간 블록은 지운다.
      */
     fun move(id: Long, date: LocalDate, weeklyGoalId: Long?): DailyGoalMoveResponse {
@@ -112,11 +122,9 @@ class DailyGoalService(
             throw BusinessRuleException("같은 날짜로는 넘길 수 없어요.", "SAME_DATE")
         }
 
-        val weeklyGoal = weeklyGoalId?.let(::getWeeklyGoal) ?: dailyGoal.weeklyGoal
-        if (weeklyGoalId == null && !isInWeek(date, weeklyGoal)) {
-            throw BusinessRuleException("다른 주로 넘기려면 그 주의 주간 목표를 골라주세요.", "WEEKLY_GOAL_REQUIRED")
-        }
-        requireDateInWeek(date, weeklyGoal)
+        val weeklyGoal = weeklyGoalId?.let(::getWeeklyGoal)
+            ?: dailyGoal.weeklyGoal?.takeIf { isInWeek(date, it) }
+        weeklyGoal?.let { requireDateInWeek(date, it) }
 
         val downgraded = dailyGoal.type == DailyGoalType.CORE &&
             dailyGoalRepository.countByDateAndType(date, DailyGoalType.CORE) >= MAX_CORE

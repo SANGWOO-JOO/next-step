@@ -8,8 +8,9 @@ export const MAX_CORE = 3
 
 export type DailyGoal = {
   id: number
-  weeklyGoalId: number
-  weeklyGoalContent: string
+  /** null이면 주간 목표에 연결하지 않은 할 일 */
+  weeklyGoalId: number | null
+  weeklyGoalContent: string | null
   date: string
   content: string
   firstAction: string | null
@@ -21,7 +22,8 @@ export type DailyGoal = {
 }
 
 export type DailyGoalCreateInput = {
-  weeklyGoalId: number
+  /** null이면 연결하지 않음 */
+  weeklyGoalId: number | null
   date: string
   content: string
   firstAction: string | null
@@ -61,6 +63,10 @@ export const updateDailyGoal = (id: number, input: DailyGoalUpdateInput) =>
   api.put<DailyGoal>(`/api/daily-goals/${id}`, input)
 
 export const deleteDailyGoal = (id: number) => api.delete<void>(`/api/daily-goals/${id}`)
+
+/** 주간 목표 연결·해제(null) */
+export const linkDailyGoal = (id: number, weeklyGoalId: number | null) =>
+  api.put<DailyGoal>(`/api/daily-goals/${id}/weekly-goal`, { weeklyGoalId })
 
 export const moveDailyGoal = (id: number, date: string, weeklyGoalId: number | null = null) =>
   api.post<DailyGoalMoveResult>(`/api/daily-goals/${id}/move`, { date, weeklyGoalId })

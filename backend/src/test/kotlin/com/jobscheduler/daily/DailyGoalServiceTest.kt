@@ -67,7 +67,7 @@ class DailyGoalServiceTest(
         date: LocalDate = thursday,
         type: DailyGoalType? = null,
         categoryId: Long? = null,
-        weeklyGoalId: Long = thisWeek.id,
+        weeklyGoalId: Long? = thisWeek.id,
     ) = dailyGoalService.create(
         DailyGoalCreateRequest(weeklyGoalId, date, content, firstAction = "노션 열기", categoryId = categoryId, type = type),
     )
@@ -113,10 +113,11 @@ class DailyGoalServiceTest(
     }
 
     @Test
-    fun `다른 주로 넘기려면 그 주의 주간 목표가 필요하다`() {
+    fun `다른 주로 넘기면 연결이 풀리고 그 주의 주간 목표를 고르면 연결된다`() {
         val goal = create()
-        val e = assertThrows<BusinessRuleException> { dailyGoalService.move(goal.id, nextMonday, null) }
-        assertEquals("WEEKLY_GOAL_REQUIRED", e.code)
+        val unlinked = dailyGoalService.move(goal.id, nextMonday, null)
+        assertNull(unlinked.dailyGoal.weeklyGoalId)
+        dailyGoalService.move(goal.id, thursday, thisWeek.id)
 
         val wrong = assertThrows<BusinessRuleException> { dailyGoalService.move(goal.id, friday, nextWeek.id) }
         assertEquals("DATE_NOT_IN_WEEK", wrong.code)
@@ -181,5 +182,24 @@ class DailyGoalServiceTest(
             weeklyGoalService.update(thisWeek.id, WeeklyGoalUpdateRequest(nextMonday, thisWeek.content, null))
         }
         assertEquals("HAS_CHILDREN", update.code)
+    }
+
+    @Test
+    fun `주간 목표 없이 하루 목표를 만들고 나중에 연결하거나 풀 수 있다`() {
+        val goal = create(weeklyGoalId = null)
+        assertNull(goal.weeklyGoalId)
+        assertNull(goal.category)
+
+        val linked = dailyGoalService.link(goal.id, thisWeek.id)
+        assertEquals(thisWeek.id, linked.weeklyGoalId)
+        // 분류가 없던 목표는 주간 목표의 분류를 물려받는다
+        assertEquals(resumeCategoryId, linked.category?.id)
+
+        val wrong = assertThrows<BusinessRuleException> { dailyGoalService.link(goal.id, nextWeek.id) }
+        assertEquals("DATE_NOT_IN_WEEK", wrong.code)
+
+        val unlinked = dailyGoalService.link(goal.id, null)
+        assertNull(unlinked.weeklyGoalId)
+        assertEquals(resumeCategoryId, unlinked.category?.id)
     }
 }

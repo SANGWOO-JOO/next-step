@@ -2,6 +2,7 @@ package com.jobscheduler.daily
 
 import com.jobscheduler.common.BusinessRuleException
 import com.jobscheduler.daily.dto.DailyGoalCreateRequest
+import com.jobscheduler.daily.dto.DailyGoalLinkRequest
 import com.jobscheduler.daily.dto.DailyGoalMoveRequest
 import com.jobscheduler.daily.dto.DailyGoalMoveResponse
 import com.jobscheduler.daily.dto.DailyGoalOrderRequest
@@ -60,6 +61,11 @@ class DailyGoalController(private val dailyGoalService: DailyGoalService) {
     @PostMapping("/{id}/move")
     fun move(@PathVariable id: Long, @RequestBody req: DailyGoalMoveRequest): DailyGoalMoveResponse =
         dailyGoalService.move(id, req.date, req.weeklyGoalId)
+
+    /** 주간 목표 연결·해제(1-4f) */
+    @PutMapping("/{id}/weekly-goal")
+    fun link(@PathVariable id: Long, @RequestBody req: DailyGoalLinkRequest): DailyGoalResponse =
+        dailyGoalService.link(id, req.weeklyGoalId)
 
     @PatchMapping("/{id}/type")
     fun changeType(@PathVariable id: Long, @RequestBody req: DailyGoalTypeRequest): DailyGoalResponse =

@@ -222,14 +222,8 @@ export default function TodayPage() {
             unfinished={unfinished}
             plans={plans}
             goals={goals}
-            weeklyGoals={weeklyGoals ?? []}
             run={run}
           />
-          )}
-          {weeklyGoals?.length === 0 && (
-            <p className="small">
-              <Link to="/plan?level=week">계획</Link>에서 이번 주 주간 목표를 먼저 만들어 주세요.
-            </p>
           )}
         </div>
         <div
@@ -262,19 +256,15 @@ export default function TodayPage() {
           </div>
           {wideSchedule && (
             <div className="schedule-toolbar">
-              {(weeklyGoals?.length ?? 0) > 0 ? (
-                <div className="toolbar-add">
-                  <NewDailyGoalForm
-                    key={selected}
-                    date={selected}
-                    weeklyGoals={weeklyGoals ?? []}
-                    categories={categories}
-                    onSubmit={(input) => run(() => createDailyGoal(input))}
-                  />
-                </div>
-              ) : (
-                <Link to="/plan?level=week">이번 주 주간 목표 먼저 만들기</Link>
-              )}
+              <div className="toolbar-add">
+                <NewDailyGoalForm
+                  key={selected}
+                  date={selected}
+                  weeklyGoals={weeklyGoals ?? []}
+                  categories={categories}
+                  onSubmit={(input) => run(() => createDailyGoal(input))}
+                />
+              </div>
               {isToday && pullCount > 0 && (
                 <span className="toolbar-pull">
                   <button className="ghost" onClick={() => setPullOpen(!pullOpen)} aria-expanded={pullOpen}>
@@ -287,7 +277,6 @@ export default function TodayPage() {
                         unfinished={unfinished}
                         plans={plans}
                         goals={goals}
-                        weeklyGoals={weeklyGoals ?? []}
                         run={run}
                       />
                     </div>

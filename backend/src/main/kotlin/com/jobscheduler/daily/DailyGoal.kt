@@ -24,9 +24,10 @@ enum class DailyGoalStatus { TODO, DONE }
 @Entity
 @Table(name = "daily_goal")
 class DailyGoal(
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    /** 없으면 주간 목표에 연결하지 않은 할 일(1-4f) */
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "weekly_goal_id")
-    var weeklyGoal: WeeklyGoal,
+    var weeklyGoal: WeeklyGoal?,
     @Column(name = "goal_date")
     var date: LocalDate,
     var content: String,
