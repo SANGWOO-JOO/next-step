@@ -1,7 +1,15 @@
 import { useEffect, useState } from 'react'
 import { errorMessage } from '../api/client'
 import { formatDuration } from '../api/focus'
-import { getStatsByCategory, getStatsSummary, unitFor, type CategoryStat, type StatsSummary } from '../api/stats'
+import {
+  getStatsByCategory,
+  getStatsByTopic,
+  getStatsSummary,
+  unitFor,
+  type CategoryStat,
+  type StatsSummary,
+  type TopicCategoryStat,
+} from '../api/stats'
 import { FocusHeatmap, FocusVsDistraction, TrendChart } from '../components/DashboardCharts'
 import { addMonths, mondayOf, shiftDate, todaySeoul } from '../utils/date'
 
@@ -31,6 +39,7 @@ export default function DashboardPage() {
   const [cards, setCards] = useState<{ label: string; now: StatsSummary; prev: StatsSummary }[]>([])
   const [selected, setSelected] = useState<StatsSummary | null>(null)
   const [categories, setCategories] = useState<CategoryStat[]>([])
+  const [topics, setTopics] = useState<TopicCategoryStat[]>([])
   const [error, setError] = useState<string | null>(null)
 
   // 상단 카드: 오늘 / 이번 주 / 이번 달, 각각 지난 같은 기간과 비교
@@ -52,10 +61,11 @@ export default function DashboardPage() {
   const range = period === 'custom' ? custom : periodRange(period, today)
 
   useEffect(() => {
-    Promise.all([getStatsSummary(range.from, range.to), getStatsByCategory(range.from, range.to)])
-      .then(([s, c]) => {
+    Promise.all([getStatsSummary(range.from, range.to), getStatsByCategory(range.from, range.to), getStatsByTopic(range.from, range.to)])
+      .then(([s, c, t]) => {
         setSelected(s)
         setCategories(c)
+        setTopics(t)
         setError(null)
       })
       .catch((e) => setError(errorMessage(e)))
@@ -129,6 +139,12 @@ export default function DashboardPage() {
         <CategoryBars stats={categories} />
       </div>
 
+      {topics.some((c) => c.topics.some((t) => t.title !== null)) && (
+        <div className="card">
+          <TopicStats stats={topics} />
+        </div>
+      )}
+
       <div className="card">
         <TrendChart from={range.from} to={range.to} unit={period === 'month' ? 'week' : unitFor(range.from, range.to)} />
       </div>
@@ -190,6 +206,48 @@ function PeriodSummary({ summary: s }: { summary: StatsSummary }) {
 }
 
 /** 분류별 비율(가로 누적 막대)과 분류별 시간 막대(목표 비율 표시) */
+/**
+ * 주제별 공부 시간(1-4f ㊾, Toggl 보고서처럼 분류 → 주제). 블록에 적은 주제를 실제 기록 기준으로 묶는다.
+ * 주제를 하나도 안 적은 분류는 빼고, 안 적은 시간은 "주제 없음"으로 맨 아래.
+ */
+function TopicStats({ stats }: { stats: TopicCategoryStat[] }) {
+  const shown = stats.filter((c) => c.topics.some((t) => t.title !== null))
+  return (
+    <>
+      <h3 className="timeline-title">주제별</h3>
+      <div className="topic-stats">
+        {shown.map((c) => {
+          const color = c.category?.color ?? 'var(--muted)'
+          const max = Math.max(1, ...c.topics.map((t) => t.seconds))
+          return (
+            <section key={c.category?.id ?? 'none'} className="topic-stats-group">
+              <header>
+                {c.category?.icon && <span aria-hidden="true">{c.category.icon}</span>}
+                <strong>{c.category?.name ?? '미분류'}</strong>
+                <span className="muted small">{formatDuration(c.seconds)}</span>
+              </header>
+              <ul>
+                {c.topics.map((t) => (
+                  <li key={t.title ?? '(none)'} className={t.title === null ? 'muted' : undefined}>
+                    <span className="topic-stats-name">{t.title ?? '주제 없음'}</span>
+                    <span className="topic-stats-track">
+                      <span
+                        className="topic-stats-fill"
+                        style={{ width: `${(t.seconds / max) * 100}%`, background: t.title === null ? 'var(--border)' : color }}
+                      />
+                    </span>
+                    <span className="small topic-stats-value">{formatDuration(t.seconds)}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )
+        })}
+      </div>
+    </>
+  )
+}
+
 function CategoryBars({ stats }: { stats: CategoryStat[] }) {
   const total = stats.reduce((sum, s) => sum + s.seconds, 0)
   const max = Math.max(1, ...stats.map((s) => Math.max(s.seconds, s.targetSeconds ?? 0)))

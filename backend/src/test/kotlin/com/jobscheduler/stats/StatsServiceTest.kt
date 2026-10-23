@@ -181,4 +181,20 @@ class StatsServiceTest(
         assertEquals(15 * 60L, summary.distractionSeconds)
         assertEquals(listOf(9), statsService.heatmap(friday, friday).cells.map { it.hour })
     }
+
+    @Test
+    fun `실제 공부 기록을 분류 안 주제별로 묶고 주제 없는 시간은 따로 둔다`() {
+        fun odt(h: Int, m: Int = 0) = OffsetDateTime.of(2026, 10, 23, h, m, 0, 0, ZoneOffset.ofHours(9))
+        actualLogService.create(ActualLogRequest(friday, odt(9), odt(11), ActualKind.STUDY, categoryId = csId, title = "알고리즘"))
+        actualLogService.create(ActualLogRequest(friday, odt(12), odt(13), ActualKind.STUDY, categoryId = csId, title = "데이터 통신"))
+        actualLogService.create(ActualLogRequest(friday, odt(14), odt(14, 30), ActualKind.STUDY, categoryId = csId))
+        actualLogService.create(ActualLogRequest(friday, odt(15), odt(16), ActualKind.STUDY, categoryId = csId, title = "알고리즘 "))
+        actualLogService.create(ActualLogRequest(friday, odt(16), odt(16, 15), ActualKind.DISTRACTION, title = "유튜브"))
+        actualLogService.create(ActualLogRequest(friday, odt(17), odt(17, 30), ActualKind.STUDY, categoryId = csId, title = "CS 공부"))
+
+        val cs = statsService.byTopic(friday, friday).single()
+        assertEquals("CS 공부", cs.category?.name)
+        assertEquals(5.0 * 3600, cs.seconds.toDouble())
+        assertEquals(listOf("알고리즘" to 3 * 3600L, "데이터 통신" to 3600L, null to 3600L), cs.topics.map { it.title to it.seconds })
+    }
 }

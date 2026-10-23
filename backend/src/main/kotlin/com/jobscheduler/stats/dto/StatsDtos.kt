@@ -25,6 +25,17 @@ data class StatsSummaryResponse(
     val targetSeconds: Long?,
 )
 
+/** 분류 안 주제별 실제 공부 시간(1-4f ㊾) */
+data class TopicCategoryStat(
+    /** null이면 미분류 */
+    val category: CategoryRef?,
+    val seconds: Long,
+    val topics: List<TopicStat>,
+)
+
+/** title이 null이면 주제를 안 적은 시간 */
+data class TopicStat(val title: String?, val seconds: Long)
+
 data class CategoryStat(
     /** null이면 미분류 */
     val category: CategoryRef?,

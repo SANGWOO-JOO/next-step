@@ -6,6 +6,7 @@ import com.jobscheduler.stats.dto.HeatmapResponse
 import com.jobscheduler.stats.dto.StatsSummaryResponse
 import com.jobscheduler.stats.dto.StatsUnit
 import com.jobscheduler.stats.dto.TimeseriesResponse
+import com.jobscheduler.stats.dto.TopicCategoryStat
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.format.annotation.DateTimeFormat.ISO
 import org.springframework.web.bind.annotation.GetMapping
@@ -22,6 +23,12 @@ class StatsController(private val statsService: StatsService) {
         @RequestParam @DateTimeFormat(iso = ISO.DATE) from: LocalDate,
         @RequestParam @DateTimeFormat(iso = ISO.DATE) to: LocalDate,
     ): StatsSummaryResponse = statsService.summary(from, to)
+
+    @GetMapping("/by-topic")
+    fun byTopic(
+        @RequestParam @DateTimeFormat(iso = ISO.DATE) from: LocalDate,
+        @RequestParam @DateTimeFormat(iso = ISO.DATE) to: LocalDate,
+    ): List<TopicCategoryStat> = statsService.byTopic(from, to)
 
     @GetMapping("/by-category")
     fun byCategory(

@@ -1,5 +1,7 @@
 package com.jobscheduler.stats
 
+import com.jobscheduler.actual.ActualKind
+import com.jobscheduler.actual.ActualLogRepository
 import com.jobscheduler.category.CategoryRepository
 import com.jobscheduler.common.BusinessRuleException
 import com.jobscheduler.goal.dto.CategoryRef
@@ -11,6 +13,8 @@ import com.jobscheduler.stats.dto.SeriesValue
 import com.jobscheduler.stats.dto.StatsSummaryResponse
 import com.jobscheduler.stats.dto.StatsUnit
 import com.jobscheduler.stats.dto.TimeseriesResponse
+import com.jobscheduler.stats.dto.TopicCategoryStat
+import com.jobscheduler.stats.dto.TopicStat
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
@@ -25,6 +29,7 @@ import java.time.temporal.TemporalAdjusters
 class StatsService(
     private val collector: StudySliceCollector,
     private val categoryRepository: CategoryRepository,
+    private val actualLogRepository: ActualLogRepository,
     private val clock: Clock,
 ) {
     companion object {
@@ -83,6 +88,28 @@ class StatsService(
     }
 
     /** 활성 분류는 0이어도 모두, 비활성·미분류는 시간이 있을 때만. 시간 많은 순 */
+    /**
+     * 기간의 실제 기록(할 일·공부)을 분류 → 주제로 묶은 시간(1-4f ㊾, Toggl 보고서의 프로젝트 → 설명 묶기).
+     * 주제는 글자가 같아야 묶이고, 안 적은 시간은 title = null로 모은다.
+     */
+    @Transactional(readOnly = true)
+    fun byTopic(from: LocalDate, to: LocalDate): List<TopicCategoryStat> {
+        slices(from, to) // 기간 검사
+        val logs = actualLogRepository.findAllByDateBetween(from, to)
+            .filter { it.kind == ActualKind.GOAL || it.kind == ActualKind.STUDY }
+        return logs.groupBy { it.category?.id }.map { (_, inCategory) ->
+            val topics = inCategory
+                // 분류·할 일 이름을 그대로 적은 제목은 주제가 아니다(예전 기록, 1-4f ㊾)
+                .groupBy { log ->
+                    log.title?.trim()?.ifEmpty { null }
+                        ?.takeIf { it != log.category?.name && it != log.dailyGoal?.content }
+                }
+                .map { (title, v) -> TopicStat(title, v.sumOf { ChronoUnit.SECONDS.between(it.startAt, it.endAt) }) }
+                .sortedWith(compareBy<TopicStat> { it.title == null }.thenByDescending { it.seconds })
+            TopicCategoryStat(inCategory.first().category?.let(CategoryRef::from), topics.sumOf { it.seconds }, topics)
+        }.sortedByDescending { it.seconds }
+    }
+
     fun byCategory(from: LocalDate, to: LocalDate): List<CategoryStat> {
         val study = slices(from, to).study()
         val total = study.sumOf { it.seconds }
