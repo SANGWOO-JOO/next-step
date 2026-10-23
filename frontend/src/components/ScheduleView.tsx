@@ -269,7 +269,7 @@ export default function ScheduleView({
         <span className="schedule-allday-label muted">목표</span>
         {dates.map((d) => (
           <div key={d} className="schedule-allday">
-            {goalsOf(d).map((g) => (
+            {[...goalsOf(d)].sort((a, b) => Number(b.type === 'CORE') - Number(a.type === 'CORE')).map((g) => (
               <GoalChip
                 key={g.id}
                 goal={g}
@@ -590,7 +590,6 @@ function GoalChip({ goal, run, coreFull }: ChipProps) {
         aria-label="완료"
       />
       <span className="schedule-goal-text">
-        {goal.type === 'CORE' ? '★ ' : ''}
         {goal.content}
       </span>
       <MoreMenu
