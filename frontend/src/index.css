@@ -1186,3 +1186,10 @@ button.color-dot.auto::after { content: 'A'; position: absolute; inset: 0; displ
 @container (max-width: 9.5rem) {
   .schedule-block-time { display: none; }
 }
+/* 짧은 블록: 제목과 [계획대로] 아이콘을 같은 첫 줄 높이에 맞춘다 */
+.schedule-block.short, .schedule-block.tiny { align-items: flex-start; }
+.schedule-block.short .schedule-block-title, .schedule-block.tiny .schedule-block-title,
+.schedule-block.short .schedule-block-time { line-height: 15px; }
+.as-planned.compact { align-self: flex-start; margin-top: 0; }
+.schedule-block.tiny { align-items: center; }
+.schedule-block.tiny .as-planned.compact { align-self: center; }
