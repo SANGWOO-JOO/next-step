@@ -934,3 +934,6 @@ body.resizing { cursor: col-resize; user-select: none; }
 .plan-card input[type="checkbox"] { margin: 0; flex: none; }
 .plan-content.done { text-decoration: line-through; opacity: 0.6; }
 .core-mark { color: #f5b301; }
+.goal-summary .more-menu { margin-left: auto; }
+.card:hover .goal-summary .more-trigger, .goal-summary .more-trigger:focus-visible, .goal-summary .more-menu.open .more-trigger,
+.unfinished-list li:hover .more-trigger { opacity: 1; }

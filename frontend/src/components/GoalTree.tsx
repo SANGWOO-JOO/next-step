@@ -136,7 +136,7 @@ type GoalFormProps = {
   onCancel: () => void
 }
 
-function GoalForm({ initial, submitLabel, onSubmit, onCancel }: GoalFormProps) {
+export function GoalForm({ initial, submitLabel, onSubmit, onCancel }: GoalFormProps) {
   const [title, setTitle] = useState(initial?.title ?? '')
   const [description, setDescription] = useState(initial?.description ?? '')
   const [startDate, setStartDate] = useState(initial?.startDate ?? todaySeoul())

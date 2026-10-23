@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import type { Category } from '../../api/categories'
-import type { Goal } from '../../api/goals'
+import { createGoal, deleteGoal, GOAL_STATUS_LABEL, updateGoal, type Goal } from '../../api/goals'
 import { getMonthlyReviews, type MonthlyReviewBrief } from '../../api/reviews'
-import GoalTree from '../../components/GoalTree'
+import { GoalForm } from '../../components/GoalTree'
 import HealthDot from '../../components/HealthDot'
+import MoreMenu from '../../components/MoreMenu'
 import { addMonths, currentMonthSeoul, monthLabel, todaySeoul } from '../../utils/date'
 import { elapsedPercent, healthOf, monthRange } from '../../utils/health'
 import { monthlyPercent, type Run } from './planData'
@@ -20,10 +21,13 @@ function monthsOf(goal: Goal) {
   return months
 }
 
-/** [최종]: 월 단위 로드맵(가운데 위) + 목표 트리 편집(가운데 아래) + 월간 회고 목록(오른쪽) */
-export default function GoalLevel({ goals, categories, run, onOpenMonth }: Props) {
+/** [최종]: 최종 목표마다 월 단위 로드맵 카드(⋯로 수정·삭제) + 월간 회고 목록(오른쪽). 월간·주간 편집은 [월]·[주]에서 */
+export default function GoalLevel({ goals, run, onOpenMonth }: Props) {
   const [reviews, setReviews] = useState<MonthlyReviewBrief[]>([])
   const [showAll, setShowAll] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [adding, setAdding] = useState(false)
+  const others = goals.filter((g) => g.status !== 'ACTIVE')
   const today = todaySeoul()
   const shown = goals.filter((g) => g.status === 'ACTIVE')
   const span = shown.length
@@ -48,14 +52,24 @@ export default function GoalLevel({ goals, categories, run, onOpenMonth }: Props
           const hidden = allMonths.length - months.length
           return (
             <div key={goal.id} className="card">
-              <div className="goal-summary">
-                <HealthDot health={healthOf(goal.progress.percent, goal.startDate, goal.targetDate, today)} label />
-                <h2 className="goal-title">{goal.title}</h2>
-                <span className="goal-summary-line muted small">
-                  {goal.startDate} 시작 · 목표일 {goal.targetDate} · 기간 {elapsedPercent(goal.startDate, goal.targetDate, today)}% 지남 ·
-                  월간 목표 {goal.progress.achieved}/{goal.progress.total} 달성
-                </span>
-              </div>
+              {editingId === goal.id ? (
+                <GoalForm
+                  initial={goal}
+                  submitLabel="저장"
+                  onSubmit={(input) => run(() => updateGoal(goal.id, input)).then((ok) => ok && setEditingId(null))}
+                  onCancel={() => setEditingId(null)}
+                />
+              ) : (
+                <div className="goal-summary">
+                  <HealthDot health={healthOf(goal.progress.percent, goal.startDate, goal.targetDate, today)} label />
+                  <h2 className="goal-title">{goal.title}</h2>
+                  <span className="goal-summary-line muted small">
+                    {goal.startDate} 시작 · 목표일 {goal.targetDate} · 기간 {elapsedPercent(goal.startDate, goal.targetDate, today)}% 지남 ·
+                    월간 목표 {goal.progress.achieved}/{goal.progress.total} 달성
+                  </span>
+                  <GoalMenu goal={goal} run={run} onEdit={() => setEditingId(goal.id)} />
+                </div>
+              )}
               <div className="roadmap-strip" style={{ gridTemplateColumns: `repeat(${months.length}, minmax(5.5rem, 1fr))` }}>
                 {months.map((month) => {
                   const monthly = goal.monthlyGoals.filter((m) => m.month === month)
@@ -94,8 +108,48 @@ export default function GoalLevel({ goals, categories, run, onOpenMonth }: Props
             </div>
           )
         })}
-        <h3 className="timeline-title plan-subtitle">목표 편집</h3>
-        <GoalTree goals={goals} categories={categories} run={run} />
+        {others.length > 0 && (
+          <div className="card">
+            <h3 className="timeline-title">완료·중단한 목표</h3>
+            <ul className="unfinished-list">
+              {others.map((goal) =>
+                editingId === goal.id ? (
+                  <li key={goal.id}>
+                    <GoalForm
+                      initial={goal}
+                      submitLabel="저장"
+                      onSubmit={(input) => run(() => updateGoal(goal.id, input)).then((ok) => ok && setEditingId(null))}
+                      onCancel={() => setEditingId(null)}
+                    />
+                  </li>
+                ) : (
+                  <li key={goal.id}>
+                    <span>{goal.title}</span>
+                    <span className="muted small">
+                      {GOAL_STATUS_LABEL[goal.status]} · {goal.startDate} ~ {goal.targetDate}
+                    </span>
+                    <GoalMenu goal={goal} run={run} onEdit={() => setEditingId(goal.id)} />
+                  </li>
+                ),
+              )}
+            </ul>
+          </div>
+        )}
+        {shown.length === 0 && !adding && <p className="card muted">아직 최종 목표가 없어요. 이직 목표부터 적어보세요.</p>}
+        {adding ? (
+          <div className="card">
+            <h3 className="timeline-title">새 최종 목표</h3>
+            <GoalForm
+              submitLabel="추가"
+              onSubmit={(input) => run(() => createGoal(input)).then((ok) => ok && setAdding(false))}
+              onCancel={() => setAdding(false)}
+            />
+          </div>
+        ) : (
+          <button className="ghost add goal-add" onClick={() => setAdding(true)}>
+            + 최종 목표
+          </button>
+        )}
       </div>
 
       <aside className="plan-side">
@@ -124,5 +178,22 @@ export default function GoalLevel({ goals, categories, run, onOpenMonth }: Props
         </div>
       </aside>
     </div>
+  )
+}
+
+/** 최종 목표 ⋯ 메뉴: 수정·삭제 */
+function GoalMenu({ goal, run, onEdit }: { goal: Goal; run: Run; onEdit: () => void }) {
+  return (
+    <MoreMenu
+      label="최종 목표 동작"
+      items={[
+        { label: '수정', onClick: onEdit },
+        {
+          label: '삭제',
+          danger: true,
+          onClick: () => confirm(`'${goal.title}' 최종 목표를 삭제할까요?`) && run(() => deleteGoal(goal.id)),
+        },
+      ]}
+    />
   )
 }
