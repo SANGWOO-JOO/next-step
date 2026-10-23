@@ -333,7 +333,9 @@ export default function ScheduleView({
                   const end = dragging?.end ?? minutesOfDay(b.endAt, date)
                   // 목표 아닌 일정은 회색 점선 테두리로 구분한다
                   const color = b.category?.color ?? 'var(--muted)'
-                  const short = end - start <= 30
+                  // 칸 높이에 맞춰 줄인다(1-4f ㉖): 한 줄이 안 되면 tiny, 세 줄이 안 되면 short(제목·시간 한 줄)
+                  const px = toPx(end - start)
+                  const size = px < 30 ? 'tiny' : px < 66 ? 'short' : ''
                   const past = date < today || (date === today && end <= now)
                   // 지난 계획인데 그 시간에 실제 기록이 하나도 없으면 [계획대로]를 보여준다
                   const unrecorded =
@@ -350,7 +352,7 @@ export default function ScheduleView({
                         b.dailyGoalStatus === 'DONE' ? 'done' : '',
                         b.dailyGoalId === null ? 'free' : '',
                         dragging ? 'dragging' : '',
-                        short ? 'short' : '',
+                        size,
                         date === today && start <= now && now < end ? 'now' : '',
                         twoLane ? 'plan-lane' : '',
                         unrecorded ? 'unrecorded' : '',
@@ -364,19 +366,24 @@ export default function ScheduleView({
                       onPointerDown={(e) => onBlockPointerDown(e, b, date)}
                       title="끌어서 옮기기 · 눌러서 고치기"
                     >
-                      <span className="schedule-block-title">{b.label}</span>
-                      <span className="schedule-block-time">
-                        {formatMinutes(start)}~{formatMinutes(end)}
+                      <span className="schedule-block-title" title={`${b.label} · ${formatMinutes(start)}~${formatMinutes(end)}`}>
+                        {b.label}
                       </span>
+                      {size !== 'tiny' && (
+                        <span className="schedule-block-time">
+                          {formatMinutes(start)}~{formatMinutes(end)}
+                        </span>
+                      )}
                       {unrecorded && (
                         <button
                           type="button"
-                          className="as-planned"
+                          className={size ? 'as-planned compact' : 'as-planned'}
                           onPointerDown={(e) => e.stopPropagation()}
                           onClick={() => run(() => actualFromBlock(b.id))}
-                          title="이 계획대로 했다고 실제 줄에 기록해요"
+                          title="계획대로: 이 계획대로 했다고 실제 줄에 기록해요"
+                          aria-label="계획대로"
                         >
-                          ✓ 계획대로
+                          {size ? '✓' : '✓ 계획대로'}
                         </button>
                       )}
                       <span className="schedule-block-resize" aria-hidden />
@@ -408,7 +415,7 @@ export default function ScheduleView({
                         className={[
                           'actual-entry',
                           `actual-${a.kind.toLowerCase()}`,
-                          end - start <= 30 ? 'short' : '',
+                          toPx(end - start) < 30 ? 'tiny' : toPx(end - start) < 44 ? 'short' : '',
                           dragging ? 'dragging' : '',
                         ].join(' ')}
                         style={{

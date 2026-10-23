@@ -1152,3 +1152,12 @@ input[type='checkbox'] { accent-color: #6d74f7; }
 /* 24시간 한눈에 버튼(1-4f ㉕) */
 button.fit-day-toggle { padding: 0.25rem 0.75rem; font-size: 0.82rem; }
 button.fit-day-toggle.on { color: #fff; border-color: transparent; background: var(--grad); }
+/* 짧은 블록이 깨지지 않게(1-4f ㉖): 높이에 따라 한 줄로 줄이고, 제목은 말줄임, [계획대로]는 ✓ 아이콘만 */
+.schedule-block > *, .actual-entry > * { flex-shrink: 0; }
+.schedule-block.short, .schedule-block.tiny, .actual-entry.short, .actual-entry.tiny { flex-direction: row; align-items: center; gap: 0.35rem; flex-wrap: nowrap; }
+.schedule-block.tiny, .actual-entry.tiny { padding-top: 0; padding-bottom: 0; font-size: 0.7rem; }
+.schedule-block.short .schedule-block-title, .schedule-block.tiny .schedule-block-title,
+.actual-entry.short .schedule-block-title, .actual-entry.tiny .schedule-block-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.schedule-block.short .schedule-block-time, .actual-entry.short .schedule-block-time { white-space: nowrap; font-size: 0.68rem; opacity: 0.8; }
+.actual-entry.tiny .schedule-block-time { display: none; }
+.as-planned.compact { margin: 0 0 0 auto; padding: 0 0.4rem; line-height: 1.4; flex: none; }
