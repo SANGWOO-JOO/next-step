@@ -318,19 +318,26 @@ export function NewDailyGoalForm({ date, categories, onSubmit }: NewFormProps) {
 
   const q = query.trim()
   const lower = q.toLowerCase()
-  const matches = categories
-    .filter((c) => c.name.toLowerCase().includes(lower))
-    .sort((x, y) => Number(!x.name.toLowerCase().startsWith(lower)) - Number(!y.name.toLowerCase().startsWith(lower)))
+  // 전체 목록을 늘 보여 주고, 쓴 글자와 맞는 분류를 위로 올린다(1-4f ㊵)
+  const rank = (c: Category) => {
+    const name = c.name.toLowerCase()
+    return !lower ? 0 : name.startsWith(lower) ? 0 : name.includes(lower) ? 1 : 2
+  }
+  const matches = [...categories].sort((x, y) => rank(x) - rank(y))
+  const matchCount = categories.filter((c) => rank(c) < 2).length
   const exact = categories.some((c) => c.name.toLowerCase() === lower)
   const options: ({ kind: 'pick'; category: Category } | { kind: 'create'; name: string })[] = [
-    ...matches.map((category) => ({ kind: 'pick' as const, category })),
+    ...matches.slice(0, matchCount).map((category) => ({ kind: 'pick' as const, category })),
     ...(q && !exact ? [{ kind: 'create' as const, name: q }] : []),
+    ...matches.slice(matchCount).map((category) => ({ kind: 'pick' as const, category })),
   ]
-  const open = q !== '' && options.length > 0
+  const [focused, setFocused] = useState(false)
+  const open = focused && options.length > 0
   const current = Math.min(active, options.length - 1)
 
   const reset = () => {
     setQuery('')
+    setFocused(false)
     setActive(0)
     setError(null)
   }
@@ -360,8 +367,7 @@ export function NewDailyGoalForm({ date, categories, onSubmit }: NewFormProps) {
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    if (!q) return
-    if (options.length > 0) choose(options[current])
+    if (options.length > 0 && (q || focused)) choose(options[current])
   }
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -387,9 +393,12 @@ export function NewDailyGoalForm({ date, categories, onSubmit }: NewFormProps) {
           onChange={(e) => {
             setQuery(e.target.value)
             setActive(0)
+            setFocused(true)
             setError(null)
           }}
           onKeyDown={onKeyDown}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           maxLength={50}
           role="combobox"
           aria-expanded={open}
