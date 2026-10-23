@@ -7,14 +7,12 @@ import {
   updateDailyGoal,
   type DailyGoal,
 } from '../api/dailyGoals'
-import { formatDuration, type FocusSession } from '../api/focus'
 import { actualFromBlock, type ActualLog } from '../api/actualLogs'
 import type { Category } from '../api/categories'
 import { createTimeBlock, deleteTimeBlock, toTimeBlockInput, updateTimeBlock, type TimeBlock } from '../api/timeBlocks'
 import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, seoulIso, shiftDate, todaySeoul } from '../utils/date'
 import ActualPopover from './ActualPopover'
 import MoreMenu from './MoreMenu'
-import FocusStartIcon from './FocusStartIcon'
 import TimeBlockForm from './TimeBlockForm'
 
 const HOUR_PX = 48
@@ -33,9 +31,7 @@ type Props = {
   dates: string[]
   blocks: TimeBlock[]
   goals: DailyGoal[]
-  sessions: FocusSession[]
   run: Run
-  onStartFocus?: (goal: DailyGoal) => void
   /** 고른 날(왼쪽 목록이 보여주는 날). [주] 보기에서 날짜 머리를 누르면 바뀐다 */
   selectedDate?: string
   onSelectDate?: (date: string) => void
@@ -85,9 +81,7 @@ export default function ScheduleView({
   dates,
   blocks,
   goals,
-  sessions,
   run,
-  onStartFocus,
   selectedDate,
   onSelectDate,
   actuals,
@@ -258,7 +252,6 @@ export default function ScheduleView({
                 key={g.id}
                 goal={g}
                 run={run}
-                onStartFocus={d === today ? onStartFocus : undefined}
                 coreFull={goalsOf(d).filter((x) => x.type === 'CORE').length >= 3}
               />
             ))}
@@ -288,21 +281,6 @@ export default function ScheduleView({
               onDragOver={(e) => e.dataTransfer.types.includes(GOAL_DRAG_TYPE) && e.preventDefault()}
               onDrop={(e) => onDrop(e, date)}
             >
-              {!twoLane && sessions
-                .filter((s) => s.date === date)
-                .map((s) => {
-                  const start = minutesOfDay(s.startedAt, date)
-                  const end = s.endedAt ? minutesOfDay(s.endedAt, date) : date === today ? now : start
-                  return (
-                    <span
-                      key={s.id}
-                      className={s.running ? 'schedule-session running' : 'schedule-session'}
-                      style={{ top: toPx(start), height: Math.max(toPx(end - start), 3) }}
-                      title={`실제 집중 ${formatMinutes(start)}~${formatMinutes(Math.min(end, DAY))} · ${formatDuration(s.focusSeconds)}`}
-                    />
-                  )
-                })}
-
               {blocks
                 .filter((b) => b.date === date)
                 .map((b) => {
@@ -451,7 +429,6 @@ export default function ScheduleView({
                   goals={goalsOf(date)}
                   run={run}
                   onClose={() => setPopover(null)}
-                  onStartFocus={date === today ? onStartFocus : undefined}
                 />
               )}
             </div>
@@ -467,11 +444,10 @@ type PopoverProps = {
   goals: DailyGoal[]
   run: Run
   onClose: () => void
-  onStartFocus?: (goal: DailyGoal) => void
 }
 
 /** 블록 추가·수정 팝업. 블록 바로 옆(위치)에 띄운다. */
-function SchedulePopover({ popover, goals, run, onClose, onStartFocus }: PopoverProps) {
+function SchedulePopover({ popover, goals, run, onClose }: PopoverProps) {
   const date = popover.kind === 'new' ? popover.date : popover.block.date
   const start = popover.kind === 'new' ? popover.start : minutesOfDay(popover.block.startAt, date)
   const end = popover.kind === 'new' ? popover.end : minutesOfDay(popover.block.endAt, date)
@@ -523,11 +499,6 @@ function SchedulePopover({ popover, goals, run, onClose, onStartFocus }: Popover
       />
       {goal && (
         <span className="row-actions">
-          {goal.status === 'TODO' && onStartFocus && (
-            <button className="start-focus with-icon" onClick={() => onStartFocus(goal)}>
-              <FocusStartIcon size="18" /> 지금 집중 시작
-            </button>
-          )}
           <button
             className="ghost"
             onClick={() =>
@@ -547,7 +518,6 @@ function SchedulePopover({ popover, goals, run, onClose, onStartFocus }: Popover
 type ChipProps = {
   goal: DailyGoal
   run: Run
-  onStartFocus?: (goal: DailyGoal) => void
   /** 그날 핵심이 이미 3개면 '핵심으로'를 막는다 */
   coreFull: boolean
 }
@@ -556,7 +526,7 @@ type ChipProps = {
  * 시간표 위쪽 "목표" 줄의 칩(docs/design.md 6장 시간표 중심). 할 일 목록 역할:
  * 완료 체크, ▶ 집중(오늘만), ⋯ 메뉴, 끌어서 시간표에 놓으면 1시간 블록.
  */
-function GoalChip({ goal, run, onStartFocus, coreFull }: ChipProps) {
+function GoalChip({ goal, run, coreFull }: ChipProps) {
   const done = goal.status === 'DONE'
   const tomorrow = shiftDate(goal.date, 1)
   const sameWeek = mondayOf(tomorrow) === mondayOf(goal.date)
@@ -575,11 +545,6 @@ function GoalChip({ goal, run, onStartFocus, coreFull }: ChipProps) {
         onChange={() => run(() => updateDailyGoal(goal.id, { ...toDailyGoalUpdateInput(goal), status: done ? 'TODO' : 'DONE' }))}
         aria-label="완료"
       />
-      {onStartFocus && !done && (
-        <button className="play-button small" onClick={() => onStartFocus(goal)} aria-label="집중 시작" title="집중 시작">
-          <FocusStartIcon size="18" />
-        </button>
-      )}
       <span className="schedule-goal-text">
         {goal.type === 'CORE' ? '★ ' : ''}
         {goal.content}

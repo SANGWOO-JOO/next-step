@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { errorMessage } from '../api/client'
 import { formatDuration } from '../api/focus'
 import { CONDITION_LABELS, getDailyLogs, type DailyLog } from '../api/records'
+import NoteInbox from '../components/NoteInbox'
 import { getMonthlyReviews, getWeeklyJournals, type MonthlyReviewBrief, type WeeklyJournalBrief } from '../api/reviews'
 import { addMonths, currentMonthSeoul, dayLabel, mondayOf, mondaysOfMonth, monthLabel, shiftDate, todaySeoul, weekLabel } from '../utils/date'
 import { monthRange } from '../utils/health'
@@ -73,6 +74,7 @@ export default function LogPage() {
       </div>
       <p className="muted">하루 마무리, 주간 일지, 월간 회고를 최신순으로 모아 봐요.</p>
       {error && <p className="error-banner">{error}</p>}
+      {kind === 'day' && <NoteInbox />}
 
       {list === null ? (
         <p className="muted">불러오는 중…</p>

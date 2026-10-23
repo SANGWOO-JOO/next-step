@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { getCurrentFocus } from '../api/focus'
 import NavIcon from './NavIcon'
 
 type Menu = { to: string; label: string; icon: string; end?: boolean }
@@ -11,7 +10,6 @@ const GROUPS: { title: string; menus: Menu[] }[] = [
     title: '매일',
     menus: [
       { to: '/', label: '일정', icon: 'schedule', end: true },
-      { to: '/focus', label: '집중', icon: 'focus' },
       { to: '/plan', label: '계획', icon: 'plan' },
       { to: '/log', label: '기록', icon: 'log' },
     ],
@@ -44,19 +42,7 @@ const readCollapsed = () => {
 export default function Layout() {
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [focusing, setFocusing] = useState(false)
   const location = useLocation()
-
-  // 집중 세션 진행 여부: 화면을 옮길 때와 1분마다 확인한다
-  useEffect(() => {
-    const check = () =>
-      getCurrentFocus()
-        .then((s) => setFocusing(!!s))
-        .catch(() => setFocusing(false))
-    check()
-    const timer = window.setInterval(check, 60_000)
-    return () => window.clearInterval(timer)
-  }, [location.pathname])
 
   // 화면을 옮기면 서랍은 닫는다
   useEffect(() => setDrawerOpen(false), [location.pathname, location.search])
@@ -97,12 +83,6 @@ export default function Layout() {
     >
       <NavIcon name={m.icon} />
       <span className="side-label">{m.label}</span>
-      {m.to === '/focus' && focusing && (
-        <>
-          <span className="side-badge">진행 중</span>
-          <span className="side-dot" aria-hidden="true" />
-        </>
-      )}
     </NavLink>
   )
 

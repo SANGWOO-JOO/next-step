@@ -1,19 +1,10 @@
 import { useCallback, useEffect, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { getCategories, type Category } from '../api/categories'
 import { errorMessage } from '../api/client'
 import { createDailyGoal, getDailyGoalsBetween, getUnfinishedDailyGoals, type DailyGoal } from '../api/dailyGoals'
 import { getWeeklyGoalsOfWeek, type WeeklyGoal } from '../api/goals'
-import {
-  DEFAULT_BREAK_MINUTES,
-  DEFAULT_FOCUS_MINUTES,
-  formatDuration,
-  getCurrentFocus,
-  getDistractionNotes,
-  getFocusSessions,
-  startFocus,
-  type FocusSession,
-} from '../api/focus'
+import { formatDuration } from '../api/focus'
 import { getHealth } from '../api/health'
 import { CONDITION_LABELS, getDailyLog, getManualLogs, type DailyLog, type ManualStudyLog } from '../api/records'
 import { getWeeklyJournals } from '../api/reviews'
@@ -34,7 +25,6 @@ export default function TodayPage() {
   const sunday = weekDates(thisMonday)[6]
   /** 이번 주 하루 목표·블록·세션. 일 보기는 그중 오늘 것만 쓴다 */
   const [weekGoals, setWeekGoals] = useState<DailyGoal[]>([])
-  const [weekSessions, setWeekSessions] = useState<FocusSession[]>([])
   const [view, setView] = useState<'day' | 'week'>(() => {
     try {
       return localStorage.getItem('today.view') === 'week' ? 'week' : 'day'
@@ -48,8 +38,6 @@ export default function TodayPage() {
   const [blocks, setBlocks] = useState<TimeBlock[]>([])
   /** 이번 주 실제 기록(시간표 "실제" 줄) */
   const [actuals, setActuals] = useState<ActualLog[]>([])
-  const [current, setCurrent] = useState<FocusSession | null>(null)
-  const [uncheckedNotes, setUncheckedNotes] = useState(0)
   const [plans, setPlans] = useState<WeeklyPlan[]>([])
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null)
   const [manualLogs, setManualLogs] = useState<ManualStudyLog[]>([])
@@ -93,7 +81,6 @@ export default function TodayPage() {
     writeValue(WIDE_KEY, next ? '1' : '0')
   }
   const isToday = selected === today
-  const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(() => {
@@ -104,21 +91,15 @@ export default function TodayPage() {
       getCategories(),
       getTimeBlocksBetween(thisMonday, sunday),
       getActualLogsBetween(thisMonday, sunday),
-      Promise.all(weekDates(thisMonday).filter((d) => d <= today).map(getFocusSessions)).then((all) => all.flat()),
-      getCurrentFocus(),
-      getDistractionNotes(false),
       getWeeklyPlansOfDate(today),
       getDailyLog(today),
       getManualLogs(today),
     ])
-      .then(([d, w, u, c, b, actual, f, cur, notes, p, log, manual]) => {
+      .then(([d, w, u, c, b, actual, p, log, manual]) => {
         setActuals(actual)
         setPlans(p)
         setDailyLog(log)
         setManualLogs(manual)
-        setWeekSessions(f)
-        setCurrent(cur ?? null)
-        setUncheckedNotes(notes.length)
         setWeekGoals(d)
         setWeeklyGoals(w)
         setUnfinished(u)
@@ -143,19 +124,6 @@ export default function TodayPage() {
     }
   }
 
-  const startFocusFor = async (goal: DailyGoal) => {
-    const ok = await run(() =>
-      startFocus({
-        dailyGoalId: goal.id,
-        categoryId: null,
-        focusMinutes: DEFAULT_FOCUS_MINUTES,
-        breakMinutes: DEFAULT_BREAK_MINUTES,
-        source: 'TODAY',
-      }),
-    )
-    if (ok) navigate('/focus')
-  }
-
   const goals = weekGoals.filter((g) => g.date === today)
   const pullCount = unfinished.length + plans.filter((p) => !goals.some((g) => g.content === p.content)).length
   const changeView = (v: 'day' | 'week') => {
@@ -175,15 +143,6 @@ export default function TodayPage() {
           일정 <span className="page-date muted">{dayLabel(today)}</span>
         </h1>
         <div className="status-bar">
-          {current ? (
-            <span className="status-focus">
-              {current.interruptions.some((i) => !i.endedAt) ? '⏸ 중단 중' : '▶ 집중 중'} ·{' '}
-              {current.dailyGoal?.content ?? current.category?.name ?? '분류 없음'}
-              <Link className="button-link" to="/focus">
-                돌아가기
-              </Link>
-            </span>
-          ) : null}
           <NowNext blocks={blocks.filter((b) => b.date === today)} />
           {dailyLog && (
             <span className="muted" title="지나간 계획 시간 중 계획과 같은 일을 실제로 한 비율">
@@ -196,8 +155,6 @@ export default function TodayPage() {
               )}
             </span>
           )}
-          {uncheckedNotes > 0 && <Link to="/focus#notes">확인 안 한 메모 {uncheckedNotes}개</Link>}
-          {!current && <Link to="/focus">분류만으로 집중하기</Link>}
           <span className="status-end">
             {dailyLog?.saved && (
               <button className="ghost log-chip" onClick={() => setShutdown(true)} title="오늘 기록 보기·고치기">
@@ -258,7 +215,6 @@ export default function TodayPage() {
             categories={categories}
             run={run}
             timeBlocks={blocks.filter((b) => b.date === selected)}
-            onStartFocus={current || !isToday ? undefined : startFocusFor}
           />
           {isToday && (
           <PullSection
@@ -344,15 +300,12 @@ export default function TodayPage() {
           <SidebarTip />
           <p className="muted small schedule-help">
             빈 칸을 끌어 시간을 잡고, 블록을 끌어 옮기거나 아래 끝을 끌어 늘여요. {wideSchedule ? '위쪽 목표 칩을' : '왼쪽 목표를'} 끌어다 놓아도 돼요.
-            초록 막대는 실제 집중한 시간이에요.
           </p>
           <ScheduleView
             dates={view === 'day' ? [selected] : weekDates(thisMonday)}
             blocks={blocks}
             goals={weekGoals}
-            sessions={weekSessions}
             run={run}
-            onStartFocus={current ? undefined : startFocusFor}
             selectedDate={selected}
             onSelectDate={setSelected}
             actuals={actuals}

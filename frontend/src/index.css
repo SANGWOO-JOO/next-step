@@ -252,7 +252,6 @@ button.add { justify-self: start; padding: 0.2rem 0.6rem; font-size: 0.85rem; }
 .timeline-now::before { content: ''; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--down); }
 
 /* 집중 모드 */
-button.start-focus { padding: 0.05rem 0.45rem; font-size: 0.75rem; }
 .focus-banner {
   display: flex;
   justify-content: space-between;
@@ -423,8 +422,6 @@ button.start-focus { padding: 0.05rem 0.45rem; font-size: 0.75rem; }
 .schedule-block-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .schedule-block-time { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 0.72rem; white-space: nowrap; }
 .schedule-block-resize { position: absolute; left: 0; right: 0; bottom: 0; height: 8px; cursor: ns-resize; }
-.schedule-session { position: absolute; right: 2px; width: 5px; border-radius: 3px; background: var(--up); opacity: 0.85; pointer-events: auto; z-index: 2; }
-.schedule-session.running { background: repeating-linear-gradient(to bottom, var(--up) 0 4px, transparent 4px 7px); }
 .schedule-now { position: absolute; left: 0; right: 0; height: 2px; background: var(--down); pointer-events: none; z-index: 2; }
 .schedule-now::before { content: ''; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--down); }
 .schedule-popover {
@@ -558,7 +555,6 @@ a.button-link:hover { text-decoration: none; filter: brightness(1.1); }
   border-radius: 10px;
   font-size: 0.92rem;
 }
-.status-focus { display: inline-flex; align-items: center; gap: 0.6rem; font-weight: 600; }
 .status-now strong, .status-next strong, .status-strong { color: var(--text); }
 .status-now { color: var(--up); }
 .today-layout { margin-top: 0.25rem; }
@@ -879,22 +875,6 @@ body.resizing { cursor: col-resize; user-select: none; }
 .toolbar-workload strong { color: var(--text); }
 .toolbar-workload.over { color: #b45309; }
 
-/* 집중 시작 아이콘 버튼 */
-.focus-start-icon { display: block; flex: none; filter: drop-shadow(0 2px 4px rgb(91 140 255 / 0.35)); }
-button.play-button {
-  display: inline-grid;
-  place-items: center;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  line-height: 0;
-  transition: transform 0.12s ease, filter 0.12s ease;
-}
-button.play-button:hover { transform: scale(1.12); filter: brightness(1.08); }
-button.play-button:active { transform: scale(0.94); }
-button.play-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-button.with-icon { display: inline-flex; align-items: center; gap: 0.4rem; }
 
 /* 계획 | 실제 두 줄 시간표 (1-4e) */
 .lane-labels { display: grid; grid-template-columns: 1fr 1fr; font-size: 0.68rem; text-align: center; border-left: 1px solid var(--border); border-top: 1px solid var(--border); padding: 0.1rem 0; }

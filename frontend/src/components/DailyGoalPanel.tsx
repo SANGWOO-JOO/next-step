@@ -17,7 +17,6 @@ import { createTimeBlock, type TimeBlock } from '../api/timeBlocks'
 import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, shiftDate, todaySeoul } from '../utils/date'
 import CategoryBadge from './CategoryBadge'
 import FormButtons from './FormButtons'
-import FocusStartIcon from './FocusStartIcon'
 import MoreMenu from './MoreMenu'
 import { GOAL_DRAG_TYPE } from './ScheduleView'
 import TimeBlockForm from './TimeBlockForm'
@@ -38,7 +37,6 @@ type Props = {
   /** 넘기면 하루 목표마다 시간 블록을 보여주고 '+ 시간'으로 블록을 만든다 */
   timeBlocks?: TimeBlock[]
   /** 넘기면 미완료 목표마다 ▶ 버튼으로 집중 세션을 시작한다 */
-  onStartFocus?: (goal: DailyGoal) => void
 }
 
 /** 하루의 핵심(최대 3개)·추가 목표를 보여주고 추가·완료·넘기기·전환을 한다. */
@@ -51,7 +49,6 @@ export default function DailyGoalPanel({
   title,
   onClose,
   timeBlocks,
-  onStartFocus,
 }: Props) {
   const [notice, setNotice] = useState<string | null>(null)
   const core = goals.filter((g) => g.type === 'CORE')
@@ -70,7 +67,6 @@ export default function DailyGoalPanel({
         onNotice={setNotice}
         blocks={timeBlocks?.filter((b) => b.dailyGoalId === goal.id)}
         nextBlockStart={nextBlockStart(date, timeBlocks)}
-        onStartFocus={onStartFocus}
       />
     ))
 
@@ -139,7 +135,6 @@ type ItemProps = {
   /** undefined면 시간 블록 기능을 숨긴다 */
   blocks?: TimeBlock[]
   nextBlockStart: number
-  onStartFocus?: (goal: DailyGoal) => void
 }
 
 function DailyGoalItem({
@@ -152,7 +147,6 @@ function DailyGoalItem({
   onNotice,
   blocks,
   nextBlockStart,
-  onStartFocus,
 }: ItemProps) {
   const [mode, setMode] = useState<'view' | 'edit' | 'move' | 'block'>('view')
   const done = goal.status === 'DONE'
@@ -201,11 +195,6 @@ function DailyGoalItem({
     >
       <div className="daily-row">
         <input type="checkbox" checked={done} onChange={toggleDone} aria-label="완료" />
-        {onStartFocus && !done && (
-          <button className="play-button" onClick={() => onStartFocus(goal)} title="집중 시작" aria-label="집중 시작">
-            <FocusStartIcon size="22" />
-          </button>
-        )}
         <span className={done ? 'daily-content done' : 'daily-content'}>
           {goal.content}
           {goal.carryCount > 0 && (
