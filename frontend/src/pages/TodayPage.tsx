@@ -241,18 +241,12 @@ export default function TodayPage() {
           onDoubleClick={() => saveLeftWidth(DEFAULT_LEFT_WIDTH)}
         />
         <div className="card schedule-card">
-          <div className="goal-header">
-            <h3 className="timeline-title goal-title">시간표</h3>
-            <button
-              className="ghost wide-toggle"
-              onClick={toggleWide}
-              aria-pressed={wideSchedule}
-              title={wideSchedule ? '목록 다시 보기' : '목록을 접고 시간표만 넓게 보기'}
-            >
-              {wideSchedule ? '⤡ 목록 보기' : '⤢ 넓게 보기'}
-            </button>
-            {/* 달력 앱처럼 ‹ 오늘 ›으로 이전·다음 주(일 보기는 하루)로 이동(1-4f) */}
-            <span className="row-actions schedule-nav">
+          {/* Google Calendar처럼 왼쪽에 [오늘] ‹ › 기간 제목, 오른쪽에 [일|주]와 넓게 보기(1-4f ⑫) */}
+          <div className="cal-header">
+            <span className="cal-nav">
+              <button className="ghost" onClick={() => setSelected(today)} disabled={view === 'week' ? viewMonday === thisMonday : isToday}>
+                오늘
+              </button>
               <button
                 className="icon"
                 onClick={() => setSelected(shiftDate(selected, view === 'week' ? -7 : -1))}
@@ -260,9 +254,6 @@ export default function TodayPage() {
                 title={view === 'week' ? '지난주' : '전날'}
               >
                 ‹
-              </button>
-              <button className="ghost" onClick={() => setSelected(today)} disabled={view === 'week' ? viewMonday === thisMonday : isToday}>
-                오늘
               </button>
               <button
                 className="icon"
@@ -272,13 +263,25 @@ export default function TodayPage() {
               >
                 ›
               </button>
+              <h3 className="cal-title">{view === 'week' ? weekTitle(viewMonday) : dayLabel(selected)}</h3>
             </span>
-            <span className="segmented">
-              {(['day', 'week'] as const).map((v) => (
-                <button key={v} className={view === v ? 'active' : ''} onClick={() => changeView(v)}>
-                  {v === 'day' ? '일' : '주'}
-                </button>
-              ))}
+            <span className="cal-tools">
+              <span className="segmented">
+                {(['day', 'week'] as const).map((v) => (
+                  <button key={v} className={view === v ? 'active' : ''} onClick={() => changeView(v)}>
+                    {v === 'day' ? '일' : '주'}
+                  </button>
+                ))}
+              </span>
+              <button
+                className="icon wide-toggle"
+                onClick={toggleWide}
+                aria-pressed={wideSchedule}
+                aria-label={wideSchedule ? '목록 보기' : '넓게 보기'}
+                title={wideSchedule ? '목록 다시 보기' : '목록을 접고 시간표만 넓게 보기'}
+              >
+                {wideSchedule ? '⤡' : '⤢'}
+              </button>
             </span>
           </div>
           {wideSchedule && (
@@ -515,6 +518,13 @@ function ServerAlert() {
       서버나 DB에 연결할 수 없어요. 백엔드와 docker compose가 켜져 있는지 확인해 주세요.
     </p>
   )
+}
+
+/** "10월 26일 – 11월 1일", 같은 달이면 "10월 19일 – 25일" */
+const weekTitle = (monday: string) => {
+  const sunday = shiftDate(monday, 6)
+  const md = (d: string) => `${Number(d.slice(5, 7))}월 ${Number(d.slice(8))}일`
+  return sunday.slice(5, 7) === monday.slice(5, 7) ? `${md(monday)} – ${Number(sunday.slice(8))}일` : `${md(monday)} – ${md(sunday)}`
 }
 
 const LEFT_WIDTH_KEY = 'today.leftWidth'

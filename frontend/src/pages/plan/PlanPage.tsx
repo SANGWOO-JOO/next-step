@@ -69,9 +69,21 @@ export default function PlanPage() {
 
   return (
     <section>
-      {/* 달력 앱처럼 지금 보는 기간을 크게, 이동은 오른쪽 ‹ 오늘 ›와 [최종|월|주] 한 곳에서(1-4f) */}
-      <div className="plan-header">
-        <div className="plan-heading">
+      {/* Google Calendar처럼 왼쪽에 [오늘] ‹ › 기간 제목, 오른쪽에 보기 단위(1-4f ⑫) */}
+      <div className="plan-header cal-header">
+        <span className="cal-nav">
+          {level !== 'goal' && (
+            <>
+              <button className="ghost" onClick={() => go(level, mondayOf(todaySeoul()))}>오늘</button>
+              <button className="icon" onClick={() => move(-1)} aria-label={level === 'week' ? '이전 주' : '이전 달'} title={level === 'week' ? '이전 주' : '이전 달'}>
+                ‹
+              </button>
+              <button className="icon" onClick={() => move(1)} aria-label={level === 'week' ? '다음 주' : '다음 달'} title={level === 'week' ? '다음 주' : '다음 달'}>
+                ›
+              </button>
+            </>
+          )}
+          <div className="plan-heading">
           <h1 className="plan-period">{periodTitle}</h1>
           {level !== 'goal' && (
             <p className="plan-context muted small">
@@ -94,27 +106,13 @@ export default function PlanPage() {
             </p>
           )}
         </div>
-        <span className="plan-nav">
-          {level !== 'goal' && (
-            <span className="row-actions">
-              <button className="icon" onClick={() => move(-1)} aria-label={level === 'week' ? '이전 주' : '이전 달'}>
-                ‹
-              </button>
-              <button className="ghost" onClick={() => go(level, mondayOf(todaySeoul()))}>
-                오늘
-              </button>
-              <button className="icon" onClick={() => move(1)} aria-label={level === 'week' ? '다음 주' : '다음 달'}>
-                ›
-              </button>
-            </span>
-          )}
-          <span className="segmented" role="group" aria-label="보기 단위">
-            {(Object.keys(LEVEL_LABELS) as Level[]).map((l) => (
-              <button key={l} className={level === l ? 'active' : ''} onClick={() => go(l)}>
-                {LEVEL_LABELS[l]}
-              </button>
-            ))}
-          </span>
+        </span>
+        <span className="segmented" role="group" aria-label="보기 단위">
+          {(Object.keys(LEVEL_LABELS) as Level[]).map((l) => (
+            <button key={l} className={level === l ? 'active' : ''} onClick={() => go(l)}>
+              {LEVEL_LABELS[l]}
+            </button>
+          ))}
         </span>
       </div>
       {error && (

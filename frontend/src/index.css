@@ -1003,3 +1003,12 @@ button.link-button:hover { color: var(--accent); text-decoration: underline; }
 .week-journal .stack-form > :not(.review-field) { grid-column: 1 / -1; }
 @media (max-width: 720px) { .week-journal .stack-form { grid-template-columns: 1fr; } }
 .month-week-study .small { white-space: nowrap; }
+/* 달력식 머리(1-4f ⑫): 왼쪽 [오늘] ‹ › 기간 제목, 오른쪽 보기 전환 */
+.cal-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem 1rem; margin-bottom: 0.6rem; }
+.cal-nav { display: inline-flex; align-items: center; gap: 0.35rem; min-width: 0; }
+.cal-nav .plan-heading { margin-left: 0.5rem; }
+.cal-title { margin: 0 0 0 0.5rem; font-size: 1.15rem; white-space: nowrap; }
+.cal-tools { display: inline-flex; align-items: center; gap: 0.5rem; }
+.plan-header.cal-header { align-items: flex-start; }
+.plan-header.cal-header .cal-nav { align-items: flex-start; }
+.plan-header.cal-header .cal-nav > button { margin-top: 0.2rem; }
