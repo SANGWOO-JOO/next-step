@@ -943,3 +943,11 @@ body.resizing { cursor: col-resize; user-select: none; }
 .month-week-label { flex: none; width: 5.5rem; text-align: left; font-variant-numeric: tabular-nums; }
 .month-week-goals { flex: 1; display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; }
 .month-week-goal { display: inline-flex; align-items: center; gap: 0.35rem; }
+/* 계획 화면 머리: 기간 제목 + 상위 목표 한 줄, 오른쪽에 이동(1-4f) */
+.plan-header { justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
+.plan-heading { display: grid; gap: 0.15rem; min-width: 0; }
+.plan-period { margin: 0; font-size: 1.4rem; line-height: 1.25; }
+.plan-context { margin: 0; overflow-wrap: anywhere; }
+.plan-nav { display: inline-flex; align-items: center; gap: 0.5rem; }
+button.link-button { padding: 0; border: none; background: none; color: inherit; font: inherit; cursor: pointer; }
+button.link-button:hover { color: var(--accent); text-decoration: underline; }

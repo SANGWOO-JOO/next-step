@@ -3,16 +3,16 @@ import { useSearchParams } from 'react-router-dom'
 import { getCategories, type Category } from '../../api/categories'
 import { errorMessage } from '../../api/client'
 import { getGoals, type Goal } from '../../api/goals'
-import { addMonths, currentMonthSeoul, mondayOf, mondaysOfMonth, monthLabel, shiftDate, todaySeoul, weekLabel } from '../../utils/date'
+import { addMonths, mondayOf, mondaysOfMonth, monthLabel, shiftDate, todaySeoul } from '../../utils/date'
 import GoalLevel from './GoalLevel'
 import MonthLevel from './MonthLevel'
-import { activeGoal, anchorOf, firstMondayOf, weeklyGoalsOf, type Level, type Run } from './planData'
+import { activeGoal, anchorOf, firstMondayOf, type Level, type Run } from './planData'
 import WeekLevel from './WeekLevel'
 
 const LEVEL_LABELS: Record<Level, string> = { goal: '최종', month: '월', week: '주' }
 
 /**
- * 계획 화면(docs/design.md 6장 3~5): 줌 레벨 [최종][월][주] + 경로 + 목표 트리 서랍.
+ * 계획 화면(docs/design.md 6장 3~5): 줌 레벨 [최종][월][주] + 기간 제목과 상위 목표 한 줄.
  * 주소에 level과 date(그 주의 월요일)를 남겨 새로고침·뒤로가기에도 유지한다.
  */
 export default function PlanPage() {
@@ -53,78 +53,64 @@ export default function PlanPage() {
     level === 'week' ? go('week', shiftDate(monday, delta * 7)) : go('month', firstMondayOf(addMonths(month, delta)))
 
   const goal = goals ? activeGoal(goals) : null
-  // 경로 드롭다운의 달: 진행 중 최종 목표의 기간(없으면 이번 달 앞뒤 6개월), 지금 보는 달은 꼭 포함
-  const pathMonths = (() => {
-    const from = goal ? goal.startDate.slice(0, 7) : addMonths(currentMonthSeoul(), -6)
-    const to = goal ? goal.targetDate.slice(0, 7) : addMonths(currentMonthSeoul(), 6)
-    const list: string[] = []
-    for (let m = from; m <= to && list.length < 120; m = addMonths(m, 1)) list.push(m)
-    return list.includes(month) ? list : [...list, month].sort()
-  })()
-  const monthlyTitle = (m: string) => {
-    const first = goals?.flatMap((g) => g.monthlyGoals).find((x) => x.month === m)
-    return first ? ` · ${first.content}` : ''
-  }
+  const monthlyGoal = goals?.flatMap((g) => g.monthlyGoals).find((x) => x.month === month)
+  // 주: "10월 19일 – 25일"(달이 바뀌면 "10월 26일 – 11월 1일"), 월: "2026년 10월", 최종: 목표 이름
+  const sunday = shiftDate(monday, 6)
+  const md = (d: string) => `${Number(d.slice(5, 7))}월 ${Number(d.slice(8))}일`
+  const periodTitle =
+    level === 'goal'
+      ? (goal?.title ?? '최종 목표')
+      : level === 'month'
+        ? monthLabel(month)
+        : sunday.slice(5, 7) === monday.slice(5, 7)
+          ? `${md(monday)} – ${Number(sunday.slice(8))}일`
+          : `${md(monday)} – ${md(sunday)}`
   const openMonth = (m: string) => go('month', mondaysOfMonth(m).includes(mondayOf(todaySeoul())) ? mondayOf(todaySeoul()) : firstMondayOf(m))
 
   return (
     <section>
+      {/* 달력 앱처럼 지금 보는 기간을 크게, 이동은 오른쪽 ‹ 오늘 ›와 [최종|월|주] 한 곳에서(1-4f) */}
       <div className="plan-header">
-        <nav className="plan-path" aria-label="경로">
-          <button className="ghost" onClick={() => go('goal')}>
-            {goal?.title ?? '최종 목표'}
-          </button>
+        <div className="plan-heading">
+          <h1 className="plan-period">{periodTitle}</h1>
           {level !== 'goal' && (
-            <>
-              ›
-              <select
-                className="path-select"
-                value={month}
-                onChange={(e) => openMonth(e.target.value)}
-                aria-label="달 고르기"
-              >
-                {pathMonths.map((m) => (
-                  <option key={m} value={m}>
-                    {monthLabel(m)}
-                    {monthlyTitle(m)}
-                  </option>
-                ))}
-              </select>
-            </>
+            <p className="plan-context muted small">
+              <button className="link-button" onClick={() => go('goal')}>
+                {goal?.title ?? '최종 목표 없음'}
+              </button>
+              {level === 'week' && (
+                <>
+                  {' · '}
+                  <button className="link-button" onClick={() => openMonth(month)}>
+                    {Number(month.slice(5))}월: {monthlyGoal?.content ?? '월간 목표 없음'}
+                  </button>
+                </>
+              )}
+            </p>
           )}
-          {level === 'week' && (
-            <>
-              ›
-              <select className="path-select" value={monday} onChange={(e) => go('week', e.target.value)} aria-label="주 고르기">
-                {mondaysOfMonth(month).map((m) => (
-                  <option key={m} value={m}>
-                    {weekLabel(m)} 주{weeklyGoalsOf(goals ?? [], m).length ? ` · ${weeklyGoalsOf(goals ?? [], m)[0].content}` : ''}
-                  </option>
-                ))}
-              </select>
-            </>
+        </div>
+        <span className="plan-nav">
+          {level !== 'goal' && (
+            <span className="row-actions">
+              <button className="icon" onClick={() => move(-1)} aria-label={level === 'week' ? '이전 주' : '이전 달'}>
+                ‹
+              </button>
+              <button className="ghost" onClick={() => go(level, mondayOf(todaySeoul()))}>
+                오늘
+              </button>
+              <button className="icon" onClick={() => move(1)} aria-label={level === 'week' ? '다음 주' : '다음 달'}>
+                ›
+              </button>
+            </span>
           )}
-        </nav>
-        <span className="segmented" role="group" aria-label="보기 단위">
-          {(Object.keys(LEVEL_LABELS) as Level[]).map((l) => (
-            <button key={l} className={level === l ? 'active' : ''} onClick={() => go(l)}>
-              {LEVEL_LABELS[l]}
-            </button>
-          ))}
-        </span>
-        {level !== 'goal' && (
-          <span className="row-actions">
-            <button className="icon" onClick={() => move(-1)} aria-label="이전">
-              ‹
-            </button>
-            <button className="ghost" onClick={() => go(level, mondayOf(todaySeoul()))}>
-              오늘
-            </button>
-            <button className="icon" onClick={() => move(1)} aria-label="다음">
-              ›
-            </button>
+          <span className="segmented" role="group" aria-label="보기 단위">
+            {(Object.keys(LEVEL_LABELS) as Level[]).map((l) => (
+              <button key={l} className={level === l ? 'active' : ''} onClick={() => go(l)}>
+                {LEVEL_LABELS[l]}
+              </button>
+            ))}
           </span>
-        )}
+        </span>
       </div>
       {error && (
         <p className="error-banner" role="alert">
