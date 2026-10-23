@@ -11,6 +11,7 @@ import { actualFromBlock, updateActualLog, type ActualLog } from '../api/actualL
 import type { Category } from '../api/categories'
 import { createTimeBlock, deleteTimeBlock, setTimeBlockColor, toTimeBlockInput, updateTimeBlock, type TimeBlock } from '../api/timeBlocks'
 import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, seoulIso, shiftDate, todaySeoul } from '../utils/date'
+import asPlannedIcon from '../assets/icons/as-planned.svg'
 import ActualPopover from './ActualPopover'
 import MoreMenu from './MoreMenu'
 import TimeBlockForm from './TimeBlockForm'
@@ -393,7 +394,8 @@ export default function ScheduleView({
                           title="계획대로: 이 계획대로 했다고 실제 줄에 기록해요"
                           aria-label="계획대로"
                         >
-                          {size ? '✓' : '✓ 계획대로'}
+                          <img className="as-planned-icon" src={asPlannedIcon} alt="" aria-hidden="true" width={16} height={16} draggable={false} />
+                          {!size && '계획대로'}
                         </button>
                       )}
                       <span className="schedule-block-resize" aria-hidden />

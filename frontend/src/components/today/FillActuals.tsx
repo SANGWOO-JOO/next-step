@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { actualFromBlock, createActualLog, type UnrecordedBlock } from '../../api/actualLogs'
+import asPlannedIcon from '../../assets/icons/as-planned.svg'
 import { formatMinutes, minutesOfDay, parseTime, seoulIso } from '../../utils/date'
 
 type Props = {
@@ -89,7 +90,10 @@ export default function FillActuals({ date, blocks, run }: Props) {
                 </form>
               ) : (
                 <span className="row-actions">
-                  <button onClick={() => run(() => actualFromBlock(b.blockId))}>✓ 계획대로</button>
+                  <button className="with-icon" onClick={() => run(() => actualFromBlock(b.blockId))}>
+                    <img className="as-planned-icon" src={asPlannedIcon} alt="" aria-hidden="true" width={16} height={16} draggable={false} />
+                    계획대로
+                  </button>
                   <button
                     className="ghost"
                     onClick={() =>
