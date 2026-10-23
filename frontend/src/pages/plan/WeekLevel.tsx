@@ -6,6 +6,7 @@ import { formatDuration } from '../../api/focus'
 import type { Goal } from '../../api/goals'
 import { getWeeklyJournal, saveWeeklyJournal, studySeconds, type WeeklyJournal } from '../../api/reviews'
 import { DayColumn, WeekGoalChips } from '../../components/plan/WeekParts'
+import { refreshReminders } from '../../utils/reminders'
 import ReviewCard from '../../components/ReviewCard'
 import { mondayOf, shiftDate, todaySeoul, weekDates } from '../../utils/date'
 import WeeklyPlanningWizard from './WeeklyPlanningWizard'
@@ -111,7 +112,7 @@ export default function WeekLevel({ monday, goals, categories, run: parentRun }:
       </div>
 
       {journal && (
-        <div className="week-journal">
+        <div className="week-journal" id="journal">
           <ReviewCard
             key={`${monday}|${journal.saved}`}
             title="주간 일지"
@@ -126,7 +127,12 @@ export default function WeekLevel({ monday, goals, categories, run: parentRun }:
             saved={journal.saved}
             due={journalDue(monday, today)}
             prompt={monday === mondayOf(today) ? '한 주를 마무리할 때예요. 돌아보고 다음 주에 바꿀 한 가지를 정해요.' : undefined}
-            onSave={(v) => run(() => saveWeeklyJournal(monday, { good: v.good, bad: v.bad, nextAction: v.nextAction }))}
+            onSave={(v) =>
+              run(() => saveWeeklyJournal(monday, { good: v.good, bad: v.bad, nextAction: v.nextAction })).then((ok) => {
+                refreshReminders()
+                return ok
+              })
+            }
           />
         </div>
       )}

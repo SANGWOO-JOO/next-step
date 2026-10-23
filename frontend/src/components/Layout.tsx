@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import NavIcon from './NavIcon'
+import ReminderStack from './ReminderStack'
 
 type Menu = { to: string; label: string; icon: string; end?: boolean }
 
@@ -128,6 +129,7 @@ export default function Layout() {
       <main className="app-main">
         <Outlet />
       </main>
+      <ReminderStack />
     </div>
   )
 }

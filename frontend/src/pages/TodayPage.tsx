@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { getCategories, type Category } from '../api/categories'
 import { errorMessage } from '../api/client'
 import { createDailyGoal, getDailyGoalsBetween, getUnfinishedDailyGoals, type DailyGoal } from '../api/dailyGoals'
@@ -7,7 +7,6 @@ import { getWeeklyGoalsOfWeek, type WeeklyGoal } from '../api/goals'
 import { formatDuration } from '../api/focus'
 import { getHealth } from '../api/health'
 import { CONDITION_LABELS, getDailyLog, getManualLogs, type DailyLog, type ManualStudyLog } from '../api/records'
-import { getWeeklyJournals } from '../api/reviews'
 import { getActualLogsBetween, type ActualLog } from '../api/actualLogs'
 import { getTimeBlocksBetween, type TimeBlock } from '../api/timeBlocks'
 import DailyGoalPanel, { NewDailyGoalForm } from '../components/DailyGoalPanel'
@@ -15,8 +14,9 @@ import PullSection from '../components/today/PullSection'
 import ShutdownDialog from '../components/today/ShutdownDialog'
 import { COLLAPSE_EVENT } from '../components/Layout'
 import ScheduleView from '../components/ScheduleView'
+import { refreshReminders } from '../utils/reminders'
 import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, shiftDate, todaySeoul, weekDates } from '../utils/date'
-import { journalDue, plannedKey } from './plan/planData'
+import { plannedKey } from './plan/planData'
 
 export default function TodayPage() {
   const today = todaySeoul()
@@ -41,7 +41,15 @@ export default function TodayPage() {
   const [actuals, setActuals] = useState<ActualLog[]>([])
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null)
   const [manualLogs, setManualLogs] = useState<ManualStudyLog[]>([])
-  const [shutdown, setShutdown] = useState(false)
+  // 오른쪽 위 알림의 [하루 마무리]는 /?shutdown=1로 와서 창을 연다
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [shutdown, setShutdown] = useState(() => searchParams.get('shutdown') === '1')
+  useEffect(() => {
+    if (searchParams.get('shutdown') === '1') {
+      setShutdown(true)
+      setSearchParams({}, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
   /** 고른 날: 왼쪽 목록과 [일] 보기가 보여주는 날(이번 주 안). [주] 보기의 날짜 머리로 바꾼다 */
   const [selected, setSelected] = useState(today)
   const [leftWidth, setLeftWidth] = useState(() => readNumber(LEFT_WIDTH_KEY, DEFAULT_LEFT_WIDTH))
@@ -185,8 +193,6 @@ export default function TodayPage() {
         today={today}
         monday={thisMonday}
         hasWeeklyGoals={thisWeekHasWeekly}
-        logSaved={dailyLog?.saved ?? true}
-        onShutdown={() => setShutdown(true)}
       />
 
       <div
@@ -342,7 +348,10 @@ export default function TodayPage() {
             .filter((b) => b.date === today)
             .reduce((sum, b) => sum + minutesOfDay(b.endAt, today) - minutesOfDay(b.startAt, today), 0)}
           run={run}
-          onClose={() => setShutdown(false)}
+          onClose={() => {
+            setShutdown(false)
+            refreshReminders()
+          }}
         />
       )}
 
@@ -385,21 +394,17 @@ function NowNext({ blocks }: { blocks: TimeBlock[] }) {
 }
 
 /**
- * 알림 한 칸(docs/design.md 6장 1-4d): 그때 가장 중요한 하나만 보여준다.
- * 주간 목표 없음 > 월요일 계획하기 > 금~일 돌아보기 > 21시 이후 하루 마무리
+ * 알림 한 칸(docs/design.md 6장 1-4d): 주간 목표 없음 > 월요일 계획하기.
+ * 금~일 돌아보기와 21시 이후 하루 마무리는 오른쪽 위 알림 카드(ReminderStack, 1-4f ⑬)로 옮겼다.
  */
 function AlertSlot({
   today,
   monday,
   hasWeeklyGoals,
-  logSaved,
-  onShutdown,
 }: {
   today: string
   monday: string
   hasWeeklyGoals: boolean | null
-  logSaved: boolean
-  onShutdown: () => void
 }) {
   const [planDismissed, setPlanDismissed] = useState(() => {
     try {
@@ -408,16 +413,6 @@ function AlertSlot({
       return false
     }
   })
-  const [journalWritten, setJournalWritten] = useState<boolean | null>(null)
-  const reviewDue = journalDue(monday, today)
-
-  useEffect(() => {
-    if (!reviewDue) return
-    getWeeklyJournals(monday, monday)
-      .then((list) => setJournalWritten(list.length > 0))
-      .catch(() => setJournalWritten(null))
-  }, [reviewDue, monday])
-
   const dismissPlan = () => {
     try {
       localStorage.setItem(plannedKey(monday), '1')
@@ -438,20 +433,6 @@ function AlertSlot({
       action: <Link className="button-link" to={planLink}>이번 주 계획하기 ▶</Link>,
       onClose: dismissPlan,
     }
-  } else if (reviewDue && journalWritten === false) {
-    alert = {
-      text: '한 주가 끝나가요. 이번 주를 돌아보고 다음 주에 바꿀 한 가지를 정해요.',
-      action: <Link className="button-link" to={planLink}>이번 주 돌아보기</Link>,
-    }
-  } else if (nowMinutesSeoul() >= SHUTDOWN_HOUR * 60 && !logSaved) {
-    alert = {
-      text: '저녁 9시가 지났어요. 오늘을 마무리하고 내일을 가볍게 시작해요.',
-      action: (
-        <button onClick={onShutdown}>
-          하루 마무리
-        </button>
-      ),
-    }
   }
   if (!alert) return null
 
@@ -471,7 +452,6 @@ function AlertSlot({
 }
 
 /** 하루 마무리를 안내하는 시각 */
-const SHUTDOWN_HOUR = 21
 
 /** 오늘 시간 잡은 양과 남은 시간(지금~자정). 남은 일정이 남은 시간보다 많으면 경고(Sunsama의 과부하 경고 참고) */
 function Workload({ blocks, goals, compact = false }: { blocks: TimeBlock[]; goals: DailyGoal[]; compact?: boolean }) {
