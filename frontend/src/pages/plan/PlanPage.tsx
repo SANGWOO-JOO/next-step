@@ -78,6 +78,11 @@ export default function PlanPage() {
               <button className="link-button" onClick={() => go('goal')}>
                 {goal?.title ?? '최종 목표 없음'}
               </button>
+              {level === 'month' && month === todaySeoul().slice(0, 7) && (
+                <span>
+                  {' · '}달 {Number(todaySeoul().slice(8))}/{new Date(Number(month.slice(0, 4)), Number(month.slice(5)), 0).getDate()}일 지남
+                </span>
+              )}
               {level === 'week' && (
                 <>
                   {' · '}
