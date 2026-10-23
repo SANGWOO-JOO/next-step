@@ -161,8 +161,8 @@ function DayCard({ log, focused }: { log: DailyLog; focused: boolean }) {
       </div>
       <div className="log-body">
         <div className="log-chips">
-          <span className="log-chip strong">공부 {formatDuration(s.focusSeconds + s.manualMinutes * 60)}</span>
-          <span className="log-chip">집중 {s.sessionCount}회</span>
+          <span className="log-chip strong">공부 {formatDuration(s.studySeconds)}</span>
+          {s.sessionCount > 0 && <span className="log-chip">지난 집중 {s.sessionCount}회</span>}
           {s.distractionSeconds > 0 && <span className="log-chip">딴짓 {formatDuration(s.distractionSeconds)}</span>}
           <span className="log-chip">
             목표 {s.goalsDone}/{s.goalsTotal}
@@ -199,7 +199,7 @@ function DayCard({ log, focused }: { log: DailyLog; focused: boolean }) {
 /** 이 달 요약(Daylio 통계 참고): 기록한 날, 공부 합계, 평균 컨디션, 연속 기록 */
 function MonthSummary({ month, days }: { month: string; days: DailyLog[] }) {
   const saved = days.filter((d) => d.saved)
-  const study = days.reduce((sum, d) => sum + d.summary.focusSeconds + d.summary.manualMinutes * 60, 0)
+  const study = days.reduce((sum, d) => sum + d.summary.studySeconds, 0)
   const conditions = days.map((d) => d.condition).filter((c): c is number => c !== null)
   const average = conditions.length ? conditions.reduce((a, b) => a + b, 0) / conditions.length : null
   // 연속 기록: 가장 최근 날부터 하루씩 거꾸로 마무리한 날이 이어진 수
@@ -250,7 +250,7 @@ function LogCalendar({
   onPick: (date: string) => void
 }) {
   const byDate = new Map(days.map((d) => [d.date, d]))
-  const max = Math.max(1, ...days.map((d) => d.summary.focusSeconds + d.summary.manualMinutes * 60))
+  const max = Math.max(1, ...days.map((d) => d.summary.studySeconds))
   const { from, to } = monthRange(month)
   const start = mondayOf(from)
   const cells: string[] = []
@@ -267,7 +267,7 @@ function LogCalendar({
         ))}
         {cells.map((date) => {
           const log = byDate.get(date)
-          const seconds = log ? log.summary.focusSeconds + log.summary.manualMinutes * 60 : 0
+          const seconds = log ? log.summary.studySeconds : 0
           const inMonth = date.startsWith(month)
           return (
             <button

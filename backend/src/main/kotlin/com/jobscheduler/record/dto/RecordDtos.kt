@@ -41,7 +41,11 @@ data class DailyLogRequest(
 
 /** 그날 자동 집계. 진행 중 세션은 응답 시각까지 계산한다. */
 data class DailySummary(
+    /** 공부 시간: 실제 기록이 있는 날은 실제 기록(하루 목표·분류 공부), 없으면 지난 집중 세션. 수동 기록 포함 */
+    val studySeconds: Long,
+    /** 지난 집중 세션 시간(1-4e 이전 데이터) */
     val focusSeconds: Long,
+    /** studySeconds와 같은 기준의 딴짓 */
     val distractionSeconds: Long,
     val sessionCount: Int,
     val manualMinutes: Int,

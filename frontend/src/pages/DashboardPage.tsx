@@ -66,7 +66,7 @@ export default function DashboardPage() {
   return (
     <section>
       <h1>시간 대시보드</h1>
-      <p className="muted">순 공부시간 = 집중 세션(딴짓·휴식 제외) + 타이머 없이 한 공부</p>
+      <p className="muted">순 공부시간 = 시간표 실제 기록(하루 목표·분류 공부) + 타이머 없이 한 공부. 실제 기록 이전 날은 지난 집중 세션</p>
       {error && (
         <p className="error-banner" role="alert">
           {error}
@@ -174,7 +174,7 @@ function PeriodSummary({ summary: s }: { summary: StatsSummary }) {
     <dl className="result-stats log-stats period-stats">
       <dt>순 공부</dt>
       <dd>{formatDuration(s.totalSeconds)}</dd>
-      <dt>집중</dt>
+      <dt>시간 기록</dt>
       <dd>{formatDuration(s.focusSeconds)}</dd>
       <dt>수동 기록</dt>
       <dd>{formatDuration(s.manualSeconds)}</dd>

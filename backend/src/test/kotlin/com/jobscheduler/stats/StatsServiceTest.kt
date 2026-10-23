@@ -1,5 +1,8 @@
 package com.jobscheduler.stats
 
+import com.jobscheduler.actual.ActualKind
+import com.jobscheduler.actual.ActualLogService
+import com.jobscheduler.actual.dto.ActualLogRequest
 import com.jobscheduler.category.CategoryService
 import com.jobscheduler.common.BusinessRuleException
 import com.jobscheduler.daily.DailyGoalService
@@ -51,6 +54,7 @@ class StatsServiceTest(
     @Autowired private val monthlyGoalService: MonthlyGoalService,
     @Autowired private val weeklyGoalService: WeeklyGoalService,
     @Autowired private val clock: MutableClock,
+    @Autowired private val actualLogService: ActualLogService,
 ) {
     private val thursday = LocalDate.of(2026, 10, 22)
     private val friday = thursday.plusDays(1)
@@ -161,5 +165,20 @@ class StatsServiceTest(
         val e = assertThrows<BusinessRuleException> { statsService.summary(thursday, thursday.minusDays(1)) }
         assertEquals("INVALID_RANGE", e.code)
         assertThrows<BusinessRuleException> { statsService.summary(thursday, thursday.plusDays(731)) }
+    }
+
+    @Test
+    fun `실제 기록이 있는 날은 실제 기록으로 세고 그날 집중 세션은 빼며 지난 세션은 그대로 센다`() {
+        session(at(22, 10), 30)
+        session(at(23, 9), 50)
+        fun odt(h: Int, m: Int = 0) = OffsetDateTime.of(2026, 10, 23, h, m, 0, 0, ZoneOffset.ofHours(9))
+        actualLogService.create(ActualLogRequest(friday, odt(9), odt(10), ActualKind.STUDY, categoryId = csId))
+        actualLogService.create(ActualLogRequest(friday, odt(10), odt(10, 15), ActualKind.DISTRACTION, title = "유튜브"))
+        actualLogService.create(ActualLogRequest(friday, odt(12), odt(13), ActualKind.OTHER, title = "점심"))
+
+        val summary = statsService.summary(thursday, friday)
+        assertEquals((30 + 60) * 60L, summary.focusSeconds)
+        assertEquals(15 * 60L, summary.distractionSeconds)
+        assertEquals(listOf(9), statsService.heatmap(friday, friday).cells.map { it.hour })
     }
 }

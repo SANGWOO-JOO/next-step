@@ -7,6 +7,8 @@ export type ManualStudyLog = { id: number; date: string; category: CategoryRef; 
 export type ManualStudyLogInput = { date: string; categoryId: number; minutes: number; memo: string | null }
 
 export type DailySummary = {
+  /** 실제 기록(없으면 지난 집중 세션) + 수동 기록 */
+  studySeconds: number
   focusSeconds: number
   distractionSeconds: number
   sessionCount: number

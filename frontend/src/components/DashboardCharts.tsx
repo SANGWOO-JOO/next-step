@@ -73,7 +73,7 @@ export function TrendChart({ from, to, unit }: { from: string; to: string; unit:
 const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일']
 const HOURS = Array.from({ length: 24 }, (_, h) => h)
 
-/** 요일 × 시간대 집중 히트맵. 수동 기록은 시간대가 없어 빠진다. */
+/** 요일 × 시간대 공부 히트맵. 수동 기록은 시간대가 없어 빠진다. */
 export function FocusHeatmap({ from, to }: { from: string; to: string }) {
   const [heatmap, setHeatmap] = useState<Heatmap | null>(null)
 
@@ -92,16 +92,16 @@ export function FocusHeatmap({ from, to }: { from: string; to: string }) {
 
   return (
     <div className="chart-box">
-      <h3 className="timeline-title">집중 히트맵 (요일 × 시간)</h3>
+      <h3 className="timeline-title">공부 히트맵 (요일 × 시간)</h3>
       {best ? (
         <p className="muted small">
-          가장 많이 집중한 칸: {WEEKDAYS[best.dayOfWeek - 1]}요일 {best.hour}시 ({formatDuration(best.seconds)})
+          가장 많이 공부한 칸: {WEEKDAYS[best.dayOfWeek - 1]}요일 {best.hour}시 ({formatDuration(best.seconds)})
         </p>
       ) : (
-        <p className="muted small">이 기간에 집중 세션이 없어요.</p>
+        <p className="muted small">이 기간에 시간 기록이 없어요.</p>
       )}
       <div className="heatmap-scroll">
-        <div className="heatmap" role="table" aria-label="요일별 시간대 집중 시간">
+        <div className="heatmap" role="table" aria-label="요일별 시간대 공부 시간">
           <span />
           {HOURS.map((h) => (
             <span key={h} className="heatmap-hour">
@@ -137,19 +137,19 @@ export function FocusHeatmap({ from, to }: { from: string; to: string }) {
   )
 }
 
-/** 집중 vs 딴짓 도넛 */
+/** 공부 vs 딴짓 도넛 */
 export function FocusVsDistraction({ summary }: { summary: StatsSummary }) {
   const data = [
-    { name: '집중', value: summary.focusSeconds, color: 'var(--up)' },
+    { name: '공부', value: summary.focusSeconds, color: 'var(--up)' },
     { name: '딴짓', value: summary.distractionSeconds, color: 'var(--down)' },
   ]
   const total = summary.focusSeconds + summary.distractionSeconds
 
   return (
     <div className="chart-box">
-      <h3 className="timeline-title">집중 vs 딴짓</h3>
+      <h3 className="timeline-title">공부 vs 딴짓</h3>
       {total === 0 ? (
-        <p className="muted small">이 기간에 집중 세션이 없어요.</p>
+        <p className="muted small">이 기간에 시간 기록이 없어요.</p>
       ) : (
         <div className="donut">
           <ResponsiveContainer width="100%" height={180}>
@@ -164,10 +164,10 @@ export function FocusVsDistraction({ summary }: { summary: StatsSummary }) {
           </ResponsiveContainer>
           <span className="donut-center">
             <strong>{Math.round((1 - summary.distractionRatio) * 100)}%</strong>
-            <span className="muted small">집중</span>
+            <span className="muted small">공부</span>
           </span>
           <p className="small donut-legend">
-            <span className="diff up">집중 {formatDuration(summary.focusSeconds)}</span> ·{' '}
+            <span className="diff up">공부 {formatDuration(summary.focusSeconds)}</span> ·{' '}
             <span className="diff down">딴짓 {formatDuration(summary.distractionSeconds)}</span>
           </p>
         </div>

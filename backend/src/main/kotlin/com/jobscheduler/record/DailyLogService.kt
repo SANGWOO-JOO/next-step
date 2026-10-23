@@ -48,7 +48,7 @@ class DailyLogService(
         return generateSequence(to) { it.minusDays(1) }
             .takeWhile { !it.isBefore(from) }
             .map { toResponse(it, logs[it]) }
-            .filter { it.saved || it.summary.focusSeconds > 0 || it.summary.manualMinutes > 0 || it.summary.goalsDone > 0 }
+            .filter { it.saved || it.summary.studySeconds > 0 || it.summary.goalsDone > 0 }
             .toList()
     }
 
@@ -65,16 +65,23 @@ class DailyLogService(
         val now = OffsetDateTime.now(clock)
         val sessions = focusSessionRepository.findAllByDateOrderByStartedAtAsc(date)
         val goals = dailyGoalRepository.findAllByDateBetween(date, date)
+        val plan = actualLogService.compare(date)
+        val manualMinutes = manualLogRepository.findAllByDateOrderByCreatedAtAscIdAsc(date).sumOf { it.minutes }
+        val focusSeconds = sessions.sumOf { it.focusSeconds ?: FocusTime.calculate(it, now).focusSeconds }
+        val sessionDistraction = sessions.flatMap { it.interruptions }
+            .filter { it.type == InterruptionType.DISTRACTION && it.endedAt != null }
+            .sumOf { Duration.between(it.startedAt, it.endedAt).seconds }
+        // 실제 기록이 있는 날은 실제 기록 기준, 없으면 지난 집중 세션 기준(1-4e)
+        val hasActual = plan.actualStudyMinutes + plan.actualDistractionMinutes + plan.actualOtherMinutes > 0
         return DailySummary(
-            focusSeconds = sessions.sumOf { it.focusSeconds ?: FocusTime.calculate(it, now).focusSeconds },
-            distractionSeconds = sessions.flatMap { it.interruptions }
-                .filter { it.type == InterruptionType.DISTRACTION && it.endedAt != null }
-                .sumOf { Duration.between(it.startedAt, it.endedAt).seconds },
+            studySeconds = (if (hasActual) plan.actualStudyMinutes * 60 else focusSeconds) + manualMinutes * 60L,
+            distractionSeconds = if (hasActual) plan.actualDistractionMinutes * 60 else sessionDistraction,
+            focusSeconds = focusSeconds,
             sessionCount = sessions.size,
-            manualMinutes = manualLogRepository.findAllByDateOrderByCreatedAtAscIdAsc(date).sumOf { it.minutes },
+            manualMinutes = manualMinutes,
             goalsDone = goals.count { it.status == DailyGoalStatus.DONE },
             goalsTotal = goals.size,
-            plan = actualLogService.compare(date),
+            plan = plan,
         )
     }
 
