@@ -88,7 +88,7 @@ button:disabled { opacity: 0.4; cursor: default; }
 .category-table { display: grid; gap: 0.4rem; overflow-x: auto; }
 .category-row {
   display: grid;
-  grid-template-columns: 4.5rem 2.5rem minmax(8rem, 1fr) 6.5rem 6.5rem 3rem 7.5rem;
+  grid-template-columns: 4.5rem 2.5rem minmax(8rem, 1fr) 6.5rem 6.5rem 3rem 10.5rem;
   align-items: center;
   gap: 0.5rem;
   min-width: 40rem;
@@ -1237,3 +1237,4 @@ button.pull-all:hover { color: #7c6cf8; }
 .quick-add-option .category-dot { width: 8px; height: 8px; flex: none; }
 .quick-add-new { width: 16px; text-align: center; color: #8B5CF6; font-weight: 700; }
 .quick-add-key { margin-left: auto; font-size: 11px; color: var(--text-muted, #888); border: 1px solid var(--border); border-radius: 5px; padding: 0 5px; }
+.category-row .row-actions > span { white-space: nowrap; align-self: center; }

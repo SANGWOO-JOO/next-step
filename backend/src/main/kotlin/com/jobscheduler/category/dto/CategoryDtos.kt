@@ -35,6 +35,8 @@ data class CategoryResponse(
     val targetRatio: Int?,
     val weeklyTargetMinutes: Int?,
     val active: Boolean,
+    /** 어디에도 쓰이지 않아 지울 수 있는지(목록 조회에서만 채움) */
+    val deletable: Boolean = false,
 ) {
     companion object {
         fun from(c: Category) = CategoryResponse(

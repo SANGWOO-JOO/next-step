@@ -5,12 +5,16 @@ import com.jobscheduler.category.dto.CategoryResponse
 import com.jobscheduler.common.BusinessRuleException
 import com.jobscheduler.common.NotFoundException
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 @Transactional
-class CategoryService(private val categoryRepository: CategoryRepository) {
+class CategoryService(
+    private val categoryRepository: CategoryRepository,
+    private val jdbcTemplate: JdbcTemplate,
+) {
 
     @Transactional(readOnly = true)
     fun list(includeInactive: Boolean): List<CategoryResponse> {
@@ -19,7 +23,8 @@ class CategoryService(private val categoryRepository: CategoryRepository) {
         } else {
             categoryRepository.findAllByActiveTrueOrderBySortOrderAscIdAsc()
         }
-        return categories.map(CategoryResponse::from)
+        val used = usedCategoryIds()
+        return categories.map { CategoryResponse.from(it).copy(deletable = it.id !in used) }
     }
 
     fun create(req: CategoryRequest): CategoryResponse {
@@ -64,6 +69,21 @@ class CategoryService(private val categoryRepository: CategoryRepository) {
         return list(includeInactive = true)
     }
 
+    /** 한 번도 쓰이지 않은 분류만 지운다. 쓰인 분류는 숨기기(비활성)를 쓴다(1-4f ㊶). */
+    fun delete(id: Long) {
+        val category = get(id)
+        if (category.id in usedCategoryIds()) {
+            throw BusinessRuleException("이미 쓰인 분류는 지울 수 없어요. 활성 체크를 꺼서 숨겨 주세요.", "CATEGORY_IN_USE")
+        }
+        categoryRepository.delete(category)
+    }
+
+    /** 분류를 참조하는 모든 테이블에서 쓰인 분류 id */
+    private fun usedCategoryIds(): Set<Long> =
+        USAGE_TABLES.flatMap { table ->
+            jdbcTemplate.queryForList("SELECT DISTINCT category_id FROM $table WHERE category_id IS NOT NULL", Long::class.java)
+        }.toSet()
+
     /** 목표 등에 새로 지정할 분류를 가져온다. 비활성 분류는 지정할 수 없다. */
     @Transactional(readOnly = true)
     fun getAssignable(id: Long): Category {
@@ -90,4 +110,8 @@ class CategoryService(private val categoryRepository: CategoryRepository) {
 
     private fun duplicateName(name: String) =
         BusinessRuleException("이미 있는 분류 이름이에요: $name", "DUPLICATE_NAME")
+
+    companion object {
+        private val USAGE_TABLES = listOf("daily_goal", "weekly_goal", "actual_log", "checklist_item", "focus_session")
+    }
 }

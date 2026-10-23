@@ -5,6 +5,7 @@ import com.jobscheduler.category.dto.CategoryRequest
 import com.jobscheduler.category.dto.CategoryResponse
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -34,4 +35,8 @@ class CategoryController(private val categoryService: CategoryService) {
     @PutMapping("/order")
     fun reorder(@Valid @RequestBody req: CategoryOrderRequest): List<CategoryResponse> =
         categoryService.reorder(req.ids)
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun delete(@PathVariable id: Long) = categoryService.delete(id)
 }

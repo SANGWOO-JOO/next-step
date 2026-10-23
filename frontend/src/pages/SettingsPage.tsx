@@ -4,6 +4,7 @@ import {
   getCategories,
   reorderCategories,
   updateCategory,
+  deleteCategory,
   type Category,
   type CategoryInput,
 } from '../api/categories'
@@ -90,6 +91,7 @@ function CategorySettings() {
             last={i === categories.length - 1}
             onMove={(delta) => move(i, delta)}
             onSave={(input) => run(() => updateCategory(c.id, input))}
+            onDelete={() => confirm(`'${c.name}' 분류를 지울까요?`) && run(() => deleteCategory(c.id))}
           />
         ))}
       </div>
@@ -105,9 +107,10 @@ type RowProps = {
   last: boolean
   onMove: (delta: number) => void
   onSave: (input: CategoryInput) => Promise<boolean>
+  onDelete: () => void
 }
 
-function CategoryRow({ category, first, last, onMove, onSave }: RowProps) {
+function CategoryRow({ category, first, last, onMove, onSave, onDelete }: RowProps) {
   const [draft, setDraft] = useState<CategoryInput>(() => toInput(category))
   const dirty = JSON.stringify(draft) !== JSON.stringify(toInput(category))
 
@@ -157,6 +160,15 @@ function CategoryRow({ category, first, last, onMove, onSave }: RowProps) {
         <button type="button" className="ghost" disabled={!dirty} onClick={() => setDraft(toInput(category))}>
           취소
         </button>
+        {category.deletable ? (
+          <button type="button" className="ghost danger" onClick={onDelete} title="한 번도 쓰이지 않은 분류라 지울 수 있어요">
+            삭제
+          </button>
+        ) : (
+          <span className="muted small" title="쓰인 분류는 지울 수 없어요. 활성 체크를 꺼서 숨겨요">
+            사용 중
+          </span>
+        )}
       </span>
     </div>
   )

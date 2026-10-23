@@ -2,6 +2,9 @@ package com.jobscheduler.category
 
 import com.jobscheduler.category.dto.CategoryRequest
 import com.jobscheduler.common.BusinessRuleException
+import com.jobscheduler.daily.DailyGoalService
+import com.jobscheduler.daily.dto.DailyGoalCreateRequest
+import java.time.LocalDate
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
@@ -10,11 +13,15 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
-class CategoryServiceTest(@Autowired private val categoryService: CategoryService) {
+class CategoryServiceTest(
+    @Autowired private val categoryService: CategoryService,
+    @Autowired private val dailyGoalService: DailyGoalService,
+) {
 
     @Test
     fun `기본 분류 6개가 순서대로 들어 있다`() {
@@ -73,6 +80,25 @@ class CategoryServiceTest(@Autowired private val categoryService: CategoryServic
 
         val e = assertThrows<BusinessRuleException> { categoryService.reorder(ids.drop(1)) }
         assertEquals("INVALID_ORDER", e.code)
+    }
+
+    @Test
+    fun `쓰이지 않은 분류는 지울 수 있다`() {
+        val created = categoryService.create(CategoryRequest(name = "[확인용] 실수", color = "#000000"))
+        assertTrue(categoryService.list(includeInactive = true).single { it.id == created.id }.deletable)
+
+        categoryService.delete(created.id)
+        assertFalse(categoryService.list(includeInactive = true).any { it.id == created.id })
+    }
+
+    @Test
+    fun `쓰인 분류는 지울 수 없고 숨기기만 된다`() {
+        val created = categoryService.create(CategoryRequest(name = "[확인용] 쓰임", color = "#000000"))
+        dailyGoalService.create(DailyGoalCreateRequest(date = LocalDate.of(2026, 10, 24), content = "할 일", categoryId = created.id))
+        assertFalse(categoryService.list(includeInactive = true).single { it.id == created.id }.deletable)
+
+        val e = assertThrows<BusinessRuleException> { categoryService.delete(created.id) }
+        assertEquals("CATEGORY_IN_USE", e.code)
     }
 
     private fun request(name: String, targetRatio: Int? = null, active: Boolean = true) =
