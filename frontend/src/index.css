@@ -1227,13 +1227,13 @@ button.pull-all:hover { color: #7c6cf8; }
 .quick-add-submit { flex: none; width: 32px; height: 32px; min-height: 0; padding: 0; border: 0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--grad); color: #fff; }
 .quick-add-submit:hover { filter: brightness(1.08); }
 
-/* 빠른 추가 분류 색 칩(1-4f ㊳): 입력칸 폭에 맞춰 한 줄, 넘치면 줄바꿈 */
-.quick-add-detail.category-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0.5rem calc(32px + 30px + 0.8rem) 0 0; padding: 0; }
-.category-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 0; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text-muted, inherit); font-size: 13px; font-weight: 500; white-space: nowrap; }
-.category-chip:hover { border-color: var(--text-muted, #888); }
-.category-chip.on { border-color: #8B5CF6; background: color-mix(in srgb, #8B5CF6 18%, transparent); color: var(--text); }
-.category-chip .category-dot { width: 8px; height: 8px; }
-/* 분류 미선택 검증(1-4f ㊴): ⋯ 버튼이 없어져 칩 줄은 ↑ 버튼 폭만큼만 비운다 */
-.quick-add-detail.category-chips { margin-right: calc(32px + 0.4rem); }
-.category-chips.need .category-chip { border-color: color-mix(in srgb, var(--danger, #ef4444) 55%, transparent); }
-.quick-add-error { margin: 0.1rem 0 0; color: var(--danger, #ef4444); font-weight: 500; }
+.quick-add-error { margin: 0.3rem 0 0; color: var(--danger, #ef4444); font-weight: 500; }
+
+/* 빠른 추가 분류 찾기 팝오버(1-4f ㊵) */
+.quick-add { position: relative; }
+.quick-add-options { list-style: none; margin: 0.4rem calc(32px + 0.4rem) 0 0; padding: 6px; background: var(--surface, var(--bg)); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); max-height: 260px; overflow-y: auto; }
+.quick-add-option { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 8px; font-size: 14px; cursor: pointer; }
+.quick-add-option.on { background: color-mix(in srgb, #8B5CF6 16%, transparent); }
+.quick-add-option .category-dot { width: 8px; height: 8px; flex: none; }
+.quick-add-new { width: 16px; text-align: center; color: #8B5CF6; font-weight: 700; }
+.quick-add-key { margin-left: auto; font-size: 11px; color: var(--text-muted, #888); border: 1px solid var(--border); border-radius: 5px; padding: 0 5px; }

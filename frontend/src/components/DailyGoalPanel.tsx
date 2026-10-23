@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from 'react'
-import type { Category } from '../api/categories'
+import { useState, type FormEvent, type KeyboardEvent } from 'react'
+import { createCategory, type Category } from '../api/categories'
+import { errorMessage } from '../api/client'
 import {
   MAX_CORE,
   changeDailyGoalType,
@@ -301,88 +302,145 @@ type NewFormProps = {
   onSubmit: (input: Parameters<typeof createDailyGoal>[0]) => Promise<boolean>
 }
 
+/** 새 분류 색: 아직 안 쓴 색부터 */
+const NEW_CATEGORY_COLORS = ['#3b82f6', '#ef4444', '#22c55e', '#8b5cf6', '#f97316', '#14b8a6', '#ec4899', '#eab308', '#6366f1', '#06b6d4']
+
 /**
- * 한 줄 빠른 추가(Todoist 빠른 추가 참고). 내용을 쓰면 분류 색 칩이 나오고,
- * 분류를 골라야 추가된다(1-4f ㊴). 핵심 자리가 있으면 핵심으로 넣는다.
+ * 한 줄 빠른 추가 = 분류 찾기(1-4f ㊵, Linear·Notion 속성 선택 참고). 할 일은 분류 그 자체라
+ * 쓰는 글자로 분류를 찾아 고르면 내용·분류가 모두 그 분류 이름으로 바로 추가된다.
+ * 맞는 분류가 없으면 그 이름으로 새 분류를 만들고 추가한다. 분류 없는 할 일은 만들지 않는다.
  */
 export function NewDailyGoalForm({ date, categories, onSubmit }: NewFormProps) {
-  // 오늘 할 일은 주간 목표와 잇지 않는다. 연결은 주간 계획 화면에서(1-4f ㊲)
-  const [content, setContent] = useState('')
-  const [categoryId, setCategoryId] = useState<number | null>(null)
-  const [needCategory, setNeedCategory] = useState(false)
+  const [query, setQuery] = useState('')
+  const [active, setActive] = useState(0)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const q = query.trim()
+  const lower = q.toLowerCase()
+  const matches = categories
+    .filter((c) => c.name.toLowerCase().includes(lower))
+    .sort((x, y) => Number(!x.name.toLowerCase().startsWith(lower)) - Number(!y.name.toLowerCase().startsWith(lower)))
+  const exact = categories.some((c) => c.name.toLowerCase() === lower)
+  const options: ({ kind: 'pick'; category: Category } | { kind: 'create'; name: string })[] = [
+    ...matches.map((category) => ({ kind: 'pick' as const, category })),
+    ...(q && !exact ? [{ kind: 'create' as const, name: q }] : []),
+  ]
+  const open = q !== '' && options.length > 0
+  const current = Math.min(active, options.length - 1)
 
   const reset = () => {
-    setContent('')
-    setCategoryId(null)
-    setNeedCategory(false)
+    setQuery('')
+    setActive(0)
+    setError(null)
+  }
+
+  const add = (category: Category) =>
+    onSubmit({ weeklyGoalId: null, date, content: category.name, firstAction: null, categoryId: category.id, type: null })
+
+  const choose = async (option: (typeof options)[number]) => {
+    if (busy) return
+    setBusy(true)
+    setError(null)
+    try {
+      let category: Category
+      if (option.kind === 'pick') category = option.category
+      else {
+        const used = new Set(categories.map((c) => c.color.toLowerCase()))
+        const color = NEW_CATEGORY_COLORS.find((c) => !used.has(c)) ?? NEW_CATEGORY_COLORS[categories.length % NEW_CATEGORY_COLORS.length]
+        category = await createCategory({ name: option.name, color, targetRatio: null, weeklyTargetMinutes: null, active: true })
+      }
+      if (await add(category)) reset()
+    } catch (e) {
+      setError(errorMessage(e))
+    } finally {
+      setBusy(false)
+    }
   }
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    if (!content.trim()) return
-    if (categoryId === null) {
-      setNeedCategory(true)
-      return
-    }
-    onSubmit({ weeklyGoalId: null, date, content, firstAction: null, categoryId, type: null }).then(
-      (ok) => ok && reset(),
-    )
+    if (!q) return
+    if (options.length > 0) choose(options[current])
   }
 
-  const pick = (id: number) => {
-    setCategoryId(categoryId === id ? null : id)
-    setNeedCategory(false)
+  const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') reset()
+    else if (e.nativeEvent.isComposing) return
+    else if (e.key === 'ArrowDown' && open) {
+      e.preventDefault()
+      setActive((current + 1) % options.length)
+    } else if (e.key === 'ArrowUp' && open) {
+      e.preventDefault()
+      setActive((current - 1 + options.length) % options.length)
+    }
   }
 
   return (
-    <form className="quick-add" onSubmit={submit} onKeyDown={(e) => e.key === 'Escape' && reset()}>
+    <form className="quick-add" onSubmit={submit}>
       <div className="quick-add-row">
         <img className="quick-add-plus" src={addIcon} alt="" aria-hidden="true" width={18} height={18} draggable={false} />
         <input
           className="grow"
-          placeholder="하루 목표 추가 후 Enter"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          maxLength={500}
-          aria-label="하루 목표 내용"
+          placeholder="분류를 찾아 추가 (예: CS 공부)"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value)
+            setActive(0)
+            setError(null)
+          }}
+          onKeyDown={onKeyDown}
+          maxLength={50}
+          role="combobox"
+          aria-expanded={open}
+          aria-controls="quick-add-options"
+          aria-activedescendant={open ? `quick-add-option-${current}` : undefined}
+          aria-label="추가할 분류"
+          disabled={busy}
         />
-        {content && (
-          <button type="submit" className="quick-add-submit" aria-label="추가" title="추가 (Enter)">
+        {q && (
+          <button type="submit" className="quick-add-submit" aria-label="추가" title="추가 (Enter)" disabled={busy}>
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M12 19V5M5.5 11.5 12 5l6.5 6.5" />
             </svg>
           </button>
         )}
       </div>
-      {/* 내용을 쓰면 분류 칩이 나온다. 분류는 꼭 골라야 한다(1-4f ㉟·㊳·㊴) */}
-      {content && (
-        <>
-          <div
-            className={needCategory ? 'quick-add-detail category-chips need' : 'quick-add-detail category-chips'}
-            role="radiogroup"
-            aria-label="분류"
-            aria-invalid={needCategory}
-          >
-            {categories.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                role="radio"
-                className={categoryId === c.id ? 'category-chip on' : 'category-chip'}
-                aria-checked={categoryId === c.id}
-                onClick={() => pick(c.id)}
-              >
-                <span className="category-dot" style={{ background: c.color }} aria-hidden="true" />
-                {c.name}
-              </button>
-            ))}
-          </div>
-          {needCategory && (
-            <p className="quick-add-error small" role="alert">
-              분류를 골라 주세요
-            </p>
-          )}
-        </>
+      {open && (
+        <ul className="quick-add-options" id="quick-add-options" role="listbox" aria-label="분류">
+          {options.map((o, i) => (
+            <li
+              key={o.kind === 'pick' ? o.category.id : 'create'}
+              id={`quick-add-option-${i}`}
+              role="option"
+              aria-selected={i === current}
+              className={i === current ? 'quick-add-option on' : 'quick-add-option'}
+              onMouseDown={(e) => e.preventDefault()}
+              onMouseEnter={() => setActive(i)}
+              onClick={() => choose(o)}
+            >
+              {o.kind === 'pick' ? (
+                <>
+                  <span className="category-dot" style={{ background: o.category.color }} aria-hidden="true" />
+                  {o.category.name}
+                </>
+              ) : (
+                <>
+                  <span className="quick-add-new" aria-hidden="true">+</span>
+                  <span>
+                    ‘{o.name}’ 분류 만들고 추가
+                  </span>
+                </>
+              )}
+              {i === current && <span className="quick-add-key">Enter</span>}
+            </li>
+          ))}
+        </ul>
+      )}
+      {error && (
+        <p className="quick-add-error small" role="alert">
+          {error}
+        </p>
       )}
     </form>
   )
