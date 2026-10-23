@@ -300,16 +300,19 @@ export default function TodayPage() {
               />
             </span>
           </div>
-          {wideSchedule && (
+          {/* 넓게 보기 위 줄: [주]는 추가 입력칸, [일]은 카드 열 아래로 옮겼으니 지난 할 일 버튼만(1-4f ㊹) */}
+          {wideSchedule && (view === 'week' || (isToday && pullCount > 0)) && (
             <div className="schedule-toolbar">
-              <div className="toolbar-add">
-                <NewDailyGoalForm
-                  key={selected}
-                  date={selected}
-                  categories={categories}
-                  onSubmit={(input) => run(() => createDailyGoal(input))}
-                />
-              </div>
+              {view === 'week' && (
+                <div className="toolbar-add">
+                  <NewDailyGoalForm
+                    key={selected}
+                    date={selected}
+                    categories={categories}
+                    onSubmit={(input) => run(() => createDailyGoal(input))}
+                  />
+                </div>
+              )}
               {isToday && pullCount > 0 && (
                 <span className="toolbar-pull">
                   <button
@@ -333,7 +336,6 @@ export default function TodayPage() {
                   )}
                 </span>
               )}
-              {isToday && <Workload blocks={blocks.filter((b) => b.date === today)} goals={goals} compact />}
             </div>
           )}
           <SidebarTip />
@@ -350,6 +352,14 @@ export default function TodayPage() {
                 goals={weekGoals.filter((g) => g.date === selected)}
                 blocks={blocks.filter((b) => b.date === selected)}
                 run={run}
+                addForm={
+                  <NewDailyGoalForm
+                    key={selected}
+                    date={selected}
+                    categories={categories}
+                    onSubmit={(input) => run(() => createDailyGoal(input))}
+                  />
+                }
               />
             )}
             <ScheduleView

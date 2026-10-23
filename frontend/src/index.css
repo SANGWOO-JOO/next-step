@@ -1278,3 +1278,5 @@ button.pull-all:hover { color: #7c6cf8; }
 /* [주] 보기 목표 칸: 얇은 칩 + "+N개" 접기(1-4f ㊸) */
 .schedule.week .schedule-goal { font-size: 12px; }
 .schedule-allday-more { align-self: flex-start; min-height: 0; padding: 1px 6px; font-size: 12px; border-radius: 6px; }
+.day-tasks-add .quick-add { margin-top: 0; }
+.day-tasks-add .quick-add-options { margin-right: 0; }
