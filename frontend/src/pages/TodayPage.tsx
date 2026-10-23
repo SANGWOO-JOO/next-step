@@ -183,11 +183,8 @@ export default function TodayPage() {
 
   return (
     <section className="today-page">
-      <div className="page-head">
-        <h1>
-          일정 <span className="page-date muted">{dayLabel(today)}</span>
-        </h1>
-      </div>
+      {/* 제목은 메뉴(일정)와 시간표 기간 제목과 겹쳐서 화면에서는 숨긴다(1-4f ㉝) */}
+      <h1 className="sr-only">일정 · {dayLabel(today)}</h1>
       {error && (
         <p className="error-banner" role="alert">
           {error}
@@ -343,9 +340,12 @@ export default function TodayPage() {
             </div>
           )}
           <SidebarTip />
-          <p className="muted small schedule-help">
-            빈 칸을 끌어 시간을 잡고, 블록을 끌어 옮기거나 아래 끝을 끌어 늘여요. {wideSchedule ? '위쪽 목표 칩을' : '왼쪽 목표를'} 끌어다 놓아도 돼요.
-          </p>
+          {/* 사용법 안내는 이 기간에 블록이 하나도 없을 때(처음 쓸 때)만 */}
+          {!blocks.some((b) => (view === 'day' ? b.date === selected : weekDates(viewMonday).includes(b.date))) && (
+            <p className="muted small schedule-help">
+              빈 칸을 끌어 시간을 잡고, 블록을 끌어 옮기거나 아래 끝을 끌어 늘여요. {wideSchedule ? '위쪽 목표 칩을' : '왼쪽 목표를'} 끌어다 놓아도 돼요.
+            </p>
+          )}
           <ScheduleView
             dates={view === 'day' ? [selected] : weekDates(viewMonday)}
             blocks={blocks}

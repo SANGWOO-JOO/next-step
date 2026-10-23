@@ -1206,3 +1206,4 @@ button.icon-only img { display: block; }
 .workload-line { display: inline-flex; align-items: center; gap: 0.3rem; }
 img.inline-icon { display: block; }
 .workload-line { gap: 0.15rem; } .workload-line strong { font-variant-numeric: tabular-nums; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
