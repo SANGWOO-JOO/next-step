@@ -307,19 +307,9 @@ export default function TodayPage() {
               />
             </span>
           </div>
-          {/* 넓게 보기 위 줄: [주]는 추가 입력칸, [일]은 카드 열 아래로 옮겼으니 지난 할 일 버튼만(1-4f ㊹) */}
-          {wideSchedule && (view === 'week' || (isToday && pullCount > 0)) && (
+          {/* 넓게 보기 위 줄은 지난 할 일 버튼만. 추가는 [일] 카드 열 아래, [주] 날짜 칸 ⊕(1-4f ㊹·㊿) */}
+          {wideSchedule && isToday && pullCount > 0 && (
             <div className="schedule-toolbar">
-              {view === 'week' && (
-                <div className="toolbar-add">
-                  <NewDailyGoalForm
-                    key={selected}
-                    date={selected}
-                    categories={categories}
-                    onSubmit={(input) => run(() => createDailyGoal(input))}
-                  />
-                </div>
-              )}
               {isToday && pullCount > 0 && (
                 <span className="toolbar-pull">
                   <button
@@ -380,6 +370,16 @@ export default function TodayPage() {
               categories={categories}
               fitDay={fitDay}
               lanes={lanes}
+              renderAdd={(date, close) => (
+                <NewDailyGoalForm
+                  date={date}
+                  categories={categories}
+                  placeholder={`분류 찾기 · ${dayLabel(date).replace(/^\d+월 /, '')}`}
+                  autoFocus
+                  onDone={close}
+                  onSubmit={(input) => run(() => createDailyGoal(input))}
+                />
+              )}
             />
           </div>
         </div>

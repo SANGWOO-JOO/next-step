@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type DragEvent, type PointerEvent } from 'react'
+import { useEffect, useRef, useState, type DragEvent, type PointerEvent, type ReactNode } from 'react'
 import {
   changeDailyGoalType,
   deleteDailyGoal,
@@ -51,6 +51,8 @@ type Props = {
   fitDay?: boolean
   /** 두 줄일 때 어느 줄을 보여줄지: 둘 다 / 계획만 / 실제만 */
   lanes?: Lanes
+  /** [주] 날짜 칸 ⊕를 누르면 띄울 추가 입력(1-4f ㊿). close를 부르면 닫힌다 */
+  renderAdd?: (date: string, close: () => void) => ReactNode
 }
 
 export type Lanes = 'both' | 'plan' | 'actual'
@@ -107,6 +109,7 @@ export default function ScheduleView({
   categories = [],
   fitDay = false,
   lanes = 'both',
+  renderAdd,
 }: Props) {
   const twoLane = actuals !== undefined
   // 보기 줄(1-4f ㉗): 계획+실제 / 계획만 / 실제만. 하나만 볼 때는 그 줄이 칸 전체를 쓴다
@@ -124,6 +127,34 @@ export default function ScheduleView({
   // 막 놓은 블록의 주제 입력(1-4f ㊽)
   const [topicFor, setTopicFor] = useState<number | null>(null)
   const [topicDraft, setTopicDraft] = useState('')
+  // [주] 날짜 칸 ⊕로 연 추가 팝오버의 날짜
+  const [addFor, setAddFor] = useState<string | null>(null)
+  useEffect(() => {
+    if (!addFor) return
+    const close = (e: globalThis.PointerEvent) => {
+      if (!(e.target as Element).closest?.('.allday-add-pop, .allday-add')) setAddFor(null)
+    }
+    document.addEventListener('pointerdown', close)
+    return () => document.removeEventListener('pointerdown', close)
+  }, [addFor])
+  const addButton = (d: string) =>
+    renderAdd && (
+      <>
+        <button
+          type="button"
+          className={d === today ? 'allday-add always' : 'allday-add'}
+          onClick={() => setAddFor(addFor === d ? null : d)}
+          aria-label={`${dayLabel(d)}에 할 일 추가`}
+          data-tip="할 일 추가"
+        >
+          <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
+            <circle cx="10" cy="10" r="8.2" fill="none" stroke="currentColor" strokeWidth="1.4" />
+            <path d="M10 6.2v7.6M6.2 10h7.6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </button>
+        {addFor === d && <div className="allday-add-pop">{renderAdd(d, () => setAddFor(null))}</div>}
+      </>
+    )
   // [주] 목표 줄 접기. 다음에 열 때도 기억한다
   const [goalsCollapsed, setGoalsCollapsed] = useState(() => {
     try {
@@ -362,6 +393,7 @@ export default function ScheduleView({
             if (goalsCollapsed) {
               return (
                 <div key={d} className="schedule-allday collapsed">
+                  {addButton(d)}
                   {dayGoals.length > 0 && (
                     <button type="button" className="ghost schedule-goal-summary" onClick={toggleGoals} title={dayGoals.map((g) => g.content).join('\n')}>
                       {dayGoals.map((g) => (
@@ -377,6 +409,7 @@ export default function ScheduleView({
             }
             return (
               <div key={d} className="schedule-allday">
+                {addButton(d)}
                 {shown.map((g) => (
                   <GoalChip
                     key={g.id}

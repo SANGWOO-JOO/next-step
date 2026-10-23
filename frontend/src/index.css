@@ -1369,3 +1369,15 @@ button.schedule-date.selected { box-shadow: none; background: color-mix(in srgb,
 .topic-stats-track { height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--border) 50%, transparent); overflow: hidden; }
 .topic-stats-fill { display: block; height: 100%; border-radius: 999px; opacity: 0.85; }
 .topic-stats-value { font-variant-numeric: tabular-nums; }
+
+/* [주] 날짜 칸 ⊕ 추가(1-4f ㊿) */
+.schedule-allday { position: relative; }
+.allday-add { position: absolute; top: 3px; right: 3px; z-index: 3; width: 22px; height: 22px; min-height: 0; padding: 0; border: 0; border-radius: 50%; background: var(--surface, #1e1e20); color: #a78bfa; display: inline-flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.12s ease; }
+.schedule-allday:hover .allday-add, .allday-add.always, .allday-add:focus-visible { opacity: 1; }
+.allday-add:hover { color: #c4b5fd; }
+.allday-add-pop { position: absolute; top: 28px; right: 2px; z-index: 30; width: 250px; padding: 8px; border-radius: 12px; background: var(--surface, #222); border: 1px solid color-mix(in srgb, #8B5CF6 40%, var(--border)); box-shadow: 0 12px 30px rgb(0 0 0 / 0.4); }
+.allday-add-pop .quick-add { margin-top: 0; }
+.allday-add-pop .quick-add-options { margin-right: 0; max-height: 220px; }
+.schedule-allday.collapsed { padding-right: 28px; }
+.schedule-head { overflow: visible; }
+.schedule.week .schedule-allday { padding-right: 28px; }

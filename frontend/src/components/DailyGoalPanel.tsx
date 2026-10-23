@@ -301,6 +301,11 @@ type NewFormProps = {
   categories: Category[]
   /** 성공하면 true. 입력란을 비우고 다음 것을 바로 쓸 수 있게 한다 */
   onSubmit: (input: Parameters<typeof createDailyGoal>[0]) => Promise<boolean>
+  /** 입력칸 안내 글. [주] 날짜 칸 ⊕에서는 넣을 날짜를 보여준다(1-4f ㊿) */
+  placeholder?: string
+  autoFocus?: boolean
+  /** 추가했거나 Esc를 누르면(팝오버 닫기용) */
+  onDone?: () => void
 }
 
 type Option =
@@ -313,7 +318,7 @@ type Option =
  * 쓰는 글자로 분류를 찾아 고르면 내용·분류가 모두 그 분류 이름으로 바로 추가된다.
  * 맞는 분류가 없으면 안 쓴 색 계열을 골라 새 분류를 만들고(㊷), 숨긴 분류면 다시 켜고 추가한다.
  */
-export function NewDailyGoalForm({ date, categories, onSubmit }: NewFormProps) {
+export function NewDailyGoalForm({ date, categories, onSubmit, placeholder, autoFocus, onDone }: NewFormProps) {
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
   const [focused, setFocused] = useState(false)
@@ -369,7 +374,10 @@ export function NewDailyGoalForm({ date, categories, onSubmit }: NewFormProps) {
     setBusy(true)
     setError(null)
     try {
-      if (await add(await make())) reset()
+      if (await add(await make())) {
+        reset()
+        onDone?.()
+      }
     } catch (e) {
       setError(errorMessage(e))
     } finally {
@@ -412,7 +420,10 @@ export function NewDailyGoalForm({ date, categories, onSubmit }: NewFormProps) {
     if (e.nativeEvent.isComposing) return
     if (e.key === 'Escape') {
       if (creating) setCreating(null)
-      else reset()
+      else {
+        reset()
+        onDone?.()
+      }
     } else if (creating && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
       e.preventDefault()
       const step = e.key === 'ArrowRight' ? 1 : -1
@@ -432,7 +443,8 @@ export function NewDailyGoalForm({ date, categories, onSubmit }: NewFormProps) {
         <img className="quick-add-plus" src={addIcon} alt="" aria-hidden="true" width={18} height={18} draggable={false} />
         <input
           className="grow"
-          placeholder="분류를 찾아 추가 (예: CS 공부)"
+          placeholder={placeholder ?? '분류를 찾아 추가 (예: CS 공부)'}
+          autoFocus={autoFocus}
           value={query}
           onChange={(e) => {
             setQuery(e.target.value)
