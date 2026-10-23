@@ -17,6 +17,8 @@ class Category(
     var targetRatio: Int? = null,
     var weeklyTargetMinutes: Int? = null,
     var active: Boolean = true,
+    /** 시간표 블록 이름 앞 이모지(1-4f ㊻) */
+    var icon: String? = null,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

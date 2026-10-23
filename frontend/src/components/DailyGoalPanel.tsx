@@ -388,6 +388,7 @@ export function NewDailyGoalForm({ date, categories, onSubmit }: NewFormProps) {
           targetRatio: c.targetRatio,
           weeklyTargetMinutes: c.weeklyTargetMinutes,
           active: true,
+          icon: c.icon ?? null,
         })
         loadHidden()
         return revived
@@ -398,7 +399,7 @@ export function NewDailyGoalForm({ date, categories, onSubmit }: NewFormProps) {
   const confirmCreate = () => {
     if (!creating) return
     const { name, colors, index } = creating
-    act(() => createCategory({ name, color: colors[index], targetRatio: null, weeklyTargetMinutes: null, active: true }))
+    act(() => createCategory({ name, color: colors[index], targetRatio: null, weeklyTargetMinutes: null, active: true, icon: null }))
   }
 
   const submit = (e: FormEvent) => {

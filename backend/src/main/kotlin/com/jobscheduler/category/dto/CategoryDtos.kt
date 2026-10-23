@@ -20,6 +20,8 @@ data class CategoryRequest(
     @field:Min(0, message = "주간 목표 시간은 0 이상이어야 해요.")
     val weeklyTargetMinutes: Int? = null,
     val active: Boolean = true,
+    @field:Size(max = 16, message = "아이콘은 16자 이하로 입력해주세요.")
+    val icon: String? = null,
 )
 
 data class CategoryOrderRequest(
@@ -35,6 +37,7 @@ data class CategoryResponse(
     val targetRatio: Int?,
     val weeklyTargetMinutes: Int?,
     val active: Boolean,
+    val icon: String?,
     /** 어디에도 쓰이지 않아 지울 수 있는지(목록 조회에서만 채움) */
     val deletable: Boolean = false,
 ) {
@@ -47,6 +50,7 @@ data class CategoryResponse(
             targetRatio = c.targetRatio,
             weeklyTargetMinutes = c.weeklyTargetMinutes,
             active = c.active,
+            icon = c.icon,
         )
     }
 }

@@ -101,6 +101,21 @@ class CategoryServiceTest(
         assertEquals("CATEGORY_IN_USE", e.code)
     }
 
+    @Test
+    fun `분류 아이콘을 저장하고 비우면 없앤다`() {
+        val created = categoryService.create(CategoryRequest(name = "[확인용] 아이콘", color = "#000000", icon = "☕"))
+        assertEquals("☕", created.icon)
+
+        val cleared = categoryService.update(created.id, CategoryRequest(name = created.name, color = "#000000", icon = " "))
+        assertEquals(null, cleared.icon)
+    }
+
+    @Test
+    fun `기본 분류에는 아이콘이 미리 들어 있다`() {
+        val icons = categoryService.list(includeInactive = false).associate { it.name to it.icon }
+        assertEquals("📘", icons["CS 공부"])
+    }
+
     private fun request(name: String, targetRatio: Int? = null, active: Boolean = true) =
         CategoryRequest(name = name, color = "#123456", targetRatio = targetRatio, active = active)
 }

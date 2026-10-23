@@ -40,6 +40,7 @@ class CategoryService(
             targetRatio = req.targetRatio,
             weeklyTargetMinutes = req.weeklyTargetMinutes,
             active = req.active,
+            icon = req.icon?.trim()?.ifEmpty { null },
         )
         return CategoryResponse.from(categoryRepository.save(category))
     }
@@ -55,6 +56,7 @@ class CategoryService(
         category.targetRatio = req.targetRatio
         category.weeklyTargetMinutes = req.weeklyTargetMinutes
         category.active = req.active
+        category.icon = req.icon?.trim()?.ifEmpty { null }
         return CategoryResponse.from(category)
     }
 

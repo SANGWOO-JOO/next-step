@@ -82,9 +82,9 @@ data class Progress(val achieved: Int, val total: Int, val percent: Int) {
     }
 }
 
-data class CategoryRef(val id: Long, val name: String, val color: String, val active: Boolean) {
+data class CategoryRef(val id: Long, val name: String, val color: String, val active: Boolean, val icon: String? = null) {
     companion object {
-        fun from(c: Category) = CategoryRef(c.id!!, c.name, c.color, c.active)
+        fun from(c: Category) = CategoryRef(c.id!!, c.name, c.color, c.active, c.icon)
     }
 }
 

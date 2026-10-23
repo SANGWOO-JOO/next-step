@@ -10,7 +10,7 @@ export const GOAL_STATUS_LABEL: Record<GoalStatus, string> = {
 
 export type Progress = { achieved: number; total: number; percent: number }
 
-export type CategoryRef = { id: number; name: string; color: string; active: boolean }
+export type CategoryRef = { id: number; name: string; color: string; active: boolean; icon?: string | null }
 
 export type WeeklyGoal = {
   id: number

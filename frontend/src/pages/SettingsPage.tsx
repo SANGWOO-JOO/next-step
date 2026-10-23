@@ -11,6 +11,7 @@ import {
 import { errorMessage } from '../api/client'
 import { availableColors } from '../utils/categoryColors'
 import CategoryBadge from '../components/CategoryBadge'
+import IconPicker from '../components/IconPicker'
 
 const toInput = (c: Category): CategoryInput => ({
   name: c.name,
@@ -18,6 +19,7 @@ const toInput = (c: Category): CategoryInput => ({
   targetRatio: c.targetRatio,
   weeklyTargetMinutes: c.weeklyTargetMinutes,
   active: c.active,
+  icon: c.icon ?? null,
 })
 
 const toNumberOrNull = (value: string) => (value.trim() === '' ? null : Number(value))
@@ -78,6 +80,7 @@ function CategorySettings() {
         <div className="category-row header muted small">
           <span>순서</span>
           <span>색</span>
+          <span>아이콘</span>
           <span>이름</span>
           <span>목표 비율(%)</span>
           <span>주간 목표(분)</span>
@@ -134,6 +137,7 @@ function CategoryRow({ category, first, last, onMove, onSave, onDelete }: RowPro
         onChange={(e) => setDraft({ ...draft, color: e.target.value })}
         aria-label="색"
       />
+      <IconPicker value={draft.icon} onChange={(icon) => setDraft({ ...draft, icon })} />
       <input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} aria-label="이름" />
       <input
         type="number"
@@ -178,7 +182,7 @@ function CategoryRow({ category, first, last, onMove, onSave, onDelete }: RowPro
   )
 }
 
-const EMPTY: CategoryInput = { name: '', color: '#64748b', targetRatio: null, weeklyTargetMinutes: null, active: true }
+const EMPTY: CategoryInput = { name: '', color: '#64748b', targetRatio: null, weeklyTargetMinutes: null, active: true, icon: null }
 
 function NewCategoryForm({ usedColors, onCreate }: { usedColors: string[]; onCreate: (input: CategoryInput) => Promise<boolean> }) {
   const [draft, setDraft] = useState<CategoryInput>(EMPTY)
@@ -205,6 +209,7 @@ function NewCategoryForm({ usedColors, onCreate }: { usedColors: string[]; onCre
         }}
         aria-label="새 분류 색"
       />
+      <IconPicker value={draft.icon} onChange={(icon) => setDraft({ ...draft, icon })} label="새 분류 아이콘" />
       <input
         placeholder="새 분류 이름"
         value={draft.name}

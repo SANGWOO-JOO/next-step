@@ -88,7 +88,7 @@ button:disabled { opacity: 0.4; cursor: default; }
 .category-table { display: grid; gap: 0.4rem; overflow-x: auto; }
 .category-row {
   display: grid;
-  grid-template-columns: 4.5rem 2.5rem minmax(8rem, 1fr) 6.5rem 6.5rem 3rem 10.5rem;
+  grid-template-columns: 4.5rem 2.5rem 2.5rem minmax(7rem, 1fr) 5.5rem 5.5rem 3rem 10.5rem;
   align-items: center;
   gap: 0.5rem;
   min-width: 40rem;
@@ -1286,3 +1286,39 @@ button.pull-all:hover { color: #7c6cf8; }
 .schedule-allday.collapsed { min-height: 0; padding: 3px 4px; }
 .schedule-goal-summary { display: inline-flex; align-items: center; gap: 4px; min-height: 0; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
 .schedule-goal-summary .category-dot { width: 6px; height: 6px; }
+
+/* 분류 아이콘 고르기(1-4f ㊻) */
+.icon-picker { position: relative; display: inline-flex; }
+.icon-picker-button { width: 2.2rem; height: 2.2rem; min-height: 0; padding: 0; border-radius: 50%; border: 1px solid var(--border); background: transparent; font-size: 1.05rem; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+.icon-picker-pop { position: absolute; top: calc(100% + 6px); left: 0; z-index: 30; display: grid; grid-template-columns: repeat(6, 2rem); gap: 4px; padding: 8px; background: var(--surface, var(--bg)); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3); }
+.icon-picker-pop button { width: 2rem; height: 2rem; min-height: 0; padding: 0; border: 0; border-radius: 8px; background: transparent; font-size: 1.05rem; }
+.icon-picker-pop button:hover, .icon-picker-pop button.on { background: color-mix(in srgb, #8B5CF6 20%, transparent); }
+.icon-picker-pop .icon-picker-none { grid-column: 1 / -1; width: auto; font-size: 12px; color: var(--text-muted, #888); }
+
+/* 일정 캘린더 디자인: 파스텔 + 분류 아이콘(1-4f ㊻, Amie·TimeTree·Google Material 3 참고) */
+.schedule-column { background-image: linear-gradient(to bottom, color-mix(in srgb, var(--border) 55%, transparent) 1px, transparent 1px); border-left-color: color-mix(in srgb, var(--border) 60%, transparent); }
+.schedule-column.today { background-color: color-mix(in srgb, #8B5CF6 5%, transparent); }
+.schedule-hour-label { font-variant-numeric: tabular-nums; }
+.schedule-block { border-left: 0; border-radius: 12px; container-type: inline-size; background: color-mix(in srgb, var(--block, var(--muted)) 20%, transparent); color: color-mix(in srgb, var(--block, var(--muted)) 45%, #fff); padding: 0.25rem 0.5rem; }
+:root[data-theme='light'] .schedule-block { color: color-mix(in srgb, var(--block, var(--muted)) 70%, #000); }
+@media (prefers-color-scheme: light) { :root:not([data-theme='dark']) .schedule-block { color: color-mix(in srgb, var(--block, var(--muted)) 70%, #000); } }
+.schedule-block .schedule-block-time { color: inherit; opacity: 0.7; }
+.schedule-block-title { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.schedule-block-icon { flex: none; font-size: 0.85em; line-height: 1; }
+.schedule-block-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@container (max-width: 40px) {
+  .schedule-block-icon + .schedule-block-label, .schedule-block .schedule-block-time { display: none; }
+}
+.schedule-block.free { border: 1px dashed color-mix(in srgb, var(--border) 90%, transparent); color: var(--text); }
+.schedule-block.now { box-shadow: 0 0 0 2px #a78bfa; }
+.schedule-block.now .schedule-block-title::before { content: none; }
+.actual-entry { border-radius: 12px; }
+.schedule-now, .schedule-now::before { background: #a78bfa; }
+.schedule-date.today, button.schedule-date.today { color: var(--text); }
+.schedule-date-pill { display: inline-block; padding: 1px 10px; border-radius: 999px; }
+.today .schedule-date-pill, .schedule-date.today .schedule-date-pill { background: linear-gradient(135deg, #5B8CFF, #8B5CF6); color: #fff; }
+button.schedule-date.selected { box-shadow: none; background: color-mix(in srgb, #8B5CF6 10%, transparent); }
+.actual-entry.actual-goal, .actual-entry.actual-study { border-left: 0; background: color-mix(in srgb, var(--block, var(--muted)) 26%, transparent); color: color-mix(in srgb, var(--block, var(--muted)) 45%, #fff); container-type: inline-size; }
+.actual-entry .schedule-block-title { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.actual-entry .schedule-block-time { color: inherit; opacity: 0.7; }
+@container (max-width: 40px) { .actual-entry .schedule-block-label, .actual-entry .schedule-block-time { display: none; } }

@@ -304,11 +304,13 @@ export default function ScheduleView({
               aria-pressed={d === selectedDate}
               title="이 날의 할 일을 왼쪽에 보여줘요"
             >
-              {dayLabel(d).replace(/^\d+월 /, '')}
+              <span className={d === today ? 'schedule-date-pill' : undefined}>{dayLabel(d).replace(/^\d+월 /, '')}</span>
             </button>
           ) : (
             <span key={d} className={d === today ? 'schedule-date today' : 'schedule-date'}>
-              {week ? dayLabel(d).replace(/^\d+월 /, '') : dayLabel(d)}
+              <span className={d === today ? 'schedule-date-pill' : undefined}>
+                {week ? dayLabel(d).replace(/^\d+월 /, '') : dayLabel(d)}
+              </span>
             </span>
           ),
         )}
@@ -383,7 +385,7 @@ export default function ScheduleView({
           <div className="schedule-gutter">
             {Array.from({ length: 24 }, (_, h) => (
               <span key={h} className="schedule-hour-label" style={{ top: toPx(h * 60) }}>
-                {h === 0 ? '' : `${h < 12 ? '오전' : '오후'} ${h % 12 === 0 ? 12 : h % 12}시`}
+                {h === 0 ? '' : h}
               </span>
             ))}
           </div>
@@ -435,14 +437,19 @@ export default function ScheduleView({
                       style={{
                         top: toPx(start),
                         height: Math.max(toPx(end - start) - 2, 14),
-                        borderLeftColor: color,
-                        background: `color-mix(in srgb, ${color} 22%, var(--surface))`,
+                        // 파스텔 채움 + 분류 색 밝은 글자(1-4f ㊻)
+                        ['--block' as string]: color,
                       }}
                       onPointerDown={(e) => onBlockPointerDown(e, b, date)}
                       title="끌어서 옮기기 · 눌러서 고치기"
                     >
                       <span className="schedule-block-title" title={`${b.label} · ${formatMinutes(start)}~${formatMinutes(end)}`}>
-                        {b.label}
+                        {b.category?.icon && (
+                          <span className="schedule-block-icon" aria-hidden="true">
+                            {b.category.icon}
+                          </span>
+                        )}
+                        <span className="schedule-block-label">{b.label}</span>
                       </span>
                       {size !== 'tiny' && (
                         <span className="schedule-block-time">
@@ -505,10 +512,8 @@ export default function ScheduleView({
                           top: toPx(start),
                           height: Math.max(toPx(end - start) - 2, 14),
                           borderLeftColor: a.kind === 'DISTRACTION' ? 'var(--down)' : color,
-                          background:
-                            a.kind === 'DISTRACTION' || a.kind === 'OTHER'
-                              ? undefined
-                              : `color-mix(in srgb, ${color} 30%, var(--surface))`,
+                          // 공부 기록은 계획 블록처럼 파스텔(1-4f ㊻). 딴짓·기타는 원래 표시 그대로
+                          ['--block' as string]: color,
                         }}
                         onPointerDown={(e) => {
                           // 계획 블록처럼 누르면 고치기, 끌면 옮기기, 아래 끝은 늘이기.
@@ -538,7 +543,8 @@ export default function ScheduleView({
                       >
                         <span className="schedule-block-title">
                           <img className="actual-mark-icon" src={mark.src} alt={mark.label} title={mark.label} width={14} height={14} draggable={false} />{' '}
-                          {a.label}
+                          {a.category?.icon && <span className="schedule-block-icon" aria-hidden="true">{a.category.icon}</span>}
+                          <span className="schedule-block-label">{a.label}</span>
                         </span>
                         <span className="schedule-block-time">
                           {formatMinutes(start)}~{formatMinutes(end)}
