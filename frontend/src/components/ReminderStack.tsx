@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { getDailyLog } from '../api/records'
+import { formatDuration } from '../api/focus'
+import { CONDITION_LABELS, getDailyLog, type DailyLog } from '../api/records'
 import { getWeeklyJournals } from '../api/reviews'
 import { getTimeBlocksBetween } from '../api/timeBlocks'
 import { journalDue } from '../pages/plan/planData'
@@ -13,7 +14,7 @@ const CHECK_INTERVAL_MS = 60_000
 /** 시작 몇 분 전부터 "곧 시작"을 알릴지 */
 const SOON_MINUTES = 15
 
-type Kind = 'shutdown' | 'weekly' | `block-${number}`
+type Kind = 'shutdown' | 'weekly' | 'today' | `block-${number}`
 
 /** 지금 하는 블록 또는 곧 시작하는 블록 */
 type BlockAlert = { id: number; label: string; start: number; end: number; now: number }
@@ -35,11 +36,13 @@ const readDismissed = (kind: Kind, date: string) => {
 export default function ReminderStack() {
   const location = useLocation()
   const navigate = useNavigate()
-  const [state, setState] = useState<{ shutdown: boolean; weekly: boolean; block: BlockAlert | null }>({
+  const [state, setState] = useState<{ shutdown: boolean; weekly: boolean; block: BlockAlert | null; log: DailyLog | null }>({
     shutdown: false,
     weekly: false,
     block: null,
+    log: null,
   })
+  const [hidden, setHidden] = useState<Kind[]>([])
   const today = todaySeoul()
   const monday = mondayOf(today)
 
@@ -48,13 +51,14 @@ export default function ReminderStack() {
     const week = mondayOf(date)
     const shutdownTime = nowMinutesSeoul() >= SHUTDOWN_HOUR * 60
     Promise.all([
-      shutdownTime && !readDismissed('shutdown', date) ? getDailyLog(date).then((l) => !l.saved) : Promise.resolve(false),
+      getDailyLog(date),
       journalDue(week, date) && !readDismissed('weekly', date)
         ? getWeeklyJournals(week, week).then((list) => list.length === 0)
         : Promise.resolve(false),
       getTimeBlocksBetween(date, date),
     ])
-      .then(([shutdown, weekly, blocks]) => {
+      .then(([log, weekly, blocks]) => {
+        const shutdown = shutdownTime && !readDismissed('shutdown', date) && !log.saved
         // 지금 하는 블록, 없으면 SOON_MINUTES 안에 시작하는 블록(Google Calendar 일정 알림 방식). 닫은 블록은 빼고
         const now = nowMinutesSeoul()
         const spans = blocks
@@ -63,9 +67,9 @@ export default function ReminderStack() {
           .sort((a, b) => a.start - b.start)
         const block =
           spans.find((x) => x.start <= now && now < x.end) ?? spans.find((x) => x.start > now && x.start - now <= SOON_MINUTES) ?? null
-        setState({ shutdown, weekly, block })
+        setState({ shutdown, weekly, block, log })
       })
-      .catch(() => setState({ shutdown: false, weekly: false, block: null }))
+      .catch(() => setState({ shutdown: false, weekly: false, block: null, log: null }))
   }, [])
 
   useEffect(check, [check, location.pathname])
@@ -86,14 +90,41 @@ export default function ReminderStack() {
     } catch {
       // 저장 못 해도 지금은 닫는다
     }
-    setState((s) => (kind.startsWith('block-') ? { ...s, block: null } : { ...s, [kind]: false }))
+    setState((s) => (kind.startsWith('block-') ? { ...s, block: null } : kind === 'today' ? { ...s } : { ...s, [kind]: false }))
+    setHidden((h) => [...h, kind])
   }
 
-  if (!state.shutdown && !state.weekly && !state.block) return null
   const b = state.block
+  const log = state.log
+  // 일정 화면에서는 오늘 숫자와 하루 마무리를 카드로(1-4f ⑮). 21시 이후 마무리 알림이 뜨면 그쪽이 대신한다
+  const showToday = location.pathname === '/' && !!log && !state.shutdown && !hidden.includes('today') && !readDismissed('today', today)
+  if (!state.shutdown && !state.weekly && !b && !showToday) return null
 
   return (
     <div className="reminder-stack" role="region" aria-label="알림">
+      {showToday && log && (
+        <div className="reminder-card today" role="status">
+          <button className="icon reminder-close" onClick={() => dismiss('today')} aria-label="오늘은 닫기">
+            ×
+          </button>
+          <strong>📊 오늘</strong>
+          <p className="muted small" title="지나간 계획 시간 중 계획과 같은 일을 실제로 한 비율">
+            실제 공부 {formatDuration(log.summary.plan.actualStudyMinutes * 60)}
+            {log.summary.plan.asPlannedPercent != null && ` · 계획대로 ${log.summary.plan.asPlannedPercent}%`}
+          </p>
+          <span className="row-actions">
+            {log.saved ? (
+              <button className="ghost" onClick={() => navigate('/?shutdown=1')}>
+                오늘 기록 ✓ {log.condition ? CONDITION_LABELS[log.condition] : ''}
+              </button>
+            ) : (
+              <button className="ghost" onClick={() => navigate('/?shutdown=1')}>
+                🌙 하루 마무리
+              </button>
+            )}
+          </span>
+        </div>
+      )}
       {b && (
         <div className="reminder-card now" role="status">
           <button className="icon reminder-close" onClick={() => dismiss(`block-${b.id}`)} aria-label="이 일정 알림 닫기">

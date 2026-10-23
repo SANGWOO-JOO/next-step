@@ -6,7 +6,7 @@ import { createDailyGoal, getDailyGoalsBetween, getUnfinishedDailyGoals, type Da
 import { getWeeklyGoalsOfWeek, type WeeklyGoal } from '../api/goals'
 import { formatDuration } from '../api/focus'
 import { getHealth } from '../api/health'
-import { CONDITION_LABELS, getDailyLog, getManualLogs, type DailyLog, type ManualStudyLog } from '../api/records'
+import { getDailyLog, getManualLogs, type DailyLog, type ManualStudyLog } from '../api/records'
 import { getActualLogsBetween, type ActualLog } from '../api/actualLogs'
 import { getTimeBlocksBetween, type TimeBlock } from '../api/timeBlocks'
 import DailyGoalPanel, { NewDailyGoalForm } from '../components/DailyGoalPanel'
@@ -157,29 +157,6 @@ export default function TodayPage() {
         <h1>
           일정 <span className="page-date muted">{dayLabel(today)}</span>
         </h1>
-        {/* 상태 줄 상자를 없애고 오늘 숫자와 하루 마무리는 제목 줄 오른쪽에(1-4f ⑭). 지금·곧 할 일은 오른쪽 위 알림 카드 */}
-        <div className="page-head-tools">
-          {dailyLog && (
-            <span className="muted small" title="지나간 계획 시간 중 계획과 같은 일을 실제로 한 비율">
-              실제 공부 <strong className="status-strong">{formatDuration(dailyLog.summary.plan.actualStudyMinutes * 60)}</strong>
-              {dailyLog.summary.plan.asPlannedPercent != null && (
-                <>
-                  {' '}
-                  · 계획대로 <strong className="status-strong">{dailyLog.summary.plan.asPlannedPercent}%</strong>
-                </>
-              )}
-            </span>
-          )}
-          {dailyLog?.saved ? (
-            <button className="ghost log-chip" onClick={() => setShutdown(true)} title="오늘 기록 보기·고치기">
-              오늘 기록 ✓ {dailyLog.condition ? CONDITION_LABELS[dailyLog.condition] : ''}
-            </button>
-          ) : (
-            <button className="ghost" onClick={() => setShutdown(true)}>
-              🌙 하루 마무리
-            </button>
-          )}
-        </div>
       </div>
       {error && (
         <p className="error-banner" role="alert">

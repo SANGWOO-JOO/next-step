@@ -1021,3 +1021,4 @@ button.link-button:hover { color: var(--accent); text-decoration: underline; }
 .reminder-card.now { border-left-color: var(--accent); }
 .page-head-tools { display: inline-flex; align-items: center; gap: 0.75rem; margin-left: auto; }
 .today-page .page-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+.reminder-card.today { border-left-color: var(--border); }
