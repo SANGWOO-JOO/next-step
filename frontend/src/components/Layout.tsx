@@ -114,7 +114,6 @@ export default function Layout() {
         <nav className="side-nav">
           {GROUPS.map((g) => (
             <div key={g.title} className="side-group">
-              <span className="side-group-title">{g.title}</span>
               {g.menus.map(link)}
             </div>
           ))}

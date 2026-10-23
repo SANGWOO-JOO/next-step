@@ -1108,3 +1108,5 @@ input[type='checkbox'] { accent-color: #6d74f7; }
 .side-link:hover .nav-tile, .side-link.active .nav-tile, .side-brand .nav-tile { filter: none; opacity: 1; }
 .side-link.active .nav-tile { transform: scale(1.06); }
 .brand-logo { display: block; height: 28px; width: auto; }
+/* 메뉴 묶음 제목 대신 묶음 사이 얇은 선(1-4f ⑲) */
+.side-group + .side-group { margin-top: 0.4rem; padding-top: 0.5rem; border-top: 1px solid var(--hairline); }
