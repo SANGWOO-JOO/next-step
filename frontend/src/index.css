@@ -1181,3 +1181,8 @@ button.color-dot.auto::after { content: 'A'; position: absolute; inset: 0; displ
 .schedule-block.short .schedule-block-title, .schedule-block.tiny .schedule-block-title,
 .actual-entry.short .schedule-block-title, .actual-entry.tiny .schedule-block-title { flex: 0 1 auto; min-width: 2.2em; }
 .schedule-block.short .schedule-block-time, .actual-entry.short .schedule-block-time { flex: 0 1000 auto; min-width: 0; overflow: hidden; text-overflow: clip; margin-left: auto; }
+/* 폭이 모자라면 짧은 블록의 시간은 뺀다(왼쪽 시간 눈금으로 확인, 1-4f ㉖) */
+.schedule-block.short, .actual-entry.short { container-type: inline-size; }
+@container (max-width: 9.5rem) {
+  .schedule-block-time { display: none; }
+}
