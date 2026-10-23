@@ -1035,3 +1035,71 @@ button.link-button:hover { color: var(--accent); text-decoration: underline; }
 .reminder-close:hover { background: color-mix(in srgb, var(--text) 10%, transparent); color: var(--text); }
 @keyframes reminder-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .reminder-card { animation: none; } }
+
+/* ===== 디자인 통일(1-4f ⑰): 알림 카드의 디자인 언어를 화면 전체로 =====
+   둥근 카드(18px) + 은은한 그림자, 알약 버튼(주요 동작은 파랑→보라 그라데이션), 둥근 입력 칸, 알약 전환 */
+:root {
+  --grad: linear-gradient(135deg, #5b8cff, #8b5cf6);
+  --hairline: color-mix(in srgb, var(--text) 9%, transparent);
+  --soft-fill: color-mix(in srgb, var(--text) 6%, transparent);
+  --card-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px rgb(0 0 0 / 0.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root { --card-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 28px rgb(0 0 0 / 0.28); }
+}
+
+.card { border-radius: 18px; border-color: var(--hairline); box-shadow: var(--card-shadow); }
+
+button {
+  border-radius: 999px;
+  border-color: transparent;
+  background: var(--grad);
+  font-weight: 600;
+  transition: transform 0.12s, filter 0.12s, background 0.12s;
+}
+button:hover:not(:disabled) { filter: brightness(1.07); }
+button:active:not(:disabled) { transform: scale(0.97); }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid color-mix(in srgb, #5b8cff 70%, transparent);
+  outline-offset: 2px;
+}
+button.ghost, button.danger, button.icon {
+  background: transparent;
+  border-color: var(--hairline);
+  font-weight: 500;
+}
+button.ghost { color: var(--text); }
+button.ghost:hover:not(:disabled), button.icon:hover:not(:disabled) { filter: none; background: var(--soft-fill); }
+button.danger:hover:not(:disabled) { filter: none; background: color-mix(in srgb, var(--down) 10%, transparent); }
+button.icon { min-width: 2rem; padding: 0.2rem 0.55rem; }
+.button-link { border-radius: 999px; }
+
+input:not([type='checkbox']):not([type='color']):not([type='range']), select, textarea {
+  padding: 0.45rem 0.7rem;
+  border-color: var(--hairline);
+  border-radius: 12px;
+  background: var(--soft-fill);
+  transition: border-color 0.12s, background 0.12s;
+}
+input:not([type='checkbox']):not([type='color']):not([type='range']):focus, select:focus, textarea:focus {
+  border-color: color-mix(in srgb, #5b8cff 60%, transparent);
+  background: var(--surface);
+  outline: none;
+}
+input[type='checkbox'] { accent-color: #6d74f7; }
+
+.segmented { border: none; border-radius: 999px; padding: 3px; gap: 2px; background: var(--soft-fill); }
+.segmented button { border-radius: 999px; padding: 0.25rem 0.8rem; font-weight: 500; }
+.segmented button:hover:not(.active) { filter: none; color: var(--text); }
+.segmented button.active { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgb(0 0 0 / 0.15); }
+
+.side-link { border-radius: 12px; }
+.side-link.active { color: var(--text); background: var(--soft-fill); box-shadow: inset 3px 0 0 #6d74f7; }
+
+.goal-metric { border-radius: 14px; background: var(--soft-fill); }
+.badge, .status-chip, .log-chip { border-radius: 999px; }
+.error-banner { border-radius: 14px; }
+.notice { border-radius: 12px; }
+.goal-bar, .progress-track, .week-bar-track { border-radius: 999px; }
+.goal-bar-fill { background: linear-gradient(90deg, #22c55e, #14b8a6); }
+.goal-bar-fill.accent, .week-bar-fill { background: var(--grad); }
