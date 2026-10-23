@@ -1131,3 +1131,21 @@ input[type='checkbox'] { accent-color: #6d74f7; }
 .log-cal-legend-swatch { width: 1.4rem; height: 1.1rem; border-radius: 5px; border: 1px solid var(--hairline); }
 /* 공부량 색 = 브랜드 보라 농도(CI: 완료·진행만 초록) */
 :root { --study: #7c6cf8; }
+/* 기록 달력 + 팝오버(1-4f ㉔) */
+.log-calendar { margin-top: 0.5rem; }
+.log-cal-grid { position: relative; }
+.log-cal-cell { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 0.15rem; min-height: 4.6rem; padding: 0.4rem 0.5rem; text-align: left; font-weight: 500; border-radius: 12px; }
+.log-cal-top { display: flex; justify-content: space-between; align-items: center; }
+.log-cal-study { font-size: 0.72rem; font-weight: 700; }
+.log-cal-plan { font-size: 0.68rem; color: var(--muted); }
+.log-cal-cell.has .log-cal-plan { color: inherit; opacity: 0.85; }
+.log-day-popover { position: absolute; z-index: 30; width: 18.5rem; padding: 0.9rem 1rem; border: 1px solid var(--hairline); border-radius: 16px; background: var(--surface); box-shadow: 0 14px 36px rgb(0 0 0 / 0.32); animation: reminder-in 0.16s ease-out; }
+.log-day-popover.side-left { transform: translateX(-100%); }
+.log-detail { margin: 0; position: static; display: grid; gap: 0.55rem; }
+.log-detail-close { margin-left: auto; }
+.log-detail-head { justify-content: flex-start; }
+@media (max-width: 720px) {
+  .log-day-popover, .log-day-popover.side-left { position: fixed; z-index: 60; left: 0 !important; right: 0; top: auto !important; bottom: 0; width: auto; transform: none; border-radius: 18px 18px 0 0; padding: 1.1rem 1rem 1.5rem; }
+  .log-cal-cell { min-height: 3.4rem; padding: 0.3rem; }
+  .log-cal-plan { display: none; }
+}

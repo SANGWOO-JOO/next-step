@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { errorMessage } from '../api/client'
 import { formatDuration } from '../api/focus'
@@ -55,13 +55,8 @@ export default function LogPage() {
 
   const move = (delta: number) => set(kind, kind === 'month' ? `${Number(year) + delta}-${month.slice(5)}` : addMonths(month, delta))
   const list = kind === 'week' ? weeks : months
-  const today = todaySeoul()
-  const picked =
-    pickedDate && pickedDate.startsWith(month)
-      ? pickedDate
-      : today.startsWith(month)
-        ? today
-        : (days?.[0]?.date ?? `${month}-01`)
+  // 처음엔 아무 날도 고르지 않는다(1-4f ㉔). 다른 달로 가면 닫힌다
+  const picked = pickedDate && pickedDate.startsWith(month) ? pickedDate : null
 
   return (
     <section>
@@ -89,10 +84,16 @@ export default function LogPage() {
       {kind !== 'day' && <ReviewWriter key={kind} kind={kind} onSaved={() => setVersion((v) => v + 1)} />}
 
       {kind === 'day' && days && (
-        <div className="log-day-layout">
-          <LogCalendar month={month} days={days} picked={picked} onPick={setPickedDate} />
-          <DayDetail date={picked} log={days.find((d) => d.date === picked)} onWrite={() => setWrapDate(picked)} />
-        </div>
+        <LogCalendar
+          month={month}
+          days={days}
+          picked={picked}
+          onPick={setPickedDate}
+          onWrite={(date) => {
+            setPickedDate(null)
+            setWrapDate(date)
+          }}
+        />
       )}
       {kind !== 'day' && (list === null ? (
         <p className="muted">불러오는 중…</p>
@@ -132,11 +133,11 @@ export default function LogPage() {
 }
 
 /** 고른 날의 기록 한 장(1-4f ㉒): 컨디션 → 메모 → 계획대로·실제 공부 → 완료 목표 → 버튼 하나 */
-function DayDetail({ date, log, onWrite }: { date: string; log: DailyLog | undefined; onWrite: () => void }) {
+function DayDetail({ date, log, onWrite, onClose }: { date: string; log: DailyLog | undefined; onWrite: () => void; onClose: () => void }) {
   const future = date > todaySeoul()
   const plan = log?.summary.plan
   return (
-    <article className="card log-detail">
+    <article className="log-detail">
       <div className="log-detail-head">
         <h2 className="log-detail-date">{dayLabel(date)}</h2>
         {log?.condition && (
@@ -144,6 +145,9 @@ function DayDetail({ date, log, onWrite }: { date: string; log: DailyLog | undef
             {CONDITION_LABELS[log.condition]}
           </span>
         )}
+        <button className="icon log-detail-close" onClick={onClose} aria-label="닫기">
+          ×
+        </button>
       </div>
       {!log || (!log.saved && !log.summary.studySeconds && !log.summary.goalsTotal) ? (
         <p className="muted">{future ? '아직 오지 않은 날이에요.' : '아직 이날의 기록이 없어요.'}</p>
@@ -197,17 +201,22 @@ const LEVELS: { label: string; ratio: number; range: (max: number) => string }[]
   { label: '많이', ratio: 1, range: (max) => `${formatDuration((max * 2) / 3)} 이상` },
 ]
 
-/** 기록 달력(Day One 달력, Daylio Year in Pixels 참고): 공부량을 색 진하기로, 컨디션을 이모지로. 누르면 그날을 고른다 */
+/**
+ * 기록 달력(1-4f ㉔, Day One 달력·Google Calendar 월 보기 클릭 참고): 전체 폭, 칸 안에 컨디션·공부 시간·계획대로 %.
+ * 날짜를 누르면 그 칸 옆에 팝오버(좁은 화면은 아래 시트). 공부량은 브랜드 보라 농도
+ */
 function LogCalendar({
   month,
   days,
   picked,
   onPick,
+  onWrite,
 }: {
   month: string
   days: DailyLog[]
-  picked: string
-  onPick: (date: string) => void
+  picked: string | null
+  onPick: (date: string | null) => void
+  onWrite: (date: string) => void
 }) {
   const byDate = new Map(days.map((d) => [d.date, d]))
   const max = Math.max(1, ...days.map((d) => d.summary.studySeconds))
@@ -216,10 +225,43 @@ function LogCalendar({
   const cells: string[] = []
   for (let d = start; d <= to || cells.length % 7 !== 0; d = shiftDate(d, 1)) cells.push(d)
   const today = todaySeoul()
+  const gridRef = useRef<HTMLDivElement>(null)
+  const [anchor, setAnchor] = useState<{ top: number; left: number; side: 'right' | 'left' } | null>(null)
+
+  // 바깥을 누르거나 Esc를 누르면 닫는다
+  useEffect(() => {
+    if (!picked) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onPick(null)
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as HTMLElement
+      if (!t.closest('.log-day-popover') && !t.closest('.log-cal-cell')) onPick(null)
+    }
+    window.addEventListener('keydown', onKey)
+    window.addEventListener('mousedown', onDown)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('mousedown', onDown)
+    }
+  }, [picked, onPick])
+
+  const pick = (date: string, el: HTMLElement) => {
+    if (picked === date) {
+      onPick(null)
+      return
+    }
+    const grid = gridRef.current!.getBoundingClientRect()
+    const cell = el.getBoundingClientRect()
+    // 오른쪽에 자리가 있으면 칸 오른쪽, 아니면 왼쪽에 띄운다
+    const side = cell.right + 300 < grid.right ? 'right' : 'left'
+    setAnchor({ top: cell.top - grid.top, left: side === 'right' ? cell.right - grid.left + 8 : cell.left - grid.left - 8, side })
+    onPick(date)
+  }
+
+  const pickedLog = picked ? byDate.get(picked) : undefined
 
   return (
     <div className="card log-calendar">
-      <div className="log-cal-grid">
+      <div className="log-cal-grid" ref={gridRef}>
         {WEEKDAYS.map((w) => (
           <span key={w} className="muted small log-cal-head">
             {w}
@@ -228,6 +270,7 @@ function LogCalendar({
         {cells.map((date) => {
           const log = byDate.get(date)
           const seconds = log ? log.summary.studySeconds : 0
+          const percent = log?.summary.plan.asPlannedPercent
           const inMonth = date.startsWith(month)
           return (
             <button
@@ -240,19 +283,33 @@ function LogCalendar({
                 log ? 'has' : '',
                 date === picked ? 'picked' : '',
               ].join(' ')}
-              onClick={() => onPick(date)}
-              title={log ? `${dayLabel(date)} · 공부 ${formatDuration(seconds)}` : dayLabel(date)}
+              onClick={(e) => pick(date, e.currentTarget)}
+              aria-label={log ? `${dayLabel(date)} · 공부 ${formatDuration(seconds)}` : dayLabel(date)}
               style={
                 seconds > 0
                   ? { background: `color-mix(in srgb, var(--study) ${Math.round(18 + (seconds / max) * 62)}%, transparent)` }
                   : undefined
               }
             >
-              <span className="log-cal-date">{Number(date.slice(8))}</span>
-              <span className="log-cal-mood">{log?.condition ? CONDITION_LABELS[log.condition] : ''}</span>
+              <span className="log-cal-top">
+                <span className="log-cal-date">{Number(date.slice(8))}</span>
+                <span className="log-cal-mood">{log?.condition ? CONDITION_LABELS[log.condition] : ''}</span>
+              </span>
+              {seconds > 0 && <span className="log-cal-study">{formatDuration(seconds)}</span>}
+              {percent != null && <span className="log-cal-plan">계획대로 {percent}%</span>}
             </button>
           )
         })}
+        {picked && anchor && (
+          <div
+            className={`log-day-popover side-${anchor.side}`}
+            style={{ top: anchor.top, left: anchor.left }}
+            role="dialog"
+            aria-label={`${dayLabel(picked)} 기록`}
+          >
+            <DayDetail date={picked} log={pickedLog} onWrite={() => onWrite(picked)} onClose={() => onPick(null)} />
+          </div>
+        )}
       </div>
       {/* 안내 글자에 마우스를 올리거나 포커스하면 색 단계 범례가 보인다 */}
       <p className="muted small log-cal-hint" tabIndex={0}>
