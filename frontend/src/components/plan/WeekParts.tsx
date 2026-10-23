@@ -10,8 +10,6 @@ import {
   type MonthlyGoal,
   type WeeklyGoal,
 } from '../../api/goals'
-import { CONDITION_LABELS } from '../../api/records'
-import { studySeconds, type WeeklyJournal } from '../../api/reviews'
 import { dayLabel, todaySeoul } from '../../utils/date'
 import { healthOf, weekRange } from '../../utils/health'
 import CategoryBadge from '../CategoryBadge'
@@ -136,6 +134,8 @@ type DayProps = {
   highlightGoalId?: number | null
   /** 다른 요일의 카드를 이 날로 끌어 놓았을 때 */
   onDropGoal?: (goalId: number, date: string) => void
+  /** 넘기면 머리에 그날 공부 시간과 막대(주 최대 대비)를 보여준다(1-4f ⑩) */
+  study?: { seconds: number; max: number }
 }
 
 /** 주 보드 카드를 다른 요일로 끌 때 쓰는 dataTransfer 형식 */
@@ -145,7 +145,7 @@ export const DAY_GOAL_DRAG_TYPE = 'application/x-day-goal'
  * 주 보드의 하루 칸. 여기 적은 것이 곧 그날 하루 목표다(1-4f, 계획 카드와 하루 목표를 합침).
  * 미리 적은 것은 일반으로 넣고 핵심은 그날 정한다(Sunsama: 요일마다 미리 채우기를 권하지 않음).
  */
-export function DayColumn({ date, today, dailyGoals, weeklyGoals, run, highlightGoalId, onDropGoal }: DayProps) {
+export function DayColumn({ date, today, dailyGoals, weeklyGoals, run, highlightGoalId, onDropGoal, study }: DayProps) {
   const [over, setOver] = useState(false)
   const [adding, setAdding] = useState(false)
   const [content, setContent] = useState('')
@@ -192,6 +192,14 @@ export function DayColumn({ date, today, dailyGoals, weeklyGoals, run, highlight
           {dailyGoals.filter((d) => d.status === 'DONE').length}/{dailyGoals.length}
         </span>
       </div>
+      {study && (
+        <span className="day-study" title="그날 공부 시간">
+          <span className="goal-bar">
+            <span className="goal-bar-fill accent" style={{ width: `${(study.seconds / Math.max(1, study.max)) * 100}%` }} />
+          </span>
+          <span className="muted small">{formatDuration(study.seconds)}</span>
+        </span>
+      )}
       <ul className="plan-list">
         {dailyGoals.map((g) => (
           <li
@@ -256,46 +264,6 @@ export function DayColumn({ date, today, dailyGoals, weeklyGoals, run, highlight
           + 할 일
         </button>
       )}
-    </div>
-  )
-}
-
-/** 이번 주 요일별 공부 시간, 목표 완료, 컨디션 */
-export function WeekSummary({ journal }: { journal: WeeklyJournal }) {
-  const t = journal.total
-  const max = Math.max(1, ...journal.days.map((d) => studySeconds(d.summary)))
-  return (
-    <div className="card">
-      <h3 className="timeline-title">요일별 기록</h3>
-      <dl className="result-stats">
-        <dt>공부 합계</dt>
-        <dd>{formatDuration(studySeconds(t))}</dd>
-        <dt>딴짓</dt>
-        <dd>{formatDuration(t.distractionSeconds)}</dd>
-        <dt>하루 목표</dt>
-        <dd>
-          {t.goalsDone}/{t.goalsTotal} 완료
-        </dd>
-        <dt>주간 목표</dt>
-        <dd>
-          {t.weeklyGoalsAchieved}/{t.weeklyGoalsTotal} 달성
-        </dd>
-      </dl>
-      <ul className="week-bars">
-        {journal.days.map((d) => {
-          const seconds = studySeconds(d.summary)
-          return (
-            <li key={d.date}>
-              <span className="muted small">{dayLabel(d.date).slice(-3)}</span>
-              <span className="week-bar-track">
-                <span className="week-bar-fill" style={{ width: `${(seconds / max) * 100}%` }} />
-              </span>
-              <span className="small">{formatDuration(seconds)}</span>
-              <span title="컨디션">{d.condition ? CONDITION_LABELS[d.condition] : ''}</span>
-            </li>
-          )
-        })}
-      </ul>
     </div>
   )
 }

@@ -988,3 +988,16 @@ button.link-button:hover { color: var(--accent); text-decoration: underline; }
 .month-week-study .goal-bar { flex: 1; }
 .goal-bar-fill.accent { background: var(--accent); }
 @media (max-width: 720px) { .month-week-row { grid-template-columns: 5.5rem minmax(0, 1fr) 4.5rem 2.5rem 2rem; } .month-week-study .goal-bar { display: none; } }
+/* 주 화면(1-4f ⑩) */
+.week-page { display: grid; gap: 1rem; }
+.week-goals-card .week-chips { display: grid; gap: 0.25rem; }
+.week-goals-card .week-chips > .muted:first-child { display: none; }
+.week-goals-card .week-chip { display: flex; width: 100%; border-radius: 6px; border: none; border-top: 1px solid var(--border); padding: 0.35rem 0.25rem; background: none; }
+.week-goals-card .week-chip-main { flex: 1; justify-content: flex-start; }
+.week-goals-card .week-chip.selected { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.week-page .week-board .day-column { min-height: 9rem; }
+.day-study { display: flex; align-items: center; gap: 0.4rem; margin: 0.1rem 0 0.4rem; }
+.day-study .goal-bar { flex: 1; height: 4px; }
+.week-journal .stack-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
+.week-journal .stack-form > :not(.review-field) { grid-column: 1 / -1; }
+@media (max-width: 720px) { .week-journal .stack-form { grid-template-columns: 1fr; } }

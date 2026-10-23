@@ -2,9 +2,10 @@ import { useCallback, useEffect, useState } from 'react'
 import type { Category } from '../../api/categories'
 import { errorMessage } from '../../api/client'
 import { getDailyGoalsBetween, moveDailyGoal, type DailyGoal } from '../../api/dailyGoals'
+import { formatDuration } from '../../api/focus'
 import type { Goal } from '../../api/goals'
-import { getWeeklyJournal, saveWeeklyJournal, type WeeklyJournal } from '../../api/reviews'
-import { DayColumn, WeekGoalChips, WeekSummary } from '../../components/plan/WeekParts'
+import { getWeeklyJournal, saveWeeklyJournal, studySeconds, type WeeklyJournal } from '../../api/reviews'
+import { DayColumn, WeekGoalChips } from '../../components/plan/WeekParts'
 import ReviewCard from '../../components/ReviewCard'
 import { mondayOf, shiftDate, todaySeoul, weekDates } from '../../utils/date'
 import WeeklyPlanningWizard from './WeeklyPlanningWizard'
@@ -12,7 +13,7 @@ import { journalDue, monthlyGoalsOfWeek, weeklyGoalsOf, type Run } from './planD
 
 type Props = { monday: string; goals: Goal[]; categories: Category[]; run: Run }
 
-/** [주]: 주간 목표 칩 + 월~일 7열 보드(가운데) + 지난주 반영, 요일별 기록, 주간 일지(아래) */
+/** [주](docs/design.md 1-4f ⑩): 숫자 요약 → 이번 주 목표 → 요일별 할 일(그날 공부 시간 포함) → 주간 일지 */
 export default function WeekLevel({ monday, goals, categories, run: parentRun }: Props) {
   const [dailyGoals, setDailyGoals] = useState<DailyGoal[]>([])
   const [journal, setJournal] = useState<WeeklyJournal | null>(null)
@@ -52,10 +53,28 @@ export default function WeekLevel({ monday, goals, categories, run: parentRun }:
     run(() => moveDailyGoal(goalId, date))
   }
 
+  const days = journal?.days ?? []
+  const maxStudy = Math.max(1, ...days.map((d) => studySeconds(d.summary)))
+  const total = journal?.total
+
   return (
-    <>
+    <div className="week-page">
       {error && <p className="error">{error}</p>}
-      <div className="card week-goals-bar">
+
+      <div className="month-metrics">
+        <Metric label="공부" value={total ? formatDuration(studySeconds(total)) : '–'} />
+        <Metric label="할 일 완료" value={total ? `${total.goalsDone}/${total.goalsTotal}` : '–'} />
+        <Metric label="주간 목표" value={total ? `${total.weeklyGoalsAchieved}/${total.weeklyGoalsTotal}` : '–'} />
+        <Metric label="딴짓" value={total ? formatDuration(total.distractionSeconds) : '–'} />
+      </div>
+
+      <div className="card week-goals-card">
+        <div className="goal-header">
+          <h3 className="timeline-title">이번 주 목표</h3>
+          <button className="ghost" onClick={() => setWizard(true)}>
+            {monday > today ? '다음 주 미리 계획하기' : '이번 주 계획하기'} ›
+          </button>
+        </div>
         <WeekGoalChips
           monday={monday}
           weeklyGoals={weeklyGoals}
@@ -66,36 +85,33 @@ export default function WeekLevel({ monday, goals, categories, run: parentRun }:
           selectedId={highlight}
           onSelect={setHighlight}
         />
-        <button className="week-plan-button" onClick={() => setWizard(true)}>
-          {monday > today ? '다음 주 미리 계획하기' : '이번 주 계획하기'} ▶
-        </button>
+        {lastJournal?.nextAction && <p className="muted small">📌 지난주에 정한 한 가지: {lastJournal.nextAction}</p>}
       </div>
 
-      <div className="week-board">
-        {dates.map((date) => (
-          <DayColumn
-            key={date}
-            date={date}
-            today={date === today}
-            dailyGoals={dailyGoals.filter((d) => d.date === date)}
-            weeklyGoals={weeklyGoals}
-            run={run}
-            highlightGoalId={highlight}
-            onDropGoal={moveGoal}
-          />
-        ))}
+      <div className="card">
+        <div className="goal-header">
+          <h3 className="timeline-title">요일별 할 일</h3>
+          <span className="muted small">카드를 끌어 다른 요일로 옮겨요</span>
+        </div>
+        <div className="week-board">
+          {dates.map((date, i) => (
+            <DayColumn
+              key={date}
+              date={date}
+              today={date === today}
+              dailyGoals={dailyGoals.filter((d) => d.date === date)}
+              weeklyGoals={weeklyGoals}
+              run={run}
+              highlightGoalId={highlight}
+              onDropGoal={moveGoal}
+              study={days[i] ? { seconds: studySeconds(days[i].summary), max: maxStudy } : undefined}
+            />
+          ))}
+        </div>
       </div>
-      <p className="muted small board-hint">요일 칸에 적은 할 일은 그날 할 일 목록에 바로 들어가요. 카드를 다른 요일로 끌어 옮기고, 위쪽 목표를 누르면 그 목표의 할 일만 보여요.</p>
 
-      <div className="week-bottom">
-        {lastJournal?.nextAction && (
-          <div className="card pinned">
-            <span className="muted small">📌 지난주 일지의 "다음 주 반영"</span>
-            <p className="pinned-text">{lastJournal.nextAction}</p>
-          </div>
-        )}
-        {journal && <WeekSummary journal={journal} />}
-        {journal && (
+      {journal && (
+        <div className="week-journal">
           <ReviewCard
             key={`${monday}|${journal.saved}`}
             title="주간 일지"
@@ -112,8 +128,8 @@ export default function WeekLevel({ monday, goals, categories, run: parentRun }:
             prompt={monday === mondayOf(today) ? '한 주를 마무리할 때예요. 돌아보고 다음 주에 바꿀 한 가지를 정해요.' : undefined}
             onSave={(v) => run(() => saveWeeklyJournal(monday, { good: v.good, bad: v.bad, nextAction: v.nextAction }))}
           />
-        )}
-      </div>
+        </div>
+      )}
 
       {wizard && (
         <WeeklyPlanningWizard
@@ -126,6 +142,15 @@ export default function WeekLevel({ monday, goals, categories, run: parentRun }:
           onClose={() => setWizard(false)}
         />
       )}
-    </>
+    </div>
+  )
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="goal-metric">
+      <span className="muted small">{label}</span>
+      <strong>{value}</strong>
+    </div>
   )
 }
