@@ -27,6 +27,7 @@ const DAY = 1440
 const RESIZE_ZONE = 8
 /** [주] 보기 목표 칸에 접지 않고 보여줄 칩 수 */
 const ALLDAY_MAX = 3
+const GOALS_COLLAPSED_KEY = 'schedule.goalsCollapsed'
 
 /** 하루 목표를 끌어다 놓을 때 쓰는 dataTransfer 형식 */
 export const GOAL_DRAG_TYPE = 'application/x-daily-goal'
@@ -119,6 +120,23 @@ export default function ScheduleView({
   const [popover, setPopover] = useState<Popover>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [alldayOpen, setAlldayOpen] = useState(false)
+  // [주] 목표 줄 접기. 다음에 열 때도 기억한다
+  const [goalsCollapsed, setGoalsCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(GOALS_COLLAPSED_KEY) === '1'
+    } catch {
+      return false
+    }
+  })
+  const toggleGoals = () => {
+    const next = !goalsCollapsed
+    setGoalsCollapsed(next)
+    try {
+      localStorage.setItem(GOALS_COLLAPSED_KEY, next ? '1' : '0')
+    } catch {
+      // 저장 못 해도 이번 화면에서는 접힌다
+    }
+  }
   const [now, setNow] = useState(nowMinutesSeoul)
   const scroller = useRef<HTMLDivElement>(null)
 
@@ -305,12 +323,39 @@ export default function ScheduleView({
             ))}
           </>
         )}
-        {week && <span className="schedule-allday-label muted">목표</span>}
+        {week && (
+          <button
+            type="button"
+            className="ghost schedule-allday-label schedule-allday-toggle"
+            onClick={toggleGoals}
+            aria-expanded={!goalsCollapsed}
+            title={goalsCollapsed ? '목표 펼치기' : '목표 접기'}
+          >
+            <span aria-hidden="true">{goalsCollapsed ? '▸' : '▾'}</span>목표
+          </button>
+        )}
         {week &&
           dates.map((d) => {
             const dayGoals = [...goalsOf(d)].sort((a, b) => Number(b.type === 'CORE') - Number(a.type === 'CORE'))
             // 하루에 3개가 넘으면 "+N개"로 접고, 누르면 모든 날을 펼친다(구글 캘린더 종일 칸처럼)
             const shown = alldayOpen ? dayGoals : dayGoals.slice(0, ALLDAY_MAX)
+            // 접으면 분류 색 점 + 완료/전체 한 줄 요약(1-4f ㊺, 구글 캘린더 종일 칸 접기)
+            if (goalsCollapsed) {
+              return (
+                <div key={d} className="schedule-allday collapsed">
+                  {dayGoals.length > 0 && (
+                    <button type="button" className="ghost schedule-goal-summary" onClick={toggleGoals} title={dayGoals.map((g) => g.content).join('\n')}>
+                      {dayGoals.map((g) => (
+                        <span key={g.id} className="category-dot" style={{ background: g.category?.color ?? 'var(--muted)' }} aria-hidden="true" />
+                      ))}
+                      <span>
+                        {dayGoals.filter((g) => g.status === 'DONE').length}/{dayGoals.length}
+                      </span>
+                    </button>
+                  )}
+                </div>
+              )
+            }
             return (
               <div key={d} className="schedule-allday">
                 {shown.map((g) => (

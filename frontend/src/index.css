@@ -1280,3 +1280,9 @@ button.pull-all:hover { color: #7c6cf8; }
 .schedule-allday-more { align-self: flex-start; min-height: 0; padding: 1px 6px; font-size: 12px; border-radius: 6px; }
 .day-tasks-add .quick-add { margin-top: 0; }
 .day-tasks-add .quick-add-options { margin-right: 0; }
+
+/* [주] 목표 줄 접기(1-4f ㊺) */
+.schedule-allday-toggle { display: inline-flex; align-items: flex-start; gap: 3px; min-height: 0; padding: 0.25rem 0.2rem; border: 0; border-radius: 0; background: transparent; font: inherit; font-size: 12px; color: var(--text-muted, #888); cursor: pointer; }
+.schedule-allday.collapsed { min-height: 0; padding: 3px 4px; }
+.schedule-goal-summary { display: inline-flex; align-items: center; gap: 4px; min-height: 0; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+.schedule-goal-summary .category-dot { width: 6px; height: 6px; }
