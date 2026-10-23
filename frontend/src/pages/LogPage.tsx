@@ -244,7 +244,7 @@ function LogCalendar({
               title={log ? `${dayLabel(date)} · 공부 ${formatDuration(seconds)}` : dayLabel(date)}
               style={
                 seconds > 0
-                  ? { background: `color-mix(in srgb, var(--up) ${Math.round(15 + (seconds / max) * 55)}%, transparent)` }
+                  ? { background: `color-mix(in srgb, var(--study) ${Math.round(18 + (seconds / max) * 62)}%, transparent)` }
                   : undefined
               }
             >
@@ -264,7 +264,7 @@ function LogCalendar({
               <span
                 className="log-cal-legend-swatch"
                 style={{
-                  background: l.ratio === 0 ? 'transparent' : `color-mix(in srgb, var(--up) ${Math.round(15 + l.ratio * 55)}%, transparent)`,
+                  background: l.ratio === 0 ? 'transparent' : `color-mix(in srgb, var(--study) ${Math.round(18 + l.ratio * 62)}%, transparent)`,
                 }}
               />
               <span>{l.label}</span>

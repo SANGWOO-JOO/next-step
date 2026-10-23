@@ -1129,3 +1129,5 @@ input[type='checkbox'] { accent-color: #6d74f7; }
 .log-cal-legend-title { font-weight: 600; margin-bottom: 0.15rem; }
 .log-cal-legend-row { display: grid; grid-template-columns: 1.4rem 2.5rem 1fr; align-items: center; gap: 0.5rem; }
 .log-cal-legend-swatch { width: 1.4rem; height: 1.1rem; border-radius: 5px; border: 1px solid var(--hairline); }
+/* 공부량 색 = 브랜드 보라 농도(CI: 완료·진행만 초록) */
+:root { --study: #7c6cf8; }
