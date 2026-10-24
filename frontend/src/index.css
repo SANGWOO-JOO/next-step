@@ -1540,7 +1540,7 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .welcome-cell.past:hover::after, .welcome-cell.past:hover::before { opacity: 1; visibility: visible; transition: opacity 0.12s 0.15s, visibility 0s 0.15s; }
 
 /* 랜딩(2-4, docs/design.md 11-5): 프로토타입 Landing 보드를 옮김. 늘 어두운 배경 */
-.ld { min-height: 100vh; background: #141414; color: #ececec; overflow-x: hidden; }
+.ld { min-height: 100vh; background: #141414; color: #ececec; overflow-x: hidden; word-break: keep-all; }
 .ld a { color: inherit; }
 .ld-sec { position: relative; }
 .ld-hero { min-height: 100vh; overflow: hidden; }
