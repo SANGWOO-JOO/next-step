@@ -278,7 +278,6 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
               {DAYS.map((d, i) => (
                 <span key={d} className={i < firstDay ? 'welcome-day past' : 'welcome-day'}>
                   {d} <span className="welcome-date">{Number(shiftDate(monday, i).slice(8))}</span>
-                  {i < firstDay && <span className="welcome-past-tag">지남</span>}
                 </span>
               ))}
               {HOURS.map((h) => (
@@ -295,6 +294,7 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
                         disabled={past}
                         aria-pressed={on}
                         aria-label={`${d}요일 ${h}시`}
+                        data-tip={past ? '지난 요일은 칠할 수 없어요' : undefined}
                         onPointerDown={(e) => {
                           e.preventDefault()
                           painting.current = !on
