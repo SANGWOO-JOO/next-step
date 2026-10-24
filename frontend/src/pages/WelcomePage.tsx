@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { errorMessage } from '../api/client'
 import { completeOnboarding, skipOnboarding, type Me, type Purpose } from '../api/me'
-import starArt from '../assets/illust/deco-star.svg'
 import studentArt from '../assets/illust/mascot-student.svg'
 import workerArt from '../assets/illust/mascot-worker.svg'
 import { availableColors } from '../utils/categoryColors'
@@ -196,7 +195,6 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
                   <span className="muted small">{p.desc}</span>
                   {/* 스텝이가 오른쪽 아래에서 빼꼼(2-3 A안). 장식이라 읽지 않는다 */}
                   <img className="welcome-mascot" src={ART[p.id].mascot} alt="" aria-hidden="true" draggable={false} />
-                  {p.id === purpose && <img className="welcome-star" src={starArt} alt="" aria-hidden="true" draggable={false} />}
                 </button>
               ))}
             </div>

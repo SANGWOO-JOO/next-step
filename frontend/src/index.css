@@ -1533,9 +1533,8 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .welcome-dayhours.zero { background: none; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .welcome-total strong { animation: none; } .welcome-daybar span { transition: none; } }
 .welcome-note { margin: -0.6rem 0 1rem; font-size: 0.85rem; color: #c4b5fd; }
-/* 목적 카드의 스텝이(2-3 A안): 오른쪽 아래에서 살짝 잘린 채 빼꼼, 고른 카드에만 별(소품은 뺌) */
+/* 목적 카드의 스텝이(2-3 A안): 오른쪽 아래에서 살짝 잘린 채 빼꼼 */
 .welcome-mascot { position: absolute; right: -0.4rem; bottom: -1rem; width: 6rem; pointer-events: none; transition: transform 0.2s; }
 .welcome-purpose:hover .welcome-mascot, .welcome-purpose.on .welcome-mascot { transform: translateY(-0.25rem); }
-.welcome-star { position: absolute; right: 5.3rem; top: 0.9rem; width: 1rem; pointer-events: none; animation: welcome-bump 0.3s ease-out; }
 .welcome-purpose strong, .welcome-purpose .muted { position: relative; z-index: 1; max-width: calc(100% - 6rem); }
-@media (prefers-reduced-motion: reduce) { .welcome-mascot { transition: none; } .welcome-star { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .welcome-mascot { transition: none; } }
