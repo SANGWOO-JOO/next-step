@@ -1,302 +1,205 @@
 import { useEffect, useState } from 'react'
-import GoalIcon from '../components/GoalIcon'
+import { Link } from 'react-router-dom'
 import { errorMessage } from '../api/client'
-import { formatDuration } from '../api/focus'
-import {
-  getStatsByCategory,
-  getStatsByTopic,
-  getStatsSummary,
-  unitFor,
-  type CategoryStat,
-  type StatsSummary,
-  type TopicCategoryStat,
-} from '../api/stats'
-import { FocusHeatmap, FocusVsDistraction, TrendChart } from '../components/DashboardCharts'
-import { addMonths, mondayOf, shiftDate, todaySeoul } from '../utils/date'
+import { getReport, type Report, type ReportBucket, type ReportPeriod } from '../api/report'
+import { parseFeedback } from '../api/reviews'
+import chevronLeft from '../assets/icons/chevron-left.svg'
+import chevronRight from '../assets/icons/chevron-right.svg'
+import calendarIllust from '../assets/illust/deco-calendar.svg'
+import mascot from '../assets/illust/mascot-wave.svg'
+import trophy from '../assets/illust/deco-trophy.svg'
+import GoalIcon from '../components/GoalIcon'
+import IconButton from '../components/IconButton'
+import { addMonths, mondayOf, monthLabel, shiftDate, todaySeoul, weekLabel } from '../utils/date'
 
-type Period = 'today' | 'week' | 'month' | 'custom'
+const DAY_NAMES = ['월', '화', '수', '목', '금', '토', '일']
 
-const PERIOD_LABELS: Record<Period, string> = { today: '오늘', week: '이번 주', month: '이번 달', custom: '직접' }
-
-/** 기간과 바로 앞 같은 길이 기간 */
-function periodRange(period: Exclude<Period, 'custom'>, today: string) {
-  if (period === 'today') return { from: today, to: today, prevFrom: shiftDate(today, -1), prevTo: shiftDate(today, -1) }
-  if (period === 'week') {
-    const monday = mondayOf(today)
-    return { from: monday, to: today, prevFrom: shiftDate(monday, -7), prevTo: shiftDate(today, -7) }
-  }
-  const first = `${today.slice(0, 7)}-01`
-  const prevFirst = `${addMonths(today.slice(0, 7), -1)}-01`
-  // 지난달 같은 날까지(지난달이 짧으면 말일까지)
-  const prevEnd = shiftDate(first, -1)
-  const sameDay = `${prevFirst.slice(0, 8)}${today.slice(8)}`
-  return { from: first, to: today, prevFrom: prevFirst, prevTo: sameDay < prevEnd ? sameDay : prevEnd }
+/** 분 → "3시간 30분", "45분", "0분" */
+const hours = (minutes: number) => {
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  if (h === 0) return `${m}분`
+  return m === 0 ? `${h}시간` : `${h}시간 ${m}분`
 }
 
+/**
+ * 내 공부 리포트(docs/design.md 11-6 2-8): "이번 주(달)에 얼마나, 어디에 썼고, 계획대로 했나?" 하나에 답한다.
+ * 큰 숫자 카드, 요일별(달은 주별) 계획과 실제, 목표별, 지난 주 피드백.
+ */
 export default function DashboardPage() {
   const today = todaySeoul()
-  const [period, setPeriod] = useState<Period>('week')
-  const [custom, setCustom] = useState({ from: shiftDate(today, -13), to: today })
-  const [cards, setCards] = useState<{ label: string; now: StatsSummary; prev: StatsSummary }[]>([])
-  const [selected, setSelected] = useState<StatsSummary | null>(null)
-  const [categories, setCategories] = useState<CategoryStat[]>([])
-  const [topics, setTopics] = useState<TopicCategoryStat[]>([])
+  const [period, setPeriod] = useState<ReportPeriod>('WEEK')
+  const [start, setStart] = useState(mondayOf(today))
+  const [report, setReport] = useState<Report | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // 상단 카드: 오늘 / 이번 주 / 이번 달, 각각 지난 같은 기간과 비교
   useEffect(() => {
-    const periods = (['today', 'week', 'month'] as const).map((p) => ({ p, r: periodRange(p, today) }))
-    Promise.all(
-      periods.map(({ p, r }) =>
-        Promise.all([getStatsSummary(r.from, r.to), getStatsSummary(r.prevFrom, r.prevTo)]).then(([now, prev]) => ({
-          label: PERIOD_LABELS[p],
-          now,
-          prev,
-        })),
-      ),
-    )
-      .then(setCards)
-      .catch((e) => setError(errorMessage(e)))
-  }, [today])
-
-  const range = period === 'custom' ? custom : periodRange(period, today)
-
-  useEffect(() => {
-    Promise.all([getStatsSummary(range.from, range.to), getStatsByCategory(range.from, range.to), getStatsByTopic(range.from, range.to)])
-      .then(([s, c, t]) => {
-        setSelected(s)
-        setCategories(c)
-        setTopics(t)
+    getReport(period, start)
+      .then((r) => {
+        setReport(r)
         setError(null)
       })
       .catch((e) => setError(errorMessage(e)))
-  }, [range.from, range.to])
+  }, [period, start])
 
-  const month = cards.find((c) => c.label === '이번 달')?.now
+  const switchTo = (p: ReportPeriod) => {
+    setPeriod(p)
+    setStart(p === 'WEEK' ? mondayOf(today) : `${today.slice(0, 7)}-01`)
+  }
+  const move = (delta: number) =>
+    setStart(period === 'WEEK' ? shiftDate(start, delta * 7) : `${addMonths(start.slice(0, 7), delta)}-01`)
+  const isCurrent = period === 'WEEK' ? start === mondayOf(today) : start.slice(0, 7) === today.slice(0, 7)
+  const label = period === 'WEEK' ? weekLabel(start) : monthLabel(start.slice(0, 7))
+  const unit = period === 'WEEK' ? '주' : '달'
 
   return (
-    <section>
-      <h1>시간 대시보드</h1>
-      <p className="muted">순 공부시간 = 시간표 실제 기록(목표 공부) + 타이머 없이 한 공부. 실제 기록 이전 날은 지난 집중 세션</p>
-      {error && (
-        <p className="error-banner" role="alert">
-          {error}
-        </p>
-      )}
-
-      <div className="stat-cards">
-        {cards.map((c) => (
-          <StatCard key={c.label} label={c.label} now={c.now} prev={c.prev} />
-        ))}
-        {month && (
-          <>
-            <div className="card stat-card">
-              <span className="muted small">일평균 (이번 달)</span>
-              <strong className="stat-value">{formatDuration(month.dailyAverageSeconds)}</strong>
-              <span className="muted small">
-                {month.days}일 중 {month.studyDays}일 공부
-              </span>
-            </div>
-            <div className="card stat-card">
-              <span className="muted small">연속 공부일</span>
-              <strong className="stat-value">{month.streakDays}일</strong>
-              <span className="muted small">오늘 안 했으면 어제부터 셈</span>
-            </div>
-          </>
-        )}
+    <section className="report-page">
+      <div className="cal-header">
+        <span className="cal-nav">
+          <IconButton icon={chevronLeft} label={`이전 ${unit}`} onClick={() => move(-1)} />
+          <IconButton icon={chevronRight} label={`다음 ${unit}`} onClick={() => move(1)} />
+          <h1 className="cal-title">내 공부 리포트</h1>
+        </span>
+        <span className="segmented" role="group" aria-label="기간">
+          <button className={period === 'WEEK' ? 'active' : ''} onClick={() => switchTo('WEEK')}>
+            이번 주
+          </button>
+          <button className={period === 'MONTH' ? 'active' : ''} onClick={() => switchTo('MONTH')}>
+            이번 달
+          </button>
+        </span>
       </div>
-
-      <div className="card">
-        <div className="goal-header">
-          <h2 className="goal-title">기간별 목표</h2>
-          <span className="segmented">
-            {(Object.keys(PERIOD_LABELS) as Period[]).map((p) => (
-              <button key={p} className={period === p ? 'active' : ''} onClick={() => setPeriod(p)}>
-                {PERIOD_LABELS[p]}
-              </button>
-            ))}
-          </span>
+      {error && <p className="error-banner">{error}</p>}
+      {report && (report.actualMinutes + report.plannedMinutes === 0 ? (
+        <div className="card report-empty">
+          <img src={calendarIllust} alt="" width={120} height={120} />
+          <strong>{isCurrent ? `이번 ${unit} 기록이 아직 없어요` : `${label}에는 기록이 없어요`}</strong>
+          <p className="muted small">일정에서 한 일을 기록하면 여기에 쌓여요</p>
+          {isCurrent && (
+            <Link className="button-link" to="/">
+              일정으로 가기
+            </Link>
+          )}
         </div>
-        {period === 'custom' && (
-          <p className="inline-form">
-            <input
-              type="date"
-              value={custom.from}
-              max={custom.to}
-              onChange={(e) => e.target.value && setCustom({ ...custom, from: e.target.value })}
-              aria-label="시작일"
-            />
-            ~
-            <input
-              type="date"
-              value={custom.to}
-              min={custom.from}
-              onChange={(e) => e.target.value && setCustom({ ...custom, to: e.target.value })}
-              aria-label="종료일"
-            />
-          </p>
-        )}
-        {selected && <PeriodSummary summary={selected} />}
-        <CategoryBars stats={categories} />
-      </div>
-
-      {topics.some((c) => c.topics.some((t) => t.title !== null)) && (
-        <div className="card">
-          <TopicStats stats={topics} />
-        </div>
-      )}
-
-      <div className="card">
-        <TrendChart from={range.from} to={range.to} unit={period === 'month' ? 'week' : unitFor(range.from, range.to)} />
-      </div>
-      <div className="dashboard-grid">
-        <div className="card">
-          <FocusHeatmap from={range.from} to={range.to} />
-        </div>
-        <div className="card">{selected && <FocusVsDistraction summary={selected} />}</div>
-      </div>
+      ) : (
+        <ReportBody report={report} label={label} unit={unit} today={today} />
+      ))}
     </section>
   )
 }
 
-function Diff({ now, prev }: { now: number; prev: number }) {
-  const diff = now - prev
-  if (diff === 0) return <span className="muted small">지난 기간과 같음</span>
-  return (
-    <span className={diff > 0 ? 'small diff up' : 'small diff down'}>
-      {diff > 0 ? '▲' : '▼'} {formatDuration(Math.abs(diff))} (지난 기간 대비)
-    </span>
-  )
-}
-
-function StatCard({ label, now, prev }: { label: string; now: StatsSummary; prev: StatsSummary }) {
-  const percent = now.targetSeconds ? Math.round((now.totalSeconds / now.targetSeconds) * 100) : null
-  return (
-    <div className="card stat-card">
-      <span className="muted small">{label}</span>
-      <strong className="stat-value">{formatDuration(now.totalSeconds)}</strong>
-      <Diff now={now.totalSeconds} prev={prev.totalSeconds} />
-      {percent !== null && (
-        <span className="muted small">
-          목표 {formatDuration(now.targetSeconds!)}의 {percent}%
-        </span>
-      )}
-    </div>
-  )
-}
-
-function PeriodSummary({ summary: s }: { summary: StatsSummary }) {
-  const focusShare = s.focusSeconds + s.distractionSeconds
-  return (
-    <dl className="result-stats log-stats period-stats">
-      <dt>순 공부</dt>
-      <dd>{formatDuration(s.totalSeconds)}</dd>
-      <dt>시간 기록</dt>
-      <dd>{formatDuration(s.focusSeconds)}</dd>
-      <dt>수동 기록</dt>
-      <dd>{formatDuration(s.manualSeconds)}</dd>
-      <dt>딴짓</dt>
-      <dd>
-        {formatDuration(s.distractionSeconds)}
-        {focusShare > 0 && ` (${Math.round(s.distractionRatio * 100)}%)`}
-      </dd>
-      <dt>일평균</dt>
-      <dd>{formatDuration(s.dailyAverageSeconds)}</dd>
-    </dl>
-  )
-}
-
-/** 분류별 비율(가로 누적 막대)과 분류별 시간 막대(목표 비율 표시) */
-/**
- * 주제별 공부 시간(1-4f ㊾, Toggl 보고서처럼 분류 → 주제). 블록에 적은 주제를 실제 기록 기준으로 묶는다.
- * 주제를 하나도 안 적은 분류는 빼고, 안 적은 시간은 "주제 없음"으로 맨 아래.
- */
-function TopicStats({ stats }: { stats: TopicCategoryStat[] }) {
-  const shown = stats.filter((c) => c.topics.some((t) => t.title !== null))
-  return (
-    <>
-      <h3 className="timeline-title">주제별</h3>
-      <div className="topic-stats">
-        {shown.map((c) => {
-          const color = c.category?.color ?? 'var(--muted)'
-          const max = Math.max(1, ...c.topics.map((t) => t.seconds))
-          return (
-            <section key={c.category?.id ?? 'none'} className="topic-stats-group">
-              <header>
-                <GoalIcon icon={c.category?.icon} color={c.category?.color} size={20} />
-                <strong>{c.category?.name ?? '목표 없음'}</strong>
-                <span className="muted small">{formatDuration(c.seconds)}</span>
-              </header>
-              <ul>
-                {c.topics.map((t) => (
-                  <li key={t.title ?? '(none)'} className={t.title === null ? 'muted' : undefined}>
-                    <span className="topic-stats-name">{t.title ?? '주제 없음'}</span>
-                    <span className="topic-stats-track">
-                      <span
-                        className="topic-stats-fill"
-                        style={{ width: `${(t.seconds / max) * 100}%`, background: t.title === null ? 'var(--border)' : color }}
-                      />
-                    </span>
-                    <span className="small topic-stats-value">{formatDuration(t.seconds)}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )
-        })}
-      </div>
-    </>
-  )
-}
-
-function CategoryBars({ stats }: { stats: CategoryStat[] }) {
-  const total = stats.reduce((sum, s) => sum + s.seconds, 0)
-  const max = Math.max(1, ...stats.map((s) => Math.max(s.seconds, s.targetSeconds ?? 0)))
-  const color = (s: CategoryStat) => s.category?.color ?? 'var(--muted)'
-  const name = (s: CategoryStat) => s.category?.name ?? '목표 없음'
-
-  if (total === 0) return <p className="muted small">이 기간에 기록된 공부가 없어요.</p>
+function ReportBody({ report, label, unit, today }: { report: Report; label: string; unit: string; today: string }) {
+  const ratio = report.plannedMinutes > 0 ? Math.round((report.actualMinutes / report.plannedMinutes) * 100) : null
+  const diff = report.actualMinutes - report.previousActualMinutes
+  const feedback = parseFeedback(report.lastWeekFeedback)
+  const weekly = report.period === 'WEEK'
 
   return (
     <>
-      <div className="stack-bar" role="img" aria-label="목표별 비율">
-        {stats
-          .filter((s) => s.seconds > 0)
-          .map((s) => (
-            <span
-              key={s.category?.id ?? 'none'}
-              style={{ width: `${s.ratio * 100}%`, background: color(s) }}
-              title={`${name(s)} ${Math.round(s.ratio * 100)}%`}
-            />
-          ))}
-      </div>
-      <ul className="category-bars">
-        {stats.map((s) => (
-          <li key={s.category?.id ?? 'none'}>
-            <span className="category-bar-name">
-              <GoalIcon icon={s.category?.icon} color={color(s)} size={22} />
-              {name(s)}
+      <div className="card report-hero">
+        <img src={mascot} alt="" width={92} height={92} />
+        <div className="report-hero-text">
+          <span className="report-sub">{label} 실제로 한 시간</span>
+          <strong className="report-big">{hours(report.actualMinutes)}</strong>
+          <span className="report-sub">{ratio === null ? '계획한 시간이 없어요' : `계획 ${hours(report.plannedMinutes)} 중 ${ratio}%`}</span>
+          {ratio !== null && (
+            <span className="report-progress">
+              <i style={{ width: `${Math.min(100, ratio)}%` }} />
             </span>
-            <span className="category-bar-track">
-              <span className="category-bar-fill" style={{ width: `${(s.seconds / max) * 100}%`, background: color(s) }} />
-              {s.targetSeconds !== null && (
-                <span
-                  className="category-bar-target"
-                  style={{ left: `${(s.targetSeconds / max) * 100}%` }}
-                  title={`주간 목표 기준 ${formatDuration(s.targetSeconds)}`}
-                />
+          )}
+          <span className="report-chips">
+            <span className="report-chip">
+              {diff === 0 ? `지난 ${unit}와 같아요` : (
+                <>
+                  <b className={diff > 0 ? 'up' : 'down'}>
+                    {diff > 0 ? '▲' : '▼'} {hours(Math.abs(diff))}
+                  </b>{' '}
+                  지난 {unit}보다
+                </>
               )}
             </span>
-            <span className="small category-bar-value">
-              {formatDuration(s.seconds)} · {Math.round(s.ratio * 100)}%
-              {s.targetRatio !== null && <span className="muted"> / 목표 {s.targetRatio}%</span>}
-            </span>
-          </li>
-        ))}
-      </ul>
-      {stats.some((s) => s.targetSeconds !== null) && (
-        <p className="muted small">세로선은 주간 목표 시간을 이 기간 길이에 맞춘 값이에요.</p>
+            <span className="report-chip">공부한 날 {report.studyDays}일</span>
+            <span className="report-chip">연속 {report.streakDays}일</span>
+          </span>
+        </div>
+      </div>
+
+      <div className="card">
+        <h3 className="report-title">{weekly ? '요일별' : '주별'}</h3>
+        <Bars buckets={report.buckets} weekly={weekly} today={today} />
+        <div className="report-legend">
+          <span>
+            <i className="plan" />
+            계획
+          </span>
+          <span>
+            <i className="act" />
+            실제
+          </span>
+        </div>
+      </div>
+
+      {report.goals.length > 0 && (
+        <div className="card">
+          <h3 className="report-title">목표별</h3>
+          {report.goals.map((g) => {
+            const max = Math.max(1, ...report.goals.map((x) => Math.max(x.plannedMinutes, x.actualMinutes)))
+            return (
+              <div key={g.id} className="report-goal">
+                <GoalIcon icon={g.icon} color={g.color} size={28} />
+                <div className="report-goal-main">
+                  <span className="report-goal-name">{g.title}</span>
+                  <span className="report-goal-track">
+                    <i className="plan" style={{ width: `${(g.plannedMinutes / max) * 100}%` }} />
+                    <i className="act" style={{ width: `${(g.actualMinutes / max) * 100}%`, background: g.color }} />
+                  </span>
+                  {g.topDetail && (
+                    <span className="muted small">
+                      많이 한 것: {g.topDetail} {hours(g.topDetailMinutes)}
+                    </span>
+                  )}
+                </div>
+                <span className="report-goal-time">
+                  <b>{hours(g.actualMinutes)}</b> / {hours(g.plannedMinutes)}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {feedback && (
+        <Link className="card report-feedback" to="/log?kind=week">
+          <img src={trophy} alt="" width={40} height={40} />
+          <span>
+            <span className="report-sub">지난 주 피드백</span>
+            <strong>{feedback.summary}</strong>
+            <span className="report-more">기록에서 전체 보기 ›</span>
+          </span>
+        </Link>
       )}
     </>
+  )
+}
+
+/** 계획(점선)과 실제(채움)를 겹친 막대 */
+function Bars({ buckets, weekly, today }: { buckets: ReportBucket[]; weekly: boolean; today: string }) {
+  const max = Math.max(60, ...buckets.map((b) => Math.max(b.plannedMinutes, b.actualMinutes)))
+  const h = (m: number) => `${(m / max) * 100}%`
+  return (
+    <div className="report-bars" style={{ gridTemplateColumns: `repeat(${buckets.length}, 1fr)` }}>
+      {buckets.map((b, i) => {
+        const current = weekly ? b.start === today : b.start === mondayOf(today)
+        return (
+          <div key={b.start} className={current ? 'report-bar current' : 'report-bar'} title={`계획 ${hours(b.plannedMinutes)}, 실제 ${hours(b.actualMinutes)}`}>
+            <span className="report-bar-area">
+              {b.plannedMinutes > 0 && <i className="plan" style={{ height: h(b.plannedMinutes) }} />}
+              {b.actualMinutes > 0 && <i className="act" style={{ height: h(b.actualMinutes) }} />}
+            </span>
+            <span className="report-bar-label">{weekly ? DAY_NAMES[i] : `${i + 1}주`}</span>
+          </div>
+        )
+      })}
+    </div>
   )
 }

@@ -1708,3 +1708,45 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .weekly-feedback ul { margin: 0; padding-left: 1.1rem; }
 .weekly-feedback-consent { margin-top: 0.5rem; padding: 0.75rem; border-radius: 10px; background: var(--soft-fill); display: grid; gap: 0.5rem; }
 .weekly-feedback-consent p { margin: 0; }
+
+/* 내 공부 리포트(docs/design.md 11-6 2-8) */
+.report-page .card { margin-top: 0.75rem; }
+.report-hero { display: flex; align-items: center; gap: 1rem; background: linear-gradient(135deg, color-mix(in srgb, #8b5cf6 22%, var(--surface)), color-mix(in srgb, #5b8cff 14%, var(--surface))); }
+.report-hero > img { flex: none; }
+.report-hero-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+.report-sub { color: var(--muted); font-size: 0.82rem; display: block; }
+.report-big { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; }
+.report-progress { display: block; height: 8px; border-radius: 4px; background: color-mix(in srgb, var(--text) 10%, transparent); overflow: hidden; margin-top: 0.4rem; }
+.report-progress i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #8fb1ff, #a06cf6); }
+.report-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.6rem; }
+.report-chip { padding: 3px 10px; border-radius: 999px; background: color-mix(in srgb, var(--text) 8%, transparent); font-size: 0.78rem; }
+.report-chip .up { color: var(--up); }
+.report-chip .down { color: var(--down); }
+.report-title { margin: 0 0 0.75rem; font-size: 0.95rem; }
+.report-bars { display: grid; gap: 0.5rem; height: 140px; }
+.report-bar { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; min-width: 0; }
+.report-bar-area { position: relative; flex: 1; width: min(28px, 100%); display: flex; align-items: flex-end; }
+.report-bar-area i { position: absolute; bottom: 0; left: 0; right: 0; border-radius: 6px; }
+.report-bar-area i.plan, .report-goal-track i.plan, .report-legend i.plan { border: 1.5px dashed color-mix(in srgb, #8b5cf6 60%, transparent); background: none; box-sizing: border-box; }
+.report-bar-area i.act, .report-legend i.act { background: linear-gradient(180deg, #a06cf6, #8fb1ff); }
+.report-bar-label { font-size: 0.75rem; color: var(--muted); }
+.report-bar.current .report-bar-label { color: var(--text); font-weight: 700; }
+.report-legend { display: flex; gap: 1rem; margin-top: 0.6rem; font-size: 0.78rem; color: var(--muted); }
+.report-legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.report-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; }
+.report-goal { display: grid; grid-template-columns: 28px 1fr auto; gap: 0.75rem; align-items: center; padding: 0.6rem 0; border-top: 1px solid var(--hairline, var(--border)); }
+.report-goal:first-of-type { border-top: 0; }
+.report-goal-main { min-width: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+.report-goal-name { font-weight: 600; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.report-goal-track { position: relative; height: 8px; border-radius: 4px; background: color-mix(in srgb, var(--text) 6%, transparent); }
+.report-goal-track i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 4px; }
+.report-goal-time { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+.report-goal-time b { color: var(--text); }
+.report-feedback { display: flex; gap: 0.75rem; align-items: flex-start; color: var(--text); text-decoration: none; }
+.report-feedback:hover { text-decoration: none; background: var(--soft-fill); }
+.report-feedback strong { display: block; margin: 0.15rem 0; }
+.report-more { color: var(--accent); font-size: 0.8rem; }
+.report-empty { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; padding: 2rem 1rem; text-align: center; }
+.report-empty p { margin: 0; }
+.report-empty .button-link { margin-top: 0.5rem; }
+@media (max-width: 560px) { .report-hero > img { width: 64px; height: 64px; } .report-big { font-size: 1.6rem; } }
