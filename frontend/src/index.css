@@ -405,7 +405,7 @@ button.core-toggle:disabled { cursor: not-allowed; }
     linear-gradient(to bottom, var(--border) 1px, transparent 1px),
     linear-gradient(to bottom, color-mix(in srgb, var(--border) 45%, transparent) 1px, transparent 1px);
   background-size: 100% 48px, 100% 24px;
-  cursor: crosshair;
+  cursor: url('./assets/cursors/create.svg') 16 16, crosshair;
   touch-action: none;
 }
 .schedule-column.today { background-color: color-mix(in srgb, var(--accent) 4%, transparent); }
@@ -421,16 +421,16 @@ button.core-toggle:disabled { cursor: not-allowed; }
   font-size: 0.78rem;
   line-height: 1.2;
   overflow: hidden;
-  cursor: grab;
+  cursor: url('./assets/cursors/move.svg') 16 16, grab;
   z-index: 1;
 }
 .schedule-block.short { flex-direction: row; gap: 0.4rem; align-items: center; }
-.schedule-block.dragging, .actual-entry.dragging { opacity: 0.85; box-shadow: 0 4px 14px rgb(0 0 0 / 0.25); cursor: grabbing; z-index: 3; }
+.schedule-block.dragging, .actual-entry.dragging { opacity: 0.85; box-shadow: 0 4px 14px rgb(0 0 0 / 0.25); cursor: url('./assets/cursors/moving.svg') 16 16, grabbing; z-index: 3; }
 .schedule-block.done .schedule-block-title { text-decoration: line-through; opacity: 0.6; }
 .schedule-block.preview { border: 1px dashed var(--accent); border-left-width: 4px; border-left-color: var(--accent); background: color-mix(in srgb, var(--accent) 18%, transparent); pointer-events: none; }
 .schedule-block-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .schedule-block-time { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 0.72rem; white-space: nowrap; }
-.schedule-block-resize { position: absolute; left: 0; right: 0; bottom: 0; height: 8px; cursor: ns-resize; }
+.schedule-block-resize { position: absolute; left: 0; right: 0; bottom: 0; height: 8px; cursor: url('./assets/cursors/resize.svg') 16 16, ns-resize; }
 .schedule-now { position: absolute; left: 0; right: 0; height: 2px; background: var(--down); pointer-events: none; z-index: 2; }
 .schedule-now::before { content: ''; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--down); }
 .schedule-popover {
