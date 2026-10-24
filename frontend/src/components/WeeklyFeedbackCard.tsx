@@ -9,7 +9,7 @@ const BLOCKED: Record<AiFeedbackBlock, string> = {
   UNAVAILABLE: '지금은 쓸 수 없어요',
   NOT_ENDED: '주가 끝난 뒤에 받을 수 있어요',
   TOO_LITTLE: '기록이 2시간 넘게 쌓이면 받을 수 있어요',
-  LIMIT: '이번 주 피드백은 다 받았어요',
+  LIMIT: '이 주 피드백은 다 받았어요',
 }
 
 /**

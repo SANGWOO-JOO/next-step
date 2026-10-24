@@ -39,7 +39,8 @@ class WeeklyFeedbackService(
             입력은 서버가 계산한 숫자와 사용자가 쓴 주간 일지를 담은 JSON이야.
             규칙:
             - 입력에 있는 숫자와 시간 표현만 그대로 써. 새로 계산하거나 지어내지 마.
-            - 한국어 해요체로, 문장은 짧게.
+            - 한국어 해요체로, 문장은 짧게. 높임 표현(-시-, 예: 쓰셨어요, 하셨어요)은 쓰지 말고 "썼어요", "했어요"처럼 써.
+            - 입력의 week가 돌아볼 주이고 이미 끝났어. 그 주는 "지난주"라고 불러. weekBeforeStudy는 그보다 한 주 전이라 "그 전 주"라고 불러. 다가올 주는 "이번 주"라고 불러.
             - 가운뎃점(·)을 쓰지 마.
             - "잘하고 있어요", "힘내세요", "대단해요" 같은 위로나 응원 문구를 쓰지 마.
             - summary: 이번 주를 한 문장으로.
@@ -121,7 +122,7 @@ class WeeklyFeedbackService(
             "purpose" to purpose?.let { PURPOSE_LABEL[it] },
             "week" to "$weekStart ~ $weekEnd",
             "totalStudy" to hours(current.total.studySeconds / 60),
-            "lastWeekStudy" to hours(lastWeek),
+            "weekBeforeStudy" to hours(lastWeek),
             "daysRecorded" to "${current.days.count { it.summary.studySeconds > 0 }}일",
             "goals" to goals,
             "topDetails" to topics,
