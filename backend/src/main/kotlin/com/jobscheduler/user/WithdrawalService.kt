@@ -20,6 +20,8 @@ class WithdrawalService(private val jdbcTemplate: JdbcTemplate) {
 
     @Transactional
     fun withdraw(userId: Long) {
+        // 다른 기기에 남은 로그인 세션도 지운다(세션의 주인 이름은 구글 sub). 속성 행은 외래 키로 함께 지워진다
+        jdbcTemplate.update("DELETE FROM spring_session WHERE principal_name = (SELECT google_sub FROM app_user WHERE id = ?)", userId)
         USER_TABLES.forEach { jdbcTemplate.update("DELETE FROM $it WHERE user_id = ?", userId) }
         jdbcTemplate.update("DELETE FROM app_user WHERE id = ?", userId)
     }

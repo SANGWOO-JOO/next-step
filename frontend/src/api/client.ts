@@ -31,10 +31,17 @@ export const UNAUTHORIZED_EVENT = 'auth:unauthorized'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
+/** 서버가 내려준 CSRF 쿠키 값(docs/deploy.md 4장). 변경 요청에 X-XSRF-TOKEN 헤더로 돌려보낸다 */
+const csrfToken = () => document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/)?.[1]
+
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const headers: Record<string, string> = {}
+  if (body !== undefined) headers['Content-Type'] = 'application/json'
+  const token = method === 'GET' ? undefined : csrfToken()
+  if (token) headers['X-XSRF-TOKEN'] = decodeURIComponent(token)
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
-    headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+    headers,
     body: body === undefined ? undefined : JSON.stringify(body),
   })
 

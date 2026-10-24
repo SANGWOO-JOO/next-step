@@ -116,7 +116,7 @@ Spring Boot → Google OAuth (로그인 확인), Anthropic Claude (주간 피드
 | 순서 | 작업 | AWS 필요 | 상태 |
 |---|---|---|---|
 | 0 | 사용자별 날짜 묶음 인덱스 | 아니요 | 완료 2026-10-25 |
-| 1 | Spring Session JDBC, CSRF 쿠키 방식 | 아니요 | |
+| 1 | Spring Session JDBC, CSRF 쿠키 방식 | 아니요 | 완료 2026-10-25 |
 | 2 | GitHub 공개 저장소, Secret Scanning과 Push Protection | 아니요 | |
 | 3 | CI 워크플로(`ci.yml`) | 아니요 | |
 | 4 | 릴리즈 워크플로(`release.yml`), 배포 단계는 꺼 둔 채 Release 생성까지 | 아니요 | |

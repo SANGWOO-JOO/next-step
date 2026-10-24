@@ -61,7 +61,12 @@ class WithdrawalServiceTest(
         TestUsers.loginAs(TestUsers.ME)
         val mine = goalService.list().size
 
+        // 이 사람의 로그인 세션(다른 기기)도 지워져야 한다
+        jdbcTemplate.update(
+            "INSERT INTO spring_session VALUES ('p-1', 's-1', 0, 0, 1209600, 9999999999999, (SELECT google_sub FROM app_user WHERE id = ?))", id,
+        )
         withdrawalService.withdraw(id)
+        assertEquals(0, jdbcTemplate.queryForObject("SELECT COUNT(*) FROM spring_session WHERE primary_id = 'p-1'", Long::class.java))
         WithdrawalService.USER_TABLES.forEach { assertEquals(0, count(it, id), it) }
         assertEquals(0, jdbcTemplate.queryForObject("SELECT COUNT(*) FROM app_user WHERE id = ?", Long::class.java, id))
         assertEquals(mine, goalService.list().size)
