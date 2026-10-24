@@ -1538,10 +1538,10 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .welcome-purpose:hover .welcome-mascot, .welcome-purpose.on .welcome-mascot { transform: translateY(-0.25rem); }
 .welcome-purpose strong, .welcome-purpose .muted { position: relative; z-index: 1; max-width: calc(100% - 6rem); }
 @media (prefers-reduced-motion: reduce) { .welcome-mascot { transition: none; } }
-/* 지난 요일 툴팁(2-3 A안): 칸 위 말풍선 + 화살표, 다른 칸보다 위에, 0.15초 뒤에 */
+/* 지난 요일 툴팁(2-3 A안): 칸 위 말풍선 + 화살표, 다른 칸보다 위에, 0.15초 뒤에. 공통 [data-tip](아래쪽)과 섞이지 않게 data-past-tip */
 .welcome-cell.past { position: relative; }
 .welcome-cell.past:hover { z-index: 3; outline: 1.5px solid #8b8a94; outline-offset: -1px; }
 .welcome-cell.past::after, .welcome-cell.past::before { position: absolute; left: 50%; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.12s 0.15s, visibility 0s 0.27s; }
-.welcome-cell.past::after { content: attr(data-tip); bottom: calc(100% + 9px); transform: translateX(-50%); padding: 0.35rem 0.65rem; border: 1px solid #4a4757; border-radius: 10px; background: #33313f; color: #f4f4f5; font-size: 0.75rem; white-space: nowrap; box-shadow: 0 6px 18px rgb(0 0 0 / 0.45); }
+.welcome-cell.past::after { content: attr(data-past-tip); bottom: calc(100% + 9px); transform: translateX(-50%); padding: 0.35rem 0.65rem; border: 1px solid #4a4757; border-radius: 10px; background: #33313f; color: #f4f4f5; font-size: 0.75rem; white-space: nowrap; box-shadow: 0 6px 18px rgb(0 0 0 / 0.45); }
 .welcome-cell.past::before { content: ''; bottom: calc(100% + 4px); width: 9px; height: 9px; transform: translateX(-50%) rotate(45deg); background: #33313f; border-right: 1px solid #4a4757; border-bottom: 1px solid #4a4757; z-index: 1; }
 .welcome-cell.past:hover::after, .welcome-cell.past:hover::before { opacity: 1; visibility: visible; transition: opacity 0.12s 0.15s, visibility 0s 0.15s; }

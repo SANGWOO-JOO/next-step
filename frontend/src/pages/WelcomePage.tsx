@@ -295,7 +295,7 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
                         aria-disabled={past}
                         aria-pressed={on}
                         aria-label={past ? `${d}요일은 지났어요` : `${d}요일 ${h}시`}
-                        data-tip={past ? `${d}요일은 지났어요` : undefined}
+                        data-past-tip={past ? `${d}요일은 지났어요` : undefined}
                         onPointerDown={(e) => {
                           e.preventDefault()
                           if (past) return
