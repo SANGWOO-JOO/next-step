@@ -240,7 +240,7 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
             {/* 합계는 글자로, 요일별 양은 표 아래 같은 열에(2-3, 사용자 확인 B안) */}
             <div className="welcome-grid-head">
               {hours === 0 ? (
-                <span className="muted small">칸을 누르거나 끌어서 칠해요</span>
+                <span className="welcome-total empty">칸을 누르거나 끌어서 칠해요</span>
               ) : (
                 <span className="welcome-total">
                   일주일 <strong key={hours}>{hours}시간</strong>
