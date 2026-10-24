@@ -304,7 +304,7 @@ export default function ScheduleView({
     e.preventDefault()
     const goal = goals.find((g) => g.id === id)
     if (!goal || goal.date !== date) {
-      setNotice(`그날(${dayLabel(date)})의 하루 목표만 놓을 수 있어요.`)
+      setNotice(`그날(${dayLabel(date)})의 할 일만 놓을 수 있어요.`)
       return
     }
     const start = Math.min(minuteAt(e, e.currentTarget), DAY - SNAP)
@@ -381,9 +381,9 @@ export default function ScheduleView({
             className="ghost schedule-allday-label schedule-allday-toggle"
             onClick={toggleGoals}
             aria-expanded={!goalsCollapsed}
-            title={goalsCollapsed ? '목표 펼치기' : '목표 접기'}
+            title={goalsCollapsed ? '할 일 펼치기' : '할 일 접기'}
           >
-            <span aria-hidden="true">{goalsCollapsed ? '▸' : '▾'}</span>목표
+            <span aria-hidden="true">{goalsCollapsed ? '▸' : '▾'}</span>할 일
           </button>
         )}
         {week &&
@@ -781,7 +781,7 @@ function SchedulePopover({ popover, goals, run, onClose }: PopoverProps) {
               ).then((ok) => ok && onClose())
             }
           >
-            {goal.status === 'DONE' ? '완료 취소' : '✓ 목표 완료'}
+            {goal.status === 'DONE' ? '완료 취소' : '✓ 할 일 완료'}
           </button>
         </span>
       )}
@@ -858,7 +858,7 @@ function GoalChip({ goal, run, coreFull }: ChipProps) {
       draggable={!done}
       onDragStart={(e) => e.dataTransfer.setData(GOAL_DRAG_TYPE, String(goal.id))}
       style={{ borderLeftColor: goal.category?.color ?? 'var(--muted)' }}
-      title={done ? '완료한 목표' : `${goal.firstAction ? `첫 행동: ${goal.firstAction} · ` : ''}시간표로 끌어다 놓으면 1시간 블록이 생겨요`}
+      title={done ? '완료한 할 일' : `${goal.firstAction ? `첫 행동: ${goal.firstAction} · ` : ''}시간표로 끌어다 놓으면 1시간 블록이 생겨요`}
     >
       <input
         type="checkbox"
@@ -870,7 +870,7 @@ function GoalChip({ goal, run, coreFull }: ChipProps) {
         {goal.content}
       </span>
       <MoreMenu
-        label="목표 동작"
+        label="할 일 동작"
         items={[
           { label: '내일로', onClick: () => run(() => moveDailyGoal(goal.id, tomorrow)), show: !done && sameWeek },
           goal.type === 'EXTRA'
@@ -879,7 +879,7 @@ function GoalChip({ goal, run, coreFull }: ChipProps) {
           {
             label: '삭제',
             danger: true,
-            onClick: () => confirm(`'${goal.content}' 하루 목표를 삭제할까요?`) && run(() => deleteDailyGoal(goal.id)),
+            onClick: () => confirm(`'${goal.content}' 할 일을 지울까요?`) && run(() => deleteDailyGoal(goal.id)),
           },
         ]}
       />

@@ -146,9 +146,9 @@ class ActualLogService(
         val title = req.title?.trim()?.ifEmpty { null }
         when (req.kind) {
             ActualKind.GOAL -> {
-                val goalId = req.dailyGoalId ?: throw BusinessRuleException("하루 목표를 골라주세요.", "GOAL_REQUIRED")
-                val goal = dailyGoalRepository.findByIdOrNull(goalId) ?: throw NotFoundException("하루 목표를 찾을 수 없어요: $goalId")
-                if (goal.date != req.date) throw BusinessRuleException("그날의 하루 목표만 고를 수 있어요.", "GOAL_DATE_MISMATCH")
+                val goalId = req.dailyGoalId ?: throw BusinessRuleException("할 일을 골라주세요.", "GOAL_REQUIRED")
+                val goal = dailyGoalRepository.findByIdOrNull(goalId) ?: throw NotFoundException("할 일을 찾을 수 없어요: $goalId")
+                if (goal.date != req.date) throw BusinessRuleException("그날의 할 일만 고를 수 있어요.", "GOAL_DATE_MISMATCH")
                 log.dailyGoal = goal
                 log.category = goal.category
                 log.title = title

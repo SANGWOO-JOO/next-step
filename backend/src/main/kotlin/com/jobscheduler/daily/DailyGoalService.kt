@@ -118,7 +118,7 @@ class DailyGoalService(
     fun move(id: Long, date: LocalDate): DailyGoalMoveResponse {
         val dailyGoal = getEntity(id)
         if (dailyGoal.status == DailyGoalStatus.DONE) {
-            throw BusinessRuleException("완료한 목표는 넘길 수 없어요.", "ALREADY_DONE")
+            throw BusinessRuleException("완료한 할 일은 넘길 수 없어요.", "ALREADY_DONE")
         }
         if (date == dailyGoal.date) {
             throw BusinessRuleException("같은 날짜로는 넘길 수 없어요.", "SAME_DATE")
@@ -172,11 +172,11 @@ class DailyGoalService(
         (dailyGoalRepository.findAllByDateAndType(date, type).maxOfOrNull { it.sortOrder } ?: 0) + 1
 
     private fun coreLimit() =
-        BusinessRuleException("핵심 목표는 하루 ${MAX_CORE}개까지예요. 추가 목록으로 넣어주세요.", "CORE_LIMIT")
+        BusinessRuleException("핵심 할 일은 하루 ${MAX_CORE}개까지예요. 추가 목록으로 넣어주세요.", "CORE_LIMIT")
 
     private fun getGoal(id: Long): Goal =
         goalRepository.findByIdOrNull(id) ?: throw NotFoundException("목표를 찾을 수 없어요: $id")
 
     private fun getEntity(id: Long): DailyGoal =
-        dailyGoalRepository.findByIdOrNull(id) ?: throw NotFoundException("하루 목표를 찾을 수 없어요: $id")
+        dailyGoalRepository.findByIdOrNull(id) ?: throw NotFoundException("할 일을 찾을 수 없어요: $id")
 }

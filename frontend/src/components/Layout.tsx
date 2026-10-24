@@ -14,7 +14,7 @@ const GROUPS: { title: string; menus: Menu[] }[] = [
     title: '매일',
     menus: [
       { to: '/', label: '일정', icon: 'schedule', end: true },
-      { to: '/plan', label: '계획', icon: 'plan' },
+      { to: '/goals', label: '목표', icon: 'plan' },
       { to: '/log', label: '기록', icon: 'log' },
     ],
   },

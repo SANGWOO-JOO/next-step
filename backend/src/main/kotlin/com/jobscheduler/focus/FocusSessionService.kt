@@ -43,10 +43,10 @@ class FocusSessionService(
             throw BusinessRuleException("이미 진행 중인 집중 세션이 있어요.", "SESSION_ALREADY_RUNNING")
         }
         val dailyGoal = req.dailyGoalId?.let {
-            dailyGoalRepository.findByIdOrNull(it) ?: throw NotFoundException("하루 목표를 찾을 수 없어요: $it")
+            dailyGoalRepository.findByIdOrNull(it) ?: throw NotFoundException("할 일을 찾을 수 없어요: $it")
         }
         if (dailyGoal == null && req.categoryId == null) {
-            throw BusinessRuleException("하루 목표나 분류 중 하나는 골라주세요.", "GOAL_OR_CATEGORY_REQUIRED")
+            throw BusinessRuleException("할 일이나 목표 중 하나는 골라주세요.", "GOAL_OR_CATEGORY_REQUIRED")
         }
         val now = now()
         val session = sessionRepository.save(

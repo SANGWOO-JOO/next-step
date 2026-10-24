@@ -83,7 +83,7 @@ class TimeBlockService(
             return Target(goal, title, goal.date)
         }
         title
-            ?: throw BusinessRuleException("하루 목표를 고르거나 제목을 입력해주세요.", "GOAL_OR_TITLE_REQUIRED")
+            ?: throw BusinessRuleException("할 일을 고르거나 제목을 입력해주세요.", "GOAL_OR_TITLE_REQUIRED")
         val date = req.date ?: throw BusinessRuleException("날짜가 필요해요.", "DATE_REQUIRED")
         return Target(null, title, date)
     }
@@ -127,7 +127,7 @@ class TimeBlockService(
     }
 
     private fun getDailyGoal(id: Long): DailyGoal =
-        dailyGoalRepository.findByIdOrNull(id) ?: throw NotFoundException("하루 목표를 찾을 수 없어요: $id")
+        dailyGoalRepository.findByIdOrNull(id) ?: throw NotFoundException("할 일을 찾을 수 없어요: $id")
 
     private fun getEntity(id: Long): TimeBlock =
         timeBlockRepository.findByIdOrNull(id) ?: throw NotFoundException("시간 블록을 찾을 수 없어요: $id")

@@ -338,7 +338,7 @@ export default function TodayPage() {
           {/* 사용법 안내는 이 기간에 블록이 하나도 없을 때(처음 쓸 때)만 */}
           {!blocks.some((b) => (view === 'day' ? b.date === selected : weekDates(viewMonday).includes(b.date))) && (
             <p className="muted small schedule-help">
-              빈 칸을 끌어 시간을 잡고, 블록을 끌어 옮기거나 아래 끝을 끌어 늘여요. {view === 'week' && wideSchedule ? '위쪽 목표 칩을' : '왼쪽 할 일을'} 끌어다 놓아도 돼요.
+              빈 칸을 끌어 시간을 잡고, 블록을 끌어 옮기거나 아래 끝을 끌어 늘여요. {view === 'week' && wideSchedule ? '위쪽 할 일 칩을' : '왼쪽 할 일을'} 끌어다 놓아도 돼요.
             </p>
           )}
           <div className={wideSchedule && view === 'day' ? 'day-split' : 'day-split off'}>
@@ -431,7 +431,7 @@ function AlertSlot({
   }
 
   if (hasWeekPlan === null) return null
-  const planLink = `/plan?week=${monday}`
+  const planLink = `/goals?week=${monday}`
   let alert: { text: string; action: ReactNode; onClose?: () => void } | null = null
   if (!hasWeekPlan) {
     alert = { text: '집중할 목표를 정해 볼까요?', action: <Link className="button-link" to={planLink}>목표 정하기 ▶</Link> }

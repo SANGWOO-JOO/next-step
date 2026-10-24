@@ -83,7 +83,7 @@ export default function ShutdownDialog({ date, log, goals, manualLogs, categorie
             <>
               <div className="stat-cards">
                 <div className="card stat-card">
-                  <span className="muted small">완료한 목표</span>
+                  <span className="muted small">완료한 할 일</span>
                   <strong className="stat-value">
                     {s.goalsDone}/{s.goalsTotal}
                   </strong>
@@ -120,7 +120,7 @@ export default function ShutdownDialog({ date, log, goals, manualLogs, categorie
               <p className="muted">못 끝낸 일이 없어요. 다음 단계로 가요.</p>
             ) : (
               <>
-                <p className="muted small">오늘 못 끝낸 목표예요. 내일로 넘기거나 그대로 둬요.</p>
+                <p className="muted small">오늘 못 끝낸 할 일이에요. 내일로 넘기거나 그대로 둬요.</p>
                 <ul className="unfinished-list">
                   {pending.map((g) => (
                     <li key={g.id}>

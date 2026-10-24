@@ -5,7 +5,7 @@ import type { CategoryRef } from './goals'
 export type ActualKind = 'GOAL' | 'STUDY' | 'DISTRACTION' | 'OTHER'
 
 export const ACTUAL_KIND_LABELS: Record<ActualKind, string> = {
-  GOAL: '하루 목표',
+  GOAL: '할 일',
   STUDY: '공부',
   DISTRACTION: '딴짓',
   OTHER: '기타',

@@ -98,7 +98,7 @@ class DailyGoalServiceTest(
     }
 
     @Test
-    fun `완료한 목표는 넘길 수 없다`() {
+    fun `완료한 할 일은 넘길 수 없다`() {
         val goal = done(create())
         val e = assertThrows<BusinessRuleException> { dailyGoalService.move(goal.id, friday) }
         assertEquals("ALREADY_DONE", e.code)

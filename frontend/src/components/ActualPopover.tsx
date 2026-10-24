@@ -85,7 +85,7 @@ export default function ActualPopover({ date, start, end, log, goals, categories
               className={kind === k ? 'active' : ''}
               onClick={() => setKind(k)}
               disabled={k === 'GOAL' && goals.length === 0}
-              title={k === 'GOAL' && goals.length === 0 ? '이 날의 하루 목표가 없어요' : undefined}
+              title={k === 'GOAL' && goals.length === 0 ? '이 날의 할 일이 없어요' : undefined}
             >
               {ACTUAL_KIND_LABELS[k]}
             </button>
@@ -93,7 +93,7 @@ export default function ActualPopover({ date, start, end, log, goals, categories
         </span>
 
         {kind === 'GOAL' && (
-          <select value={goalId ?? ''} onChange={(e) => setGoalId(Number(e.target.value))} aria-label="하루 목표">
+          <select value={goalId ?? ''} onChange={(e) => setGoalId(Number(e.target.value))} aria-label="할 일">
             {goals.map((g) => (
               <option key={g.id} value={g.id}>
                 {g.content}

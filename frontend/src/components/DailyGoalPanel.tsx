@@ -167,7 +167,7 @@ function DailyGoalItem({
   const moveTomorrow = () => move(tomorrow)
 
   const remove = () => {
-    if (confirm(`'${goal.content}' 하루 목표를 삭제할까요?`)) run(() => deleteDailyGoal(goal.id))
+    if (confirm(`'${goal.content}' 할 일을 지울까요?`)) run(() => deleteDailyGoal(goal.id))
   }
 
   if (mode === 'edit') {
@@ -196,9 +196,9 @@ function DailyGoalItem({
           onClick={() => run(() => changeDailyGoalType(goal.id, goal.type === 'CORE' ? 'EXTRA' : 'CORE'))}
           disabled={goal.type === 'EXTRA' && !canBeCore}
           aria-pressed={goal.type === 'CORE'}
-          aria-label="핵심 목표"
+          aria-label="핵심 할 일"
           title={
-            goal.type === 'CORE' ? '핵심 목표 (누르면 해제)' : canBeCore ? '핵심 목표로 정하기' : `핵심은 ${MAX_CORE}개까지예요`
+            goal.type === 'CORE' ? '핵심 할 일 (누르면 해제)' : canBeCore ? '핵심 할 일로 정하기' : `핵심은 ${MAX_CORE}개까지예요`
           }
         >
           {goal.type === 'CORE' ? '★' : '☆'}
@@ -209,7 +209,7 @@ function DailyGoalItem({
         >
           {goal.content}
           {goal.carryCount > 0 && (
-            <span className="carry" title={`${goal.carryCount}번 넘긴 목표`}>
+            <span className="carry" title={`${goal.carryCount}번 넘긴 할 일`}>
               ↻{goal.carryCount}
             </span>
           )}
@@ -233,7 +233,7 @@ function DailyGoalItem({
           />
         )}
         <MoreMenu
-          label="목표 동작"
+          label="할 일 동작"
           items={[
             { label: '+ 시간 잡기', onClick: () => setMode('block'), show: !!blocks && !done },
             { label: '내일로', onClick: moveTomorrow, show: !done },
@@ -533,7 +533,7 @@ export function NewDailyGoalForm({ date, categories, onSubmit, placeholder, auto
               )}
               {o.kind === 'full' && (
                 <span className="muted small">
-                  진행 중 목표가 {MAX_ACTIVE_GOALS}개예요. 계획에서 하나를 완료하거나 멈추면 새 목표를 만들 수 있어요
+                  진행 중 목표가 {MAX_ACTIVE_GOALS}개예요. 목표 화면에서 하나를 완료하거나 멈추면 새 목표를 만들 수 있어요
                 </span>
               )}
               {i === current && o.kind !== 'full' && <span className="quick-add-key">Enter</span>}

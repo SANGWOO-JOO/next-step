@@ -61,7 +61,7 @@ class ActualLog(
 
     val label: String
         get() = when (kind) {
-            ActualKind.GOAL -> dailyGoal?.content ?: title ?: "하루 목표"
+            ActualKind.GOAL -> dailyGoal?.content ?: title ?: "할 일"
             ActualKind.STUDY -> title ?: category?.name ?: "공부"
             ActualKind.DISTRACTION -> title ?: "딴짓"
             ActualKind.OTHER -> title ?: "기타"

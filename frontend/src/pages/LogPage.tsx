@@ -171,7 +171,7 @@ function DayDetail({ date, log, onWrite, onClose }: { date: string; log: DailyLo
               ))}
             </ul>
           ) : (
-            <p className="muted small">완료한 목표 0/{log.summary.goalsTotal}</p>
+            <p className="muted small">완료한 할 일 0/{log.summary.goalsTotal}</p>
           )}
         </>
       )}
