@@ -55,20 +55,20 @@ input:not([type='checkbox']):not([type='color']), select, textarea {
   border-radius: 6px;
   min-width: 0;
 }
-input[type='color'] { width: 2.2rem; height: 2rem; padding: 0; border: none; background: none; cursor: pointer; }
+input[type='color'] { width: 2.2rem; height: 2rem; padding: 0; border: none; background: none; cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; }
 button {
   padding: 0.35rem 0.75rem;
   border: 1px solid var(--accent);
   border-radius: 6px;
   background: var(--accent);
   color: #fff;
-  cursor: pointer;
+  cursor: url('./assets/cursors/pointer.svg') 9 2, pointer;
   white-space: nowrap;
 }
 button.ghost { background: transparent; color: var(--muted); border-color: var(--border); }
 button.danger { background: transparent; color: var(--down); border-color: var(--border); }
 button.icon { padding: 0.2rem 0.5rem; background: transparent; color: var(--text); border-color: var(--border); }
-button:disabled { opacity: 0.4; cursor: default; }
+button:disabled { opacity: 0.4; cursor: url('./assets/cursors/blocked.svg') 11 11, not-allowed; }
 
 .badge {
   display: inline-flex;
@@ -205,10 +205,10 @@ button.add { justify-self: start; padding: 0.2rem 0.6rem; font-size: 0.85rem; }
 .daily-row .daily-content { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .daily-list .daily-item { border-bottom: none; padding: 0.15rem 0.35rem; border-radius: 6px; }
 .daily-list .daily-item:hover { background: color-mix(in srgb, var(--border) 35%, transparent); }
-button.core-toggle { padding: 0; border: none; background: none; color: var(--muted); font-size: 1rem; line-height: 1; cursor: pointer; opacity: 0.45; }
+button.core-toggle { padding: 0; border: none; background: none; color: var(--muted); font-size: 1rem; line-height: 1; cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; opacity: 0.45; }
 button.core-toggle.on { color: #f5b301; opacity: 1; }
 .daily-item:hover button.core-toggle:not(:disabled) { opacity: 1; }
-button.core-toggle:disabled { cursor: not-allowed; }
+button.core-toggle:disabled { cursor: url('./assets/cursors/blocked.svg') 11 11, not-allowed; }
 .daily-time { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .category-dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; flex: none; }
 .daily-content { flex: 1 1 12rem; font-weight: 500; }
@@ -389,7 +389,7 @@ button.core-toggle:disabled { cursor: not-allowed; }
   text-overflow: ellipsis;
   cursor: grab;
 }
-.schedule-goal.done { opacity: 0.5; text-decoration: line-through; cursor: default; }
+.schedule-goal.done { opacity: 0.5; text-decoration: line-through; cursor: url('./assets/cursors/arrow.svg') 4 3, default; }
 .schedule-scroll { height: min(70vh, 44rem); overflow-y: auto; }
 .schedule-body { display: grid; position: relative; }
 .schedule-gutter { position: relative; }
@@ -438,7 +438,7 @@ button.core-toggle:disabled { cursor: not-allowed; }
   margin: 0;
   display: grid;
   gap: 0.4rem;
-  cursor: default;
+  cursor: url('./assets/cursors/arrow.svg') 4 3, default;
   box-shadow: 0 8px 28px rgb(0 0 0 / 0.3);
 }
 .schedule.week .schedule-column:nth-last-child(-n + 3) .schedule-popover { left: auto; right: 0.5rem; }
@@ -629,7 +629,7 @@ body.immersive .app-main { padding-top: 2rem; }
   font: inherit;
   text-decoration: none;
   white-space: nowrap;
-  cursor: pointer;
+  cursor: url('./assets/cursors/pointer.svg') 9 2, pointer;
 }
 .side-link:hover { color: var(--text); background: color-mix(in srgb, var(--border) 50%, transparent); text-decoration: none; }
 .side-link.active { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
@@ -705,7 +705,7 @@ body.immersive .app-main { padding-top: 2rem; }
 .plan-done { color: var(--up); }
 .board-hint { margin: 0.4rem 0 0; }
 .week-bottom { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 0 1rem; align-items: start; }
-.path-select { border: none; background: transparent; color: var(--accent); font-weight: 500; padding: 0.15rem 0.25rem; cursor: pointer; max-width: 22rem; }
+.path-select { border: none; background: transparent; color: var(--accent); font-weight: 500; padding: 0.15rem 0.25rem; cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; max-width: 22rem; }
 .path-select:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
 /* [월] 주 줄의 버튼은 마우스를 올릴 때만 */
 .calendar-embedded .calendar-row .calendar-goals .row-actions { opacity: 0; transition: opacity 0.12s; }
@@ -738,7 +738,7 @@ body.immersive .app-main { padding-top: 2rem; }
 .roadmap-bar { height: 0.35rem; background: var(--border); border-radius: 999px; overflow: hidden; }
 .roadmap-bar-fill { display: block; height: 100%; background: var(--up); }
 .roadmap-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); min-height: 1em; }
-button.schedule-date { border: none; border-left: 1px solid var(--border); border-radius: 0; background: transparent; color: var(--text); font: inherit; font-weight: 600; cursor: pointer; }
+button.schedule-date { border: none; border-left: 1px solid var(--border); border-radius: 0; background: transparent; color: var(--text); font: inherit; font-weight: 600; cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; }
 button.schedule-date:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); }
 button.schedule-date.today { color: var(--down); }
 button.schedule-date.selected { background: color-mix(in srgb, var(--accent) 16%, transparent); box-shadow: inset 0 -2px 0 var(--accent); }
@@ -809,7 +809,7 @@ body.resizing { cursor: col-resize; user-select: none; }
   background: transparent;
   color: var(--text);
 }
-.log-cal-cell:disabled { cursor: default; opacity: 1; color: var(--muted); }
+.log-cal-cell:disabled { cursor: url('./assets/cursors/arrow.svg') 4 3, default; opacity: 1; color: var(--muted); }
 .log-cal-cell.outside { opacity: 0.35; }
 .log-cal-cell.today { border-color: var(--down); }
 .log-cal-cell.has:hover { border-color: var(--accent); }
@@ -899,7 +899,7 @@ body.resizing { cursor: col-resize; user-select: none; }
   background: color-mix(in srgb, var(--up) 18%, var(--surface));
   color: var(--text);
   font-size: 0.72rem;
-  cursor: pointer;
+  cursor: url('./assets/cursors/pointer.svg') 9 2, pointer;
 }
 .schedule-block.short .as-planned { margin-top: 0; }
 .actual-entry {
@@ -915,7 +915,7 @@ body.resizing { cursor: col-resize; user-select: none; }
   font-size: 0.78rem;
   line-height: 1.2;
   overflow: hidden;
-  cursor: pointer;
+  cursor: url('./assets/cursors/pointer.svg') 9 2, pointer;
   z-index: 1;
 }
 .actual-entry.short { flex-direction: row; gap: 0.4rem; align-items: center; }
@@ -946,7 +946,7 @@ button.month-week-label:hover { color: var(--accent); }
 .plan-period { margin: 0; font-size: 1.4rem; line-height: 1.25; }
 .plan-context { margin: 0; overflow-wrap: anywhere; }
 .plan-nav { display: inline-flex; align-items: center; gap: 0.5rem; }
-button.link-button { padding: 0; border: none; background: none; color: inherit; font: inherit; cursor: pointer; }
+button.link-button { padding: 0; border: none; background: none; color: inherit; font: inherit; cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; }
 button.link-button:hover { color: var(--accent); text-decoration: underline; }
 .plan-layout.single { grid-template-columns: minmax(0, 1fr); }
 /* 최종 화면(1-4f ⑧) */
@@ -1022,12 +1022,12 @@ button.link-button:hover { color: var(--accent); text-decoration: underline; }
 .reminder-progress { display: block; height: 4px; margin-top: 0.35rem; border-radius: 999px; background: color-mix(in srgb, var(--text) 10%, transparent); overflow: hidden; }
 .reminder-progress > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #22c55e, #14b8a6); }
 .reminder-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
-.reminder-btn { display: inline-flex; align-items: center; padding: 0.35rem 0.85rem; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--text) 14%, transparent); background: transparent; color: var(--text); font-size: 0.8rem; font-weight: 600; text-decoration: none; cursor: pointer; transition: transform 0.12s, background 0.12s; }
+.reminder-btn { display: inline-flex; align-items: center; padding: 0.35rem 0.85rem; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--text) 14%, transparent); background: transparent; color: var(--text); font-size: 0.8rem; font-weight: 600; text-decoration: none; cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; transition: transform 0.12s, background 0.12s; }
 .reminder-btn:hover { background: color-mix(in srgb, var(--text) 8%, transparent); }
 .reminder-btn:active { transform: scale(0.97); }
 .reminder-btn.primary { border-color: transparent; color: #fff; background: linear-gradient(135deg, #5b8cff, #8b5cf6); }
 .reminder-btn.primary:hover { filter: brightness(1.08); background: linear-gradient(135deg, #5b8cff, #8b5cf6); }
-.reminder-close { position: absolute; top: 0.55rem; right: 0.55rem; width: 1.6rem; height: 1.6rem; padding: 0; border: none; border-radius: 999px; background: transparent; color: var(--muted); font-size: 1rem; line-height: 1; cursor: pointer; }
+.reminder-close { position: absolute; top: 0.55rem; right: 0.55rem; width: 1.6rem; height: 1.6rem; padding: 0; border: none; border-radius: 999px; background: transparent; color: var(--muted); font-size: 1rem; line-height: 1; cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; }
 .reminder-close:hover { background: color-mix(in srgb, var(--text) 10%, transparent); color: var(--text); }
 @keyframes reminder-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .reminder-card { animation: none; } }
@@ -1116,11 +1116,11 @@ input[type='checkbox'] { accent-color: #6d74f7; }
 .log-detail-line { margin: 0; }
 .log-detail-line b { font-weight: 700; }
 .log-detail .log-cta { margin-top: 0.25rem; }
-.log-cal-cell { cursor: pointer; }
+.log-cal-cell { cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; }
 .log-cal-cell.picked { outline: 2px solid #6d74f7; outline-offset: -2px; }
 /* 달력 색 단계 범례: 안내 글자에 마우스를 올리면 보임 */
 .log-cal-hint { position: relative; cursor: help; text-decoration: underline dotted; text-underline-offset: 3px; outline: none; }
-.log-cal-legend { display: none; position: absolute; left: 0; bottom: calc(100% + 0.4rem); z-index: 20; gap: 0.35rem; min-width: 16rem; padding: 0.75rem 0.85rem; border: 1px solid var(--hairline); border-radius: 14px; background: var(--surface); color: var(--text); box-shadow: 0 12px 32px rgb(0 0 0 / 0.28); text-decoration: none; cursor: default; }
+.log-cal-legend { display: none; position: absolute; left: 0; bottom: calc(100% + 0.4rem); z-index: 20; gap: 0.35rem; min-width: 16rem; padding: 0.75rem 0.85rem; border: 1px solid var(--hairline); border-radius: 14px; background: var(--surface); color: var(--text); box-shadow: 0 12px 32px rgb(0 0 0 / 0.28); text-decoration: none; cursor: url('./assets/cursors/arrow.svg') 4 3, default; }
 .log-cal-hint:hover .log-cal-legend, .log-cal-hint:focus .log-cal-legend { display: grid; }
 .log-cal-legend-title { font-weight: 600; margin-bottom: 0.15rem; }
 .log-cal-legend-row { display: grid; grid-template-columns: 1.4rem 2.5rem 1fr; align-items: center; gap: 0.5rem; }
@@ -1229,7 +1229,7 @@ button.pull-all:hover { color: #7c6cf8; }
 /* 빠른 추가 분류 찾기 팝오버(1-4f ㊵) */
 .quick-add { position: relative; }
 .quick-add-options { list-style: none; margin: 0.4rem calc(32px + 0.4rem) 0 0; padding: 6px; background: var(--surface, var(--bg)); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); max-height: 260px; overflow-y: auto; }
-.quick-add-option { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 8px; font-size: 14px; cursor: pointer; }
+.quick-add-option { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 8px; font-size: 14px; cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; }
 .quick-add-option.on { background: color-mix(in srgb, #8B5CF6 16%, transparent); }
 .quick-add-option .category-dot { width: 8px; height: 8px; flex: none; }
 .quick-add-new { width: 16px; text-align: center; color: #8B5CF6; font-weight: 700; }
@@ -1243,7 +1243,7 @@ button.pull-all:hover { color: #7c6cf8; }
 .quick-add-create-head strong { font-weight: 600; }
 .quick-add-create-head .muted { margin-left: auto; }
 .quick-add-swatches { display: flex; flex-wrap: wrap; gap: 10px; }
-.swatch { width: 24px; height: 24px; min-height: 0; padding: 0; border-radius: 50%; border: 0; cursor: pointer; }
+.swatch { width: 24px; height: 24px; min-height: 0; padding: 0; border-radius: 50%; border: 0; cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; }
 .swatch.on { box-shadow: 0 0 0 2px var(--surface, #2a2a2e), 0 0 0 4px var(--text, #fff); }
 .quick-add-create-foot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .quick-add-create-foot button { padding: 6px 14px; border-radius: 999px; background: var(--grad); color: #fff; border: 0; min-height: 0; }
@@ -1268,7 +1268,7 @@ button.pull-all:hover { color: #7c6cf8; }
 .day-task .category-dot { width: 8px; height: 8px; flex: none; }
 .day-task-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .day-task-grip { color: var(--text-muted, #888); font-size: 14px; letter-spacing: -1px; }
-.day-task.done { cursor: default; opacity: 0.55; }
+.day-task.done { cursor: url('./assets/cursors/arrow.svg') 4 3, default; opacity: 0.55; }
 .day-task.done .day-task-text { text-decoration: line-through; }
 .day-tasks-hint { margin: 0; }
 
@@ -1279,7 +1279,7 @@ button.pull-all:hover { color: #7c6cf8; }
 .day-tasks-add .quick-add-options { margin-right: 0; }
 
 /* [주] 목표 줄 접기(1-4f ㊺) */
-.schedule-allday-toggle { display: inline-flex; align-items: flex-start; gap: 3px; min-height: 0; padding: 0.25rem 0.2rem; border: 0; border-radius: 0; background: transparent; font: inherit; font-size: 12px; color: var(--text-muted, #888); cursor: pointer; }
+.schedule-allday-toggle { display: inline-flex; align-items: flex-start; gap: 3px; min-height: 0; padding: 0.25rem 0.2rem; border: 0; border-radius: 0; background: transparent; font: inherit; font-size: 12px; color: var(--text-muted, #888); cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; }
 .schedule-allday.collapsed { min-height: 0; padding: 3px 4px; }
 .schedule-goal-summary { display: inline-flex; align-items: center; gap: 4px; min-height: 0; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
 .schedule-goal-summary .category-dot { width: 6px; height: 6px; }
@@ -1337,7 +1337,7 @@ button.schedule-date.selected { box-shadow: none; background: color-mix(in srgb,
 
 /* 시간 블록 주제(1-4f ㊽) */
 .schedule-block.topic-open { overflow: visible; z-index: 20; }
-.topic-pop { position: absolute; top: calc(100% + 6px); left: 0; width: max(100%, 260px); display: grid; gap: 6px; padding: 10px; border-radius: 12px; background: var(--surface, #222); border: 1px solid color-mix(in srgb, #8B5CF6 35%, var(--border)); box-shadow: 0 10px 28px rgb(0 0 0 / 0.35); color: var(--text); cursor: default; }
+.topic-pop { position: absolute; top: calc(100% + 6px); left: 0; width: max(100%, 260px); display: grid; gap: 6px; padding: 10px; border-radius: 12px; background: var(--surface, #222); border: 1px solid color-mix(in srgb, #8B5CF6 35%, var(--border)); box-shadow: 0 10px 28px rgb(0 0 0 / 0.35); color: var(--text); cursor: url('./assets/cursors/arrow.svg') 4 3, default; }
 .topic-field { display: grid; gap: 6px; }
 .topic-field input { width: 100%; font-size: 14px; }
 .topic-chips { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -1378,9 +1378,9 @@ button.schedule-date.selected { box-shadow: none; background: color-mix(in srgb,
 /* 계획 경로(1-4f (51)) */
 .plan-header.cal-header { align-items: center; justify-content: space-between; }
 .plan-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; font-size: 15px; }
-.plan-crumb { min-height: 0; padding: 4px 10px; border: 0; border-radius: 999px; background: transparent; color: var(--text-muted, var(--muted)); font: inherit; font-weight: 600; cursor: pointer; max-width: 22rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plan-crumb { min-height: 0; padding: 4px 10px; border: 0; border-radius: 999px; background: transparent; color: var(--text-muted, var(--muted)); font: inherit; font-weight: 600; cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; max-width: 22rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--border) 50%, transparent)); color: var(--text); }
-.plan-crumb.current { cursor: default; color: var(--text); font-weight: 700; font-size: 17px; background: color-mix(in srgb, #8B5CF6 18%, transparent); }
+.plan-crumb.current { cursor: url('./assets/cursors/arrow.svg') 4 3, default; color: var(--text); font-weight: 700; font-size: 17px; background: color-mix(in srgb, #8B5CF6 18%, transparent); }
 .plan-crumb-sep { color: var(--text-muted, var(--muted)); opacity: 0.6; }
 .plan-crumb-hint { margin-left: 4px; opacity: 0.6; }
 
@@ -1416,8 +1416,8 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .plan-bar-fill { display: block; height: 100%; border-radius: inherit; }
 .plan-bar-fill.scheduled { opacity: 0.45; }
 .plan-schedule-link { white-space: nowrap; font-size: 0.9rem; }
-.plan-add { margin-top: 0.75rem; width: 100%; padding: 0.7rem; border: 1px dashed var(--border); border-radius: 12px; background: none; color: var(--text); cursor: pointer; }
-.plan-add:disabled { cursor: not-allowed; color: var(--muted); }
+.plan-add { margin-top: 0.75rem; width: 100%; padding: 0.7rem; border: 1px dashed var(--border); border-radius: 12px; background: none; color: var(--text); cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; }
+.plan-add:disabled { cursor: url('./assets/cursors/blocked.svg') 11 11, not-allowed; color: var(--muted); }
 .plan-form { display: grid; grid-template-columns: 2fr 1fr 1fr auto; align-items: end; gap: 0.75rem; margin-top: 0.75rem; }
 .plan-form label { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
 .plan-past { margin-top: 1.25rem; }
@@ -1476,11 +1476,11 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .welcome-title { margin: 0; font-size: 1.4rem; }
 .welcome-lead { margin: 0.4rem 0 1.25rem; color: var(--muted); }
 .welcome-purposes { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-.welcome-purpose { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; min-height: 8.25rem; padding: 1rem 1.1rem; border: 1.5px solid var(--border); border-radius: 16px; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
+.welcome-purpose { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; min-height: 8.25rem; padding: 1rem 1.1rem; border: 1.5px solid var(--border); border-radius: 16px; background: transparent; color: var(--text); text-align: left; cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; }
 .welcome-purpose strong { font-size: 1.05rem; }
 .welcome-purpose.on { border-color: #a78bfa; background: linear-gradient(160deg, rgb(167 139 250 / 0.16), rgb(244 114 182 / 0.08)); }
 .welcome-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.welcome-chip { min-height: 2.5rem; padding: 0 1rem; border: 1.5px solid var(--border); border-radius: 999px; background: transparent; color: var(--muted); font-weight: 600; cursor: pointer; }
+.welcome-chip { min-height: 2.5rem; padding: 0 1rem; border: 1.5px solid var(--border); border-radius: 999px; background: transparent; color: var(--muted); font-weight: 600; cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; }
 .welcome-chip.on { border-color: #7c5cff; background: color-mix(in srgb, #7c5cff 14%, transparent); color: var(--text); }
 .welcome-label { display: flex; flex-direction: column; gap: 0.4rem; margin: 1.25rem 0 0.5rem; font-size: 0.85rem; color: var(--muted); }
 .welcome-label input { width: 100%; }
@@ -1543,7 +1543,7 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .ld-logo { font-size: 20px; font-weight: 800; }
 .ld-grad-blue { background: linear-gradient(135deg, #5b8cff, #8b5cf6); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .ld-grad { background: linear-gradient(135deg, #93c5fd, #c4b5fd 45%, #f9a8d4); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.ld-ghost { display: inline-flex; align-items: center; padding: 11px 20px; border-radius: 999px; border: 1.5px solid rgb(255 255 255 / 0.2); background: transparent; color: #ececec; text-decoration: none; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.ld-ghost { display: inline-flex; align-items: center; padding: 11px 20px; border-radius: 999px; border: 1.5px solid rgb(255 255 255 / 0.2); background: transparent; color: #ececec; text-decoration: none; font: inherit; font-size: 14px; font-weight: 700; cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; }
 .ld-ghost-lg { height: 56px; padding: 0 24px; font-size: 15px; }
 .ld-hero-body { position: relative; z-index: 1; min-height: 100vh; box-sizing: border-box; padding: 96px 24px 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; text-align: center; }
 .ld-hero-art { position: relative; width: 260px; height: 270px; }
@@ -1553,7 +1553,7 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .ld-h1 { margin: 0; font-size: clamp(2.2rem, 5vw, 3.8rem); line-height: 1.2; font-weight: 800; letter-spacing: -0.035em; }
 .ld-h2 { margin: 0; font-size: clamp(1.9rem, 3.6vw, 2.8rem); line-height: 1.3; font-weight: 800; letter-spacing: -0.03em; }
 .ld-ctas { display: flex; flex-direction: column; align-items: center; gap: 14px; }
-.ld-more { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 10px; padding: 6px 10px; border: 0; background: transparent; color: #8b8b94; font: inherit; font-size: 15px; font-weight: 500; cursor: pointer; }
+.ld-more { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 10px; padding: 6px 10px; border: 0; background: transparent; color: #8b8b94; font: inherit; font-size: 15px; font-weight: 500; cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; }
 .ld-more:hover { color: #ddd6fe; }
 .ld-more span { animation: ld-hint 2s ease-in-out infinite; }
 @keyframes ld-hint { 0%, 100% { transform: translateY(0); opacity: 0.6; } 50% { transform: translateY(5px); opacity: 1; } }
@@ -1616,7 +1616,7 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .legal ul { padding-left: 1.2rem; }
 .legal-back { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
 /* 시작 설정 약관 동의(2-4) */
-.welcome-agree { display: flex; align-items: center; gap: 0.55rem; margin-top: 1.1rem; font-size: 0.9rem; cursor: pointer; }
+.welcome-agree { display: flex; align-items: center; gap: 0.55rem; margin-top: 1.1rem; font-size: 0.9rem; cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; }
 .welcome-agree input { width: 1.1rem; height: 1.1rem; accent-color: #7c5cff; }
 .welcome-agree a { color: #c4b5fd; }
 /* 설정의 계정(2-4) */
@@ -1624,7 +1624,7 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .settings-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
 .settings-row { display: flex; align-items: center; gap: 0.75rem; width: 100%; min-height: 3.25rem; padding: 0.75rem 1rem; border: 0; border-top: 1px solid var(--hairline, var(--border)); border-radius: 0; background: none; color: var(--text); font: inherit; text-align: left; text-decoration: none; }
 .settings-row:first-child { border-top: 0; }
-.settings-row.link { cursor: pointer; }
+.settings-row.link { cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; }
 .settings-row.link:hover { background: var(--soft-fill); }
 .settings-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; }
 .settings-chev { color: var(--muted); font-size: 1.1rem; }
@@ -1639,12 +1639,12 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .ld-contact-tip { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); padding: 5px 10px; border-radius: 8px; background: #33313f; border: 1px solid #4a4757; color: #f4f4f5; font-size: 12px; white-space: nowrap; }
 /* 사이드바 프로필 메뉴(2-1, 프로토타입 Profile): 프로필을 누르면 위로 펼친다 */
 .side-profile { position: relative; }
-.side-user { width: 100%; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.side-user { width: 100%; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; }
 .side-user.open { background: color-mix(in srgb, var(--accent) 10%, transparent); }
 .side-profile-menu { position: absolute; left: 0; bottom: calc(100% + 6px); z-index: 20; width: max(100%, 14rem); padding: 0.4rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: 0 10px 28px rgb(0 0 0 / 0.35); }
 .side-profile-head { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.5rem 0.6rem 0.6rem; margin-bottom: 0.25rem; border-bottom: 1px solid var(--border); min-width: 0; }
 .side-profile-head strong, .side-profile-head span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.side-profile-item { display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0.5rem 0.6rem; border: 0; border-radius: 8px; background: transparent; color: var(--text); font: inherit; font-size: 0.9rem; text-decoration: none; cursor: pointer; }
+.side-profile-item { display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0.5rem 0.6rem; border: 0; border-radius: 8px; background: transparent; color: var(--text); font: inherit; font-size: 0.9rem; text-decoration: none; cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; }
 .side-profile-item:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
 .tip-right[data-tip]::after, .tip-right[data-tip]:hover::after { left: auto; right: 0; transform: none; }
 /* 계획만·실제만·둘 다 툴팁이 둥근 묶음 밖으로 나오게(잘림 방지) */
@@ -1661,19 +1661,19 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .plan-goal-main { flex: 1; min-width: 0; }
 .plan-goal-icon { width: 44px; height: 44px; flex-shrink: 0; }
 .goal-icon-picker { position: relative; align-self: end; }
-.goal-icon-trigger { width: 44px; height: 44px; min-height: 0; padding: 4px; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.goal-icon-trigger { width: 44px; height: 44px; min-height: 0; padding: 4px; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; }
 .goal-icon-trigger:hover, .goal-icon-trigger.open { border-color: var(--accent); }
 .goal-icon-trigger.open { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
 .goal-icon-trigger img { width: 34px; height: 34px; }
 .goal-icon-pop { position: absolute; top: calc(100% + 8px); left: 0; z-index: 20; width: 21rem; max-width: calc(100vw - 2rem); padding: 0.6rem; margin: 0; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35); }
 .goal-icon-tabs { display: flex; gap: 2px; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
-.goal-icon-tabs button { flex: 1; min-height: 0; padding: 4px; border: 0; background: none; border-radius: 8px; cursor: pointer; }
+.goal-icon-tabs button { flex: 1; min-height: 0; padding: 4px; border: 0; background: none; border-radius: 8px; cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; }
 .goal-icon-tabs button:hover { background: var(--soft-fill); }
 .goal-icon-tabs img { width: 22px; height: 22px; display: block; margin: 0 auto; }
 .goal-icon-list { max-height: 17rem; overflow-y: auto; overflow-x: hidden; padding-top: 0.25rem; padding-bottom: 2rem; }
 .goal-icon-cap { font-size: 0.75rem; color: var(--muted); margin: 0.5rem 0.15rem 0.3rem; }
 .goal-icon-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; }
-.goal-icon-grid button { min-height: 0; padding: 5px; border: 0; background: none; border-radius: 9px; cursor: pointer; }
+.goal-icon-grid button { min-height: 0; padding: 5px; border: 0; background: none; border-radius: 9px; cursor: url('./assets/cursors/pointer.svg') 9 2, pointer; }
 .goal-icon-grid button:hover { background: var(--soft-fill); }
 .goal-icon-grid button.on { background: color-mix(in srgb, var(--accent) 18%, transparent); box-shadow: inset 0 0 0 1.5px var(--accent); }
 .goal-icon-grid img { width: 32px; height: 32px; display: block; margin: 0 auto; }
@@ -1682,3 +1682,16 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .goal-icon-grid button:nth-child(6n + 1)[data-tip]::after { left: 0; transform: none; }
 .goal-icon-grid button:nth-child(6n)[data-tip]::after { left: auto; right: 0; transform: none; }
 .goal-icon-grid button:hover, .goal-icon-grid button:focus-visible { z-index: 5; }
+
+/* 앱 화면 커서(docs/design.md 11-6 2-6 ⑥, A안): 화살표, 누르기, 쓰기, 막힘을 보라 커서로.
+   :where로 점수를 0으로 둬서 일정의 만들기, 옮기기, 늘이기 같은 개별 커서가 늘 이긴다 */
+:where(.app) { cursor: url('./assets/cursors/arrow.svg') 4 3, default; }
+:where(.app) :where(button, a[href], [role='button'], [role='radio'], [role='tab'], [role='menuitem'], label, select, summary, input[type='checkbox'], input[type='radio'], input[type='date'], input[type='time'], input[type='color']) {
+  cursor: url('./assets/cursors/pointer.svg') 9 2, pointer;
+}
+:where(.app) :where(input:not([type]), input[type='text'], input[type='search'], input[type='number'], input[type='email'], input[type='url'], textarea, [contenteditable='true']) {
+  cursor: url('./assets/cursors/text.svg') 11 11, text;
+}
+:where(.app) :where(button:disabled, input:disabled, select:disabled, textarea:disabled, [aria-disabled='true']) {
+  cursor: url('./assets/cursors/blocked.svg') 11 11, not-allowed;
+}
