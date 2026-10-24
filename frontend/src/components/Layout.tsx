@@ -15,7 +15,7 @@ const GROUPS: { title: string; menus: Menu[] }[] = [
     menus: [
       { to: '/', label: '일정', icon: 'schedule', end: true },
       { to: '/goals', label: '목표', icon: 'plan' },
-      { to: '/log', label: '기록', icon: 'log' },
+      { to: '/log', label: '돌아보기', icon: 'log' },
     ],
   },
   {

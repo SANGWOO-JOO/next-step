@@ -1,36 +1,27 @@
 import { useCallback, useEffect, useState } from 'react'
 import { errorMessage } from '../api/client'
-import {
-  getMonthlyReview,
-  getWeeklyJournal,
-  saveMonthlyReview,
-  saveWeeklyJournal,
-  type MonthlyReview,
-  type WeeklyJournal,
-} from '../api/reviews'
-import { journalDue, reviewDue } from '../pages/plan/planData'
-import { currentMonthSeoul, monthLabel, mondayOf, shiftDate, todaySeoul, weekLabel } from '../utils/date'
+import { getWeeklyJournal, saveWeeklyJournal, type WeeklyJournal } from '../api/reviews'
+import { journalDue } from '../pages/plan/planData'
+import { mondayOf, shiftDate, todaySeoul, weekLabel } from '../utils/date'
 import { refreshReminders } from '../utils/reminders'
 import ReviewCard from './ReviewCard'
 import WeeklyFeedbackCard from './WeeklyFeedbackCard'
 
 /**
- * 기록 페이지 맨 위의 이번 주 일지·이번 달 회고 쓰기(docs/design.md 1-4f ⑳).
- * 계획 화면은 계획 세우기만 하고, 돌아보기는 여기서 쓴다.
+ * 돌아보기 맨 위 이번 주 카드(docs/design.md 11-6 2-9 ②): 왼쪽 이번 주 일지, 오른쪽 지난 주 AI 피드백.
+ * 월간 회고는 화면에서 뺐다(2-9 ⑤).
  */
-export default function ReviewWriter({ kind, onSaved }: { kind: 'week' | 'month'; onSaved: () => void }) {
+export default function ReviewWriter({ onSaved }: { onSaved: () => void }) {
   const today = todaySeoul()
   const monday = mondayOf(today)
-  const month = currentMonthSeoul()
   const [journal, setJournal] = useState<WeeklyJournal | null>(null)
-  const [review, setReview] = useState<MonthlyReview | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(() => {
-    const fail = (e: unknown) => setError(errorMessage(e))
-    if (kind === 'week') getWeeklyJournal(monday).then(setJournal).catch(fail)
-    else getMonthlyReview(month).then(setReview).catch(fail)
-  }, [kind, monday, month])
+    getWeeklyJournal(monday)
+      .then(setJournal)
+      .catch((e) => setError(errorMessage(e)))
+  }, [monday])
   useEffect(load, [load])
 
   const save = async (action: () => Promise<unknown>) => {
@@ -48,10 +39,9 @@ export default function ReviewWriter({ kind, onSaved }: { kind: 'week' | 'month'
   }
 
   return (
-    <div className="week-journal" id="journal">
+    <div className="log-week" id="journal">
       {error && <p className="error">{error}</p>}
-      {kind === 'week' && <WeeklyFeedbackCard weekStart={shiftDate(monday, -7)} />}
-      {kind === 'week' && journal && (
+      {journal && (
         <ReviewCard
           key={`${monday}|${journal.saved}`}
           title={`이번 주 일지 ${weekLabel(monday)}`}
@@ -59,7 +49,7 @@ export default function ReviewWriter({ kind, onSaved }: { kind: 'week' | 'month'
           fields={[
             { key: 'good', label: '잘한 점', placeholder: '이번 주에 잘된 것' },
             { key: 'bad', label: '아쉬운 점', placeholder: '막혔던 것, 딴짓한 때' },
-            { key: 'nextAction', label: '다음 주 반영', placeholder: '다음 주에 바꿀 한 가지' },
+            { key: 'nextAction', label: '다음 주에 바꿀 한 가지', placeholder: '다음 주에 바꿀 한 가지' },
           ]}
           values={{ good: journal.good, bad: journal.bad, nextAction: journal.nextAction }}
           version={`${monday}|${journal.updatedAt}`}
@@ -70,24 +60,7 @@ export default function ReviewWriter({ kind, onSaved }: { kind: 'week' | 'month'
           onSave={(v) => save(() => saveWeeklyJournal(monday, { good: v.good, bad: v.bad, nextAction: v.nextAction }))}
         />
       )}
-      {kind === 'month' && review && (
-        <ReviewCard
-          key={`${month}|${review.saved}`}
-          title={`이번 달 회고 ${monthLabel(month)}`}
-          name="이번 달 회고"
-          fields={[
-            { key: 'review', label: '회고', placeholder: '이번 달에 무엇을 했고 어땠나요?', rows: 4 },
-            { key: 'nextDirection', label: '다음 달 방향', placeholder: '다음 달에 집중할 것' },
-          ]}
-          values={{ review: review.review, nextDirection: review.nextDirection }}
-          version={`${month}|${review.updatedAt}`}
-          aiSummary={review.aiSummary}
-          saved={review.saved}
-          due={reviewDue(month, today)}
-          prompt={reviewDue(month, today) && !review.saved ? '이 달의 마지막 주예요. 한 달을 돌아보고 다음 달 방향을 정해요.' : undefined}
-          onSave={(v) => save(() => saveMonthlyReview(month, { review: v.review, nextDirection: v.nextDirection }))}
-        />
-      )}
+      <WeeklyFeedbackCard weekStart={shiftDate(monday, -7)} />
     </div>
   )
 }

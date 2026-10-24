@@ -312,7 +312,7 @@ button.core-toggle:disabled { cursor: url('./assets/cursors/blocked.svg') 11 11,
 .log-stats { grid-template-columns: repeat(auto-fill, minmax(5rem, auto) minmax(7rem, 1fr)); }
 .log-subtitle { margin: 0.25rem 0 0; font-weight: 600; }
 .condition-picker { margin-top: 0; }
-.condition-picker button.icon { font-size: 1.15rem; padding: 0.1rem 0.4rem; opacity: 0.55; }
+.condition-picker button.icon { padding: 0.15rem 0.3rem; opacity: 0.5; line-height: 0; }
 .condition-picker button.icon.selected { opacity: 1; border-color: var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); }
 
 /* 주간 일지·월간 회고 */
@@ -1750,3 +1750,31 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .report-empty p { margin: 0; }
 .report-empty .button-link { margin-top: 0.5rem; }
 @media (max-width: 560px) { .report-hero > img { width: 64px; height: 64px; } .report-big { font-size: 1.6rem; } }
+
+/* 돌아보기(docs/design.md 11-6 2-9) */
+.log-week { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 0.75rem; align-items: start; margin-top: 0.75rem; }
+.log-week > .card { margin: 0; }
+.log-week .stack-form { display: grid; gap: 0.6rem; }
+.log-week > .card:first-of-type { background: linear-gradient(135deg, color-mix(in srgb, #8b5cf6 18%, var(--surface)), color-mix(in srgb, #5b8cff 10%, var(--surface))); }
+@media (max-width: 860px) { .log-week { grid-template-columns: 1fr; } }
+.log-page .log-calendar { margin-top: 0.75rem; }
+.log-page .log-cal-grid { grid-template-columns: repeat(7, minmax(0, 1fr)) 4.2rem; gap: 6px; }
+.log-page .log-cal-cell { position: relative; min-height: 4.6rem; background: none; }
+.log-cal-face { position: absolute; top: 0.4rem; right: 0.4rem; }
+.log-cal-cell .log-cal-study { position: absolute; left: 0.5rem; bottom: 0.4rem; }
+.log-cal-pen { position: absolute; right: 0.4rem; bottom: 0.4rem; }
+.log-cal-week { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem; min-height: 4.6rem; padding: 0; border-radius: 10px; border: 1px dashed var(--border); background: none; color: var(--muted); font-size: 0.7rem; }
+.log-cal-week.written { border: 1px solid color-mix(in srgb, #8b5cf6 40%, var(--border)); background: color-mix(in srgb, #8b5cf6 14%, transparent); color: color-mix(in srgb, #c4b5fd 80%, var(--text)); }
+.log-cal-week.picked { outline: 2px solid #6d74f7; outline-offset: -2px; }
+.log-legend { display: flex; flex-wrap: wrap; gap: 0.9rem; font-size: 0.75rem; color: var(--muted); }
+.log-legend span { display: inline-flex; align-items: center; gap: 0.3rem; }
+.log-panel { display: grid; grid-template-columns: 44px 1fr; gap: 0.9rem; align-items: start; margin-top: 0.75rem; }
+.log-panel-blank { width: 44px; height: 44px; border-radius: 50%; background: var(--soft-fill); }
+.log-panel-main { display: grid; gap: 0.5rem; min-width: 0; }
+.log-panel-head { display: flex; justify-content: space-between; align-items: center; }
+.log-panel-line { margin: 0; display: flex; gap: 0.4rem 0.6rem; flex-wrap: wrap; font-size: 0.9rem; }
+.log-panel-memo { padding: 0.6rem 0.75rem; border-radius: 10px; background: var(--soft-fill); }
+.log-panel-memo p { margin: 0.15rem 0 0; white-space: pre-wrap; }
+.log-empty { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; padding: 1.75rem 1rem; text-align: center; margin-top: 0.75rem; }
+.log-empty p { margin: 0; }
+.log-empty button { margin-top: 0.4rem; }

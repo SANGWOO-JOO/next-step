@@ -31,7 +31,9 @@ export type DailyLog = {
   summary: DailySummary
 }
 
-export const CONDITION_LABELS: Record<number, string> = { 1: '😫', 2: '😕', 3: '😐', 4: '🙂', 5: '😄' }
+
+/** 컨디션 이름(docs/design.md 11-6 2-9 ⑦). 그림은 ConditionFace */
+export const CONDITION_NAMES: Record<number, string> = { 1: '지침', 2: '별로', 3: '보통', 4: '좋음', 5: '최고' }
 
 export const getManualLogs = (date: string) => api.get<ManualStudyLog[]>(`/api/manual-logs?date=${date}`)
 

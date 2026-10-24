@@ -3,9 +3,10 @@ import type { Category } from '../../api/categories'
 import { errorMessage } from '../../api/client'
 import { moveDailyGoal, type DailyGoal } from '../../api/dailyGoals'
 import { formatDuration } from '../../api/focus'
-import { CONDITION_LABELS, deleteManualLog, saveDailyLog, type DailyLog, type ManualStudyLog } from '../../api/records'
+import { CONDITION_NAMES, deleteManualLog, saveDailyLog, type DailyLog, type ManualStudyLog } from '../../api/records'
 import { dayLabel, shiftDate } from '../../utils/date'
 import CategoryBadge from '../CategoryBadge'
+import ConditionFace from '../ConditionFace'
 import ManualLogForm from '../ManualLogForm'
 import FillActuals from './FillActuals'
 
@@ -148,11 +149,11 @@ export default function ShutdownDialog({ date, log, goals, manualLogs, categorie
                     type="button"
                     role="radio"
                     aria-checked={condition === n}
-                    aria-label={`컨디션 ${n}`}
+                    aria-label={`컨디션 ${CONDITION_NAMES[n]}`}
                     className={condition === n ? 'icon selected' : 'icon'}
                     onClick={() => setCondition(condition === n ? null : n)}
                   >
-                    {CONDITION_LABELS[n]}
+                    <ConditionFace value={n} size={26} />
                   </button>
                 ))}
               </span>

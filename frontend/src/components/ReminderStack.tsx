@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { formatDuration } from '../api/focus'
-import { CONDITION_LABELS, getDailyLog, type DailyLog } from '../api/records'
+import { getDailyLog, type DailyLog } from '../api/records'
 import { getWeeklyJournals } from '../api/reviews'
 import { getTimeBlocksBetween } from '../api/timeBlocks'
 import nowIcon from '../assets/reminders/now.svg'
@@ -124,7 +124,7 @@ export default function ReminderStack() {
           }
           actions={
             <button className="reminder-btn" onClick={() => navigate('/?shutdown=1')}>
-              {log.saved ? `오늘 기록 보기 ${log.condition ? CONDITION_LABELS[log.condition] : ''}` : '하루 마무리'}
+              {log.saved ? '오늘 기록 보기' : '하루 마무리'}
             </button>
           }
         />
