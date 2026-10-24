@@ -1653,3 +1653,7 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .segmented.lane-switch { overflow: visible; }
 /* 시간표 위 도구 줄의 툴팁이 아래 시간표 머리(고정, z-index 4)에 가리지 않게 */
 .schedule-card > .cal-header { position: relative; z-index: 6; }
+/* 목표 화면 주 이동: 이번 주·화살표·기간 글자를 한 줄 가운데로(옛 계획 화면의 위 정렬 규칙을 덮음) */
+.plan-page .plan-header.cal-header .cal-nav { align-items: center; }
+.plan-page .plan-header.cal-header .cal-nav > button { margin-top: 0; }
+.plan-page .plan-week { line-height: 1; }
