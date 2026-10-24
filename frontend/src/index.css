@@ -1683,3 +1683,4 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .goal-icon-trigger.open[data-tip]::after { display: none; }
 .goal-icon-grid button:nth-child(6n + 1)[data-tip]::after { left: 0; transform: none; }
 .goal-icon-grid button:nth-child(6n)[data-tip]::after { left: auto; right: 0; transform: none; }
+.goal-icon-grid button:hover, .goal-icon-grid button:focus-visible { z-index: 5; }
