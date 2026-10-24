@@ -1562,7 +1562,12 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .ld-tag { padding: 7px 14px; border-radius: 999px; background: rgb(249 168 212 / 0.16); color: #fbcfe8; font-size: 13px; font-weight: 700; }
 .ld-h1 { margin: 0; font-size: clamp(2.2rem, 5vw, 3.8rem); line-height: 1.2; font-weight: 800; letter-spacing: -0.035em; }
 .ld-h2 { margin: 0; font-size: clamp(1.9rem, 3.6vw, 2.8rem); line-height: 1.3; font-weight: 800; letter-spacing: -0.03em; }
-.ld-ctas { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.ld-ctas { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.ld-more { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; border: 0; background: transparent; color: #a1a1aa; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.ld-more:hover { color: #ddd6fe; }
+.ld-more span { animation: ld-hint 2s ease-in-out infinite; }
+@keyframes ld-hint { 0%, 100% { transform: translateY(0); opacity: 0.6; } 50% { transform: translateY(5px); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .ld-more span { animation: none; } }
 .ld-google { height: 56px; padding: 0 28px; border-radius: 999px; background: #fff; color: #1f1f1f !important; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 800; }
 .ld-burst { position: absolute; left: 50%; top: 50%; width: var(--s); opacity: 0; transform: translate(-50%, -50%) scale(0.2); transition: transform 1.1s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.7s ease-out; pointer-events: none; }
 .on .ld-burst { opacity: 1; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1) rotate(var(--r)); }

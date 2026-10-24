@@ -110,8 +110,10 @@ export default function LandingPage() {
           </h1>
           <div className="ld-rv d3 ld-ctas">
             <GoogleButton>Google로 무료로 시작하기</GoogleButton>
-            <button type="button" className="ld-ghost ld-ghost-lg" onClick={() => detail.current?.scrollIntoView({ behavior: 'smooth' })}>
+            {/* 보조 동작은 아래에 작은 글자로(시작 버튼만 주인공) */}
+            <button type="button" className="ld-more" onClick={() => detail.current?.scrollIntoView({ behavior: 'smooth' })}>
               어떤 앱인지 볼래요
+              <span aria-hidden="true">↓</span>
             </button>
           </div>
         </div>
