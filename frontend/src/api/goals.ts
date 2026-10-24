@@ -1,13 +1,12 @@
 import { api } from './client'
 
-/** 진행·완료·멈춤·그만둠(docs/design.md 11-4) */
-export type GoalStatus = 'ACTIVE' | 'DONE' | 'PAUSED' | 'DROPPED'
+/** 진행·완료·보관(docs/design.md 11-6 2-2 추가 결정) */
+export type GoalStatus = 'ACTIVE' | 'DONE' | 'ARCHIVED'
 
 export const GOAL_STATUS_LABEL: Record<GoalStatus, string> = {
   ACTIVE: '진행 중',
   DONE: '완료',
-  PAUSED: '멈춤',
-  DROPPED: '그만둠',
+  ARCHIVED: '보관'
 }
 
 /** 진행 중 목표 최대 개수(docs/design.md 11-6 2-2 ⑦) */

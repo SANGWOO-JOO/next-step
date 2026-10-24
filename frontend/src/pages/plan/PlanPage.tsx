@@ -155,7 +155,7 @@ export default function PlanPage() {
               className="plan-add"
               onClick={() => setAdding(true)}
               disabled={full}
-              title={full ? `진행 중인 목표는 ${MAX_ACTIVE_GOALS}개까지예요. 하나를 완료하거나 멈춘 뒤 추가해 주세요.` : undefined}
+              title={full ? `진행 중인 목표는 ${MAX_ACTIVE_GOALS}개까지예요. 하나를 완료하거나 보관한 뒤 추가해 주세요.` : undefined}
             >
               + 목표 추가 {full && <span className="muted small">(진행 중 {MAX_ACTIVE_GOALS}개까지)</span>}
             </button>
@@ -247,8 +247,7 @@ function GoalCard({ row, goals, run, full }: CardProps) {
           items={[
             { label: '고치기', onClick: () => setEditing(true) },
             { label: '완료', onClick: () => status('DONE'), show: activeGoal },
-            { label: '멈춤', onClick: () => status('PAUSED'), show: activeGoal },
-            { label: '그만둠', onClick: () => status('DROPPED'), show: activeGoal },
+            { label: '보관', onClick: () => status('ARCHIVED'), show: activeGoal },
             { label: '다시 진행', onClick: () => status('ACTIVE'), show: !activeGoal, disabled: full },
             {
               label: '지우기',

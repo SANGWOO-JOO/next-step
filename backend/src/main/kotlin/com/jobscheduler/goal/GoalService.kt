@@ -65,7 +65,7 @@ class GoalService(
         return GoalResponse.from(goal)
     }
 
-    /** 완료·멈춤·그만둠으로 바꿔도 기록과 묶인 할 일은 그대로 둔다. 다시 진행으로 돌릴 때만 개수를 본다 */
+    /** 완료·보관으로 바꿔도 기록과 묶인 할 일은 그대로 둔다. 다시 진행으로 돌릴 때만 개수를 본다 */
     fun changeStatus(id: Long, status: GoalStatus): GoalResponse {
         val goal = getEntity(id)
         if (status == GoalStatus.ACTIVE && goal.status != GoalStatus.ACTIVE) requireActiveSlot()
@@ -130,7 +130,7 @@ class GoalService(
     private fun requireActiveSlot() {
         if (goalRepository.countByStatus(GoalStatus.ACTIVE) >= MAX_ACTIVE) {
             throw BusinessRuleException(
-                "진행 중인 목표는 ${MAX_ACTIVE}개까지예요. 하나를 완료하거나 멈춘 뒤 추가해 주세요.",
+                "진행 중인 목표는 ${MAX_ACTIVE}개까지예요. 하나를 완료하거나 보관한 뒤 추가해 주세요.",
                 "ACTIVE_GOAL_LIMIT",
             )
         }
