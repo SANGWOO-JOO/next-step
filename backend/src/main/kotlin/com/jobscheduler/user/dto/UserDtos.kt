@@ -35,4 +35,6 @@ data class OnboardingRequest(
 )
 
 /** 건너뛰기도 동의는 받는다 */
+data class PurposeRequest(val purpose: UserPurpose)
+
 data class OnboardingSkipRequest(val agreed: Boolean = false)

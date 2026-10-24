@@ -121,4 +121,11 @@ class OnboardingServiceTest(
         assertEquals(null, me.purpose)
         assertTrue(goalService.list().isEmpty())
     }
+
+    @Test
+    fun `설정에서 준비 중인 것을 바꿀 수 있다`() {
+        onboardingService.complete(OnboardingRequest(true, UserPurpose.JOB_SEEKER, GoalRequest("면접 준비", "#14b8a6")))
+        assertEquals(UserPurpose.CAREER_CHANGER, userService.changePurpose(UserPurpose.CAREER_CHANGER).purpose)
+        assertEquals(UserPurpose.CAREER_CHANGER, userService.me().purpose)
+    }
 }

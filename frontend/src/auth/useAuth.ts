@@ -1,7 +1,8 @@
 import { createContext, useContext } from 'react'
 import type { Me } from '../api/me'
 
-export type Auth = { me: Me; signOut: () => Promise<void> }
+/** setMe: 설정에서 바꾼 내 정보를 앱 전체에 반영 */
+export type Auth = { me: Me; signOut: () => Promise<void>; setMe: (me: Me) => void }
 
 export const AuthContext = createContext<Auth | null>(null)
 

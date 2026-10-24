@@ -30,6 +30,14 @@ class UserService(
         return created
     }
 
+    /** 설정의 "준비 중인 것"(docs/design.md 11-6 2-6 ④) */
+    @Transactional
+    fun changePurpose(purpose: UserPurpose): MeResponse {
+        val user = userRepository.findByIdOrNull(CurrentUser.id()) ?: throw NotFoundException("사용자를 찾을 수 없어요")
+        user.purpose = purpose
+        return MeResponse.from(user)
+    }
+
     @Transactional(readOnly = true)
     fun me(): MeResponse {
         val user = userRepository.findByIdOrNull(CurrentUser.id()) ?: throw NotFoundException("사용자를 찾을 수 없어요")

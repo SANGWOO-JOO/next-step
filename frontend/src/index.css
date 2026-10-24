@@ -1284,14 +1284,6 @@ button.pull-all:hover { color: #7c6cf8; }
 .schedule-goal-summary { display: inline-flex; align-items: center; gap: 4px; min-height: 0; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
 .schedule-goal-summary .category-dot { width: 6px; height: 6px; }
 
-/* 분류 아이콘 고르기(1-4f ㊻) */
-.icon-picker { position: relative; display: inline-flex; }
-.icon-picker-button { width: 2.2rem; height: 2.2rem; min-height: 0; padding: 0; border-radius: 50%; border: 1px solid var(--border); background: transparent; font-size: 1.05rem; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
-.icon-picker-pop { position: absolute; top: calc(100% + 6px); left: 0; z-index: 30; display: grid; grid-template-columns: repeat(6, 2rem); gap: 4px; padding: 8px; background: var(--surface, var(--bg)); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3); }
-.icon-picker-pop button { width: 2rem; height: 2rem; min-height: 0; padding: 0; border: 0; border-radius: 8px; background: transparent; font-size: 1.05rem; }
-.icon-picker-pop button:hover, .icon-picker-pop button.on { background: color-mix(in srgb, #8B5CF6 20%, transparent); }
-.icon-picker-pop .icon-picker-none { grid-column: 1 / -1; width: auto; font-size: 12px; color: var(--text-muted, #888); }
-
 /* 일정 캘린더 디자인: 파스텔 + 분류 아이콘(1-4f ㊻, Amie·TimeTree·Google Material 3 참고) */
 .schedule-column { background-image: linear-gradient(to bottom, color-mix(in srgb, var(--border) 55%, transparent) 1px, transparent 1px); border-left-color: color-mix(in srgb, var(--border) 60%, transparent); }
 .schedule-column.today { background-color: color-mix(in srgb, #8B5CF6 5%, transparent); }
@@ -1628,10 +1620,16 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .welcome-agree input { width: 1.1rem; height: 1.1rem; accent-color: #7c5cff; }
 .welcome-agree a { color: #c4b5fd; }
 /* 설정의 계정(2-4) */
-.settings-account { margin-top: 1rem; }
-.settings-account p a { color: var(--muted); margin-right: 0.75rem; }
-.settings-leave { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); }
-.settings-leave p { margin: 0.2rem 0 0; }
+.settings-cap { font-size: 0.8rem; font-weight: 600; color: var(--muted); margin: 1.5rem 0.25rem 0.5rem; }
+.settings-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.settings-row { display: flex; align-items: center; gap: 0.75rem; width: 100%; min-height: 3.25rem; padding: 0.75rem 1rem; border: 0; border-top: 1px solid var(--hairline, var(--border)); border-radius: 0; background: none; color: var(--text); font: inherit; text-align: left; text-decoration: none; }
+.settings-row:first-child { border-top: 0; }
+.settings-row.link { cursor: pointer; }
+.settings-row.link:hover { background: var(--soft-fill); }
+.settings-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+.settings-chev { color: var(--muted); font-size: 1.1rem; }
+.settings-danger { color: var(--down); }
+.settings-avatar { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; background: var(--grad); object-fit: cover; }
 .ld-signin { margin-top: -2px; font-size: 15px; color: #8b8b94; }
 .ld-signin a { display: inline-block; padding: 4px 2px; }
 .ld-signin a { color: #c4b5fd !important; text-decoration: underline; text-underline-offset: 3px; }

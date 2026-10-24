@@ -46,5 +46,5 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   if (!state.me.onboarded && (pathname === '/terms' || pathname === '/privacy'))
     return <LegalPage kind={pathname === '/terms' ? 'terms' : 'privacy'} />
   if (!state.me.onboarded) return <WelcomePage me={state.me} onDone={(me) => setState({ status: 'in', me })} />
-  return <AuthContext.Provider value={{ me: state.me, signOut }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ me: state.me, signOut, setMe: (me) => setState({ status: 'in', me }) }}>{children}</AuthContext.Provider>
 }

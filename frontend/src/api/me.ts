@@ -36,5 +36,8 @@ export const completeOnboarding = (input: OnboardingInput) => api.post<Me>('/api
 /** 이미 쓰던 사람은 건너뛴다 */
 export const skipOnboarding = (agreed: boolean) => api.post<Me>('/api/me/onboarding/skip', { agreed })
 
+/** 설정의 "준비 중인 것" 바꾸기(2-6) */
+export const changePurpose = (purpose: Purpose) => api.patch<Me>('/api/me/purpose', { purpose })
+
 /** 회원 탈퇴(2-4). 모든 기록과 계정을 지우고 세션을 끝낸다 */
 export const withdraw = () => api.delete<void>('/api/me')

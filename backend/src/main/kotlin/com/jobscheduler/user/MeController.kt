@@ -3,12 +3,14 @@ package com.jobscheduler.user
 import com.jobscheduler.user.dto.MeResponse
 import com.jobscheduler.user.dto.OnboardingRequest
 import com.jobscheduler.user.dto.OnboardingSkipRequest
+import com.jobscheduler.user.dto.PurposeRequest
 import jakarta.validation.Valid
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -33,6 +35,10 @@ class MeController(
     /** 시작 설정 건너뛰기(이미 쓰던 사람) */
     @PostMapping("/onboarding/skip")
     fun skipOnboarding(@RequestBody req: OnboardingSkipRequest): MeResponse = onboardingService.skip(req.agreed)
+
+    /** 준비 중인 것 바꾸기(2-6) */
+    @PatchMapping("/purpose")
+    fun changePurpose(@RequestBody req: PurposeRequest): MeResponse = userService.changePurpose(req.purpose)
 
     /** 회원 탈퇴(2-4). 모든 기록과 계정을 지우고 로그인 세션도 끝낸다 */
     @DeleteMapping

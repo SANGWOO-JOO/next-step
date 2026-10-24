@@ -1,273 +1,124 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import {
-  createCategory,
-  getCategories,
-  reorderCategories,
-  updateCategory,
-  deleteCategory,
-  type Category,
-  type CategoryInput,
-} from '../api/categories'
-import { errorMessage } from '../api/client'
-import { withdraw } from '../api/me'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { availableColors } from '../utils/categoryColors'
-import CategoryBadge from '../components/CategoryBadge'
-import IconPicker from '../components/IconPicker'
+import { errorMessage } from '../api/client'
+import { changePurpose, withdraw, type Purpose } from '../api/me'
+import { useAuth } from '../auth/useAuth'
+import { CONTACT_EMAIL } from '../legal'
 
-const toInput = (c: Category): CategoryInput => ({
-  name: c.name,
-  color: c.color,
-  targetRatio: c.targetRatio,
-  weeklyTargetMinutes: c.weeklyTargetMinutes,
-  active: c.active,
-  icon: c.icon ?? null,
-})
+const PURPOSES: { id: Purpose; label: string }[] = [
+  { id: 'JOB_SEEKER', label: '취업 준비생' },
+  { id: 'CAREER_CHANGER', label: '이직 준비 중' },
+]
 
-const toNumberOrNull = (value: string) => (value.trim() === '' ? null : Number(value))
-
+/** 설정(docs/design.md 11-6 2-6): 내 정보, 약관, 계정만 */
 export default function SettingsPage() {
-  return (
-    <section className="settings-page">
-      <h1>설정</h1>
-      <p className="muted">타이머, 알림, 텔레그램 설정은 1-5단계에서 추가돼요.</p>
-      <CategorySettings />
-      <AccountSection />
-    </section>
-  )
-}
-
-function CategorySettings() {
-  const [categories, setCategories] = useState<Category[]>([])
-  const [error, setError] = useState<string | null>(null)
-
-  const load = useCallback(() => {
-    getCategories(true)
-      .then(setCategories)
-      .catch((e) => setError(errorMessage(e)))
-  }, [])
-
-  useEffect(load, [load])
-
-  const run = async (action: () => Promise<unknown>) => {
-    setError(null)
-    try {
-      await action()
-      load()
-      return true
-    } catch (e) {
-      setError(errorMessage(e))
-      return false
-    }
-  }
-
-  const move = (index: number, delta: number) => {
-    const ids = categories.map((c) => c.id)
-    const target = index + delta
-    ;[ids[index], ids[target]] = [ids[target], ids[index]]
-    run(() => reorderCategories(ids))
-  }
-
-  const ratioSum = categories.filter((c) => c.active).reduce((sum, c) => sum + (c.targetRatio ?? 0), 0)
-
-  return (
-    <div className="card">
-      <h2>목표 색·순서</h2>
-      <p className="muted small">
-        보이는 목표의 비율 합계 <strong className={ratioSum > 100 ? 'status down' : undefined}>{ratioSum}%</strong> (100% 이하).
-        목표 이름·기한·상태는 계획 화면에서 바꿔요. 기록이 있는 목표는 지우지 않고 숨겨요.
-      </p>
-      {error && <p className="error">{error}</p>}
-
-      <div className="category-table">
-        <div className="category-row header muted small">
-          <span>순서</span>
-          <span>색</span>
-          <span>아이콘</span>
-          <span>이름</span>
-          <span>목표 비율(%)</span>
-          <span>주간 목표(분)</span>
-          <span>활성</span>
-          <span />
-        </div>
-        {categories.map((c, i) => (
-          <CategoryRow
-            key={c.id}
-            category={c}
-            first={i === 0}
-            last={i === categories.length - 1}
-            onMove={(delta) => move(i, delta)}
-            onSave={(input) => run(() => updateCategory(c.id, input))}
-            onDelete={() => confirm(`'${c.name}' 목표를 지울까요?`) && run(() => deleteCategory(c.id))}
-          />
-        ))}
-      </div>
-
-      <NewCategoryForm
-        usedColors={categories.map((c) => c.color)}
-        onCreate={(input) => run(() => createCategory(input))}
-      />
-    </div>
-  )
-}
-
-type RowProps = {
-  category: Category
-  first: boolean
-  last: boolean
-  onMove: (delta: number) => void
-  onSave: (input: CategoryInput) => Promise<boolean>
-  onDelete: () => void
-}
-
-function CategoryRow({ category, first, last, onMove, onSave, onDelete }: RowProps) {
-  const [draft, setDraft] = useState<CategoryInput>(() => toInput(category))
-  const dirty = JSON.stringify(draft) !== JSON.stringify(toInput(category))
-
-  return (
-    <div className={category.active ? 'category-row' : 'category-row inactive'}>
-      <span className="row-actions">
-        <button type="button" className="icon" disabled={first} onClick={() => onMove(-1)} aria-label="위로">
-          ↑
-        </button>
-        <button type="button" className="icon" disabled={last} onClick={() => onMove(1)} aria-label="아래로">
-          ↓
-        </button>
-      </span>
-      <input
-        type="color"
-        value={draft.color}
-        onChange={(e) => setDraft({ ...draft, color: e.target.value })}
-        aria-label="색"
-      />
-      <IconPicker value={draft.icon} onChange={(icon) => setDraft({ ...draft, icon })} />
-      <input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} aria-label="이름" />
-      <input
-        type="number"
-        min={0}
-        max={100}
-        value={draft.targetRatio ?? ''}
-        onChange={(e) => setDraft({ ...draft, targetRatio: toNumberOrNull(e.target.value) })}
-        aria-label="목표 비율"
-      />
-      <input
-        type="number"
-        min={0}
-        step={30}
-        value={draft.weeklyTargetMinutes ?? ''}
-        onChange={(e) => setDraft({ ...draft, weeklyTargetMinutes: toNumberOrNull(e.target.value) })}
-        aria-label="주간 목표 시간(분)"
-      />
-      <input
-        type="checkbox"
-        checked={draft.active}
-        onChange={(e) => setDraft({ ...draft, active: e.target.checked })}
-        aria-label="활성"
-      />
-      <span className="row-actions">
-        <button type="button" disabled={!dirty} onClick={() => onSave(draft)}>
-          저장
-        </button>
-        <button type="button" className="ghost" disabled={!dirty} onClick={() => setDraft(toInput(category))}>
-          취소
-        </button>
-        {category.deletable ? (
-          <button type="button" className="ghost danger" onClick={onDelete} title="한 번도 쓰이지 않아 지울 수 있어요">
-            삭제
-          </button>
-        ) : (
-          <span className="muted small" title="쓰인 목표는 지울 수 없어요. 활성 체크를 꺼서 숨겨요">
-            사용 중
-          </span>
-        )}
-      </span>
-    </div>
-  )
-}
-
-const EMPTY: CategoryInput = { name: '', color: '#64748b', targetRatio: null, weeklyTargetMinutes: null, active: true, icon: null }
-
-function NewCategoryForm({ usedColors, onCreate }: { usedColors: string[]; onCreate: (input: CategoryInput) => Promise<boolean> }) {
-  const [draft, setDraft] = useState<CategoryInput>(EMPTY)
-  // 색을 직접 바꾸지 않았으면 안 쓴 색 계열을 기본으로(1-4f ㊷)
-  const [colorTouched, setColorTouched] = useState(false)
-  const color = colorTouched ? draft.color : availableColors(usedColors)[0]
-
-  const submit = async (e: FormEvent) => {
-    e.preventDefault()
-    if (await onCreate({ ...draft, color })) {
-      setDraft(EMPTY)
-      setColorTouched(false)
-    }
-  }
-
-  return (
-    <form className="inline-form" onSubmit={submit}>
-      <input
-        type="color"
-        value={color}
-        onChange={(e) => {
-          setDraft({ ...draft, color: e.target.value })
-          setColorTouched(true)
-        }}
-        aria-label="새 항목 색"
-      />
-      <IconPicker value={draft.icon} onChange={(icon) => setDraft({ ...draft, icon })} label="새 항목 아이콘" />
-      <input
-        placeholder="새 항목 이름"
-        value={draft.name}
-        onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-        required
-      />
-      <input
-        type="number"
-        min={0}
-        max={100}
-        placeholder="목표 비율(%)"
-        value={draft.targetRatio ?? ''}
-        onChange={(e) => setDraft({ ...draft, targetRatio: toNumberOrNull(e.target.value) })}
-      />
-      <button type="submit">추가</button>
-      {draft.name && <CategoryBadge name={draft.name} color={draft.color} />}
-    </form>
-  )
-}
-
-/** 계정: 약관 링크와 회원 탈퇴(docs/design.md 11-6 2-4 ④) */
-function AccountSection() {
+  const { me, setMe, signOut } = useAuth()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
-  const leave = async () => {
-    if (!confirm('정말 탈퇴할까요? 목표, 할 일, 시간표, 기록이 모두 바로 지워지고 되돌릴 수 없어요.')) return
+  const run = async (action: () => Promise<void>) => {
     setBusy(true)
     setError(null)
     try {
-      await withdraw()
-      // 세션이 끝났으니 처음(랜딩)부터 다시 연다
-      window.location.href = '/'
+      await action()
     } catch (e) {
       setError(errorMessage(e))
+    } finally {
       setBusy(false)
     }
   }
 
+  const pick = (purpose: Purpose) => purpose !== me.purpose && run(async () => setMe(await changePurpose(purpose)))
+
+  const copyEmail = () =>
+    navigator.clipboard
+      ?.writeText(CONTACT_EMAIL)
+      .then(() => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2500)
+      })
+      .catch(() => setCopied(false))
+
+  const leave = () => {
+    if (!confirm('정말 탈퇴할까요? 목표, 할 일, 시간표, 기록이 모두 바로 지워지고 되돌릴 수 없어요.')) return
+    run(async () => {
+      await withdraw()
+      // 세션이 끝났으니 처음(랜딩)부터 다시 연다
+      window.location.href = '/'
+    })
+  }
+
   return (
-    <div className="card settings-account">
-      <h2>계정</h2>
-      <p className="muted small">
-        <Link to="/terms">이용약관</Link> <Link to="/privacy">개인정보 처리방침</Link>
-      </p>
-      <div className="settings-leave">
-        <div>
-          <strong>탈퇴하기</strong>
-          <p className="muted small">계정과 모든 기록을 바로 지워요. 되돌릴 수 없어요.</p>
+    <section className="settings-page">
+      <h1>설정</h1>
+      {error && <p className="error-banner">{error}</p>}
+
+      <h2 className="settings-cap">내 정보</h2>
+      <div className="settings-box">
+        <div className="settings-row">
+          {me.pictureUrl ? (
+            <img className="settings-avatar" src={me.pictureUrl} alt="" referrerPolicy="no-referrer" />
+          ) : (
+            <span className="settings-avatar">{(me.name ?? me.email).slice(0, 1)}</span>
+          )}
+          <div className="settings-text">
+            <div>{me.name ?? me.email}</div>
+            <div className="muted small">{me.email} 구글 계정</div>
+          </div>
         </div>
-        <button type="button" className="danger" onClick={leave} disabled={busy}>
-          탈퇴하기
+        <div className="settings-row">
+          <div className="settings-text">준비 중인 것</div>
+          <div className="segmented" role="radiogroup" aria-label="준비 중인 것">
+            {PURPOSES.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                role="radio"
+                aria-checked={me.purpose === p.id}
+                className={me.purpose === p.id ? 'active' : undefined}
+                disabled={busy}
+                onClick={() => pick(p.id)}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <h2 className="settings-cap">약관</h2>
+      <div className="settings-box">
+        <Link className="settings-row link" to="/terms">
+          <span className="settings-text">이용약관</span>
+          <span className="settings-chev">›</span>
+        </Link>
+        <Link className="settings-row link" to="/privacy">
+          <span className="settings-text">개인정보 처리방침</span>
+          <span className="settings-chev">›</span>
+        </Link>
+        <button type="button" className="settings-row link" onClick={copyEmail}>
+          <span className="settings-text">문의하기</span>
+          <span className="muted small" role="status">
+            {copied ? '메일 주소를 복사했어요' : '이메일 복사'}
+          </span>
         </button>
       </div>
-      {error && <p className="error-banner">{error}</p>}
-    </div>
+
+      <h2 className="settings-cap">계정</h2>
+      <div className="settings-box">
+        <button type="button" className="settings-row link" onClick={signOut}>
+          <span className="settings-text">로그아웃</span>
+          <span className="settings-chev">›</span>
+        </button>
+        <button type="button" className="settings-row link" onClick={leave} disabled={busy}>
+          <span className="settings-text">
+            <span className="settings-danger">탈퇴하기</span>
+            <span className="muted small">계정과 모든 기록을 바로 지워요. 되돌릴 수 없어요.</span>
+          </span>
+          <span className="settings-chev">›</span>
+        </button>
+      </div>
+    </section>
   )
 }
