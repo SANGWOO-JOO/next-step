@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import type { DailyGoal } from '../api/dailyGoals'
 import type { Goal } from '../api/goals'
 import type { TimeBlockInput } from '../api/timeBlocks'
@@ -32,7 +32,10 @@ type Props = {
   submitLabel: string
   onSubmit: (input: TimeBlockInput, target: BlockTarget) => void
   onCancel: () => void
-  onDelete?: () => void
+  /** 시간 아래, 버튼 줄 위에 넣을 것(블록 색 등) */
+  extra?: ReactNode
+  /** 버튼 줄 왼쪽에 둘 것(할 일 완료 등). 지우기는 부르는 쪽 ⋯ 메뉴에 둔다 */
+  footerLeft?: ReactNode
 }
 
 const FREE = ''
@@ -52,7 +55,8 @@ export default function TimeBlockForm({
   submitLabel,
   onSubmit,
   onCancel,
-  onDelete,
+  extra,
+  footerLeft,
 }: Props) {
   // 선택값: 'd:할 일 id' · 'g:목표 id' · 'new' · ''(목표 아닌 일정)
   const [pick, setPick] = useState(initialGoalId !== null ? `d:${initialGoalId}` : planGoals?.[0] ? `g:${planGoals[0].id}` : FREE)
@@ -90,9 +94,9 @@ export default function TimeBlockForm({
   }
 
   return (
-    <form className="inline-form block-form" onSubmit={submit}>
-      <span className="topic-label small muted">할 일</span>
-      <select value={pick} onChange={(e) => setPick(e.target.value)} aria-label="할 일">
+    <form className="block-form" onSubmit={submit}>
+      <label className="block-form-label" htmlFor={`block-pick-${date}`}>할 일</label>
+      <select id={`block-pick-${date}`} value={pick} onChange={(e) => setPick(e.target.value)} aria-label="할 일">
         {goals.length > 0 && (
           <optgroup label="이 날의 할 일">
             {goals.map((g) => (
@@ -160,6 +164,7 @@ export default function TimeBlockForm({
       )}
       {isFree && (
         <input
+          className="block-form-wide"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="예: 점심, 산책"
@@ -169,20 +174,22 @@ export default function TimeBlockForm({
           aria-label="일정 제목"
         />
       )}
-      <input type="time" step={600} value={start} onChange={(e) => setStart(e.target.value)} required aria-label="시작" />
-      ~
-      <input type="time" step={600} value={end} onChange={(e) => setEnd(e.target.value)} required aria-label="종료" />
-      <span className="row-actions">
-        <button type="submit">{submitLabel}</button>
-        <button type="button" className="ghost" onClick={onCancel}>
+      <span className="block-form-label">시간</span>
+      <div className="block-form-time">
+        <input type="time" step={600} value={start} onChange={(e) => setStart(e.target.value)} required aria-label="시작" />
+        <span className="muted" aria-hidden="true">→</span>
+        <input type="time" step={600} value={end} onChange={(e) => setEnd(e.target.value)} required aria-label="끝" />
+      </div>
+      {extra}
+      <div className="block-form-foot">
+        {footerLeft}
+        <button type="button" className="ghost block-form-cancel" onClick={onCancel}>
           취소
         </button>
-        {onDelete && (
-          <button type="button" className="danger" onClick={onDelete}>
-            삭제
-          </button>
-        )}
-      </span>
+        <button type="submit" className="primary">
+          {submitLabel}
+        </button>
+      </div>
     </form>
   )
 }

@@ -685,6 +685,10 @@ type PopoverProps = {
   onClose: () => void
 }
 
+/** 90 → '1시간 30분' */
+const durationLabel = (minutes: number) =>
+  [Math.floor(minutes / 60) && `${Math.floor(minutes / 60)}시간`, minutes % 60 && `${minutes % 60}분`].filter(Boolean).join(' ') || '0분'
+
 /** 블록 추가·수정 팝업. 블록 바로 옆(위치)에 띄운다. */
 function SchedulePopover({ popover, goals, run, onClose }: PopoverProps) {
   const date = popover.kind === 'new' ? popover.date : popover.block.date
@@ -730,10 +734,33 @@ function SchedulePopover({ popover, goals, run, onClose }: PopoverProps) {
       role="dialog"
       aria-label={popover.kind === 'new' ? '시간 블록 추가' : '시간 블록 수정'}
     >
-      <div className="daily-panel-head">
-        <strong className="small">
-          {popover.kind === 'new' ? '새 시간 블록' : popover.block.label} · {dayLabel(date)}
-        </strong>
+      {/* 머리글: 목표 색 점 · 이름, 아래 날짜 · 시간 · 길이. 지우기는 ⋯ 안으로(2-2 팝오버 정리) */}
+      <div className="block-pop-head">
+        {popover.kind === 'edit' && (
+          <span className="category-dot" style={{ background: popover.block.color ?? popover.block.category?.color ?? 'var(--muted)' }} aria-hidden="true" />
+        )}
+        <div className="block-pop-title">
+          <strong>{popover.kind === 'new' ? '새 시간 블록' : popover.block.label}</strong>
+          <span className="muted small">
+            {dayLabel(date)} · {formatMinutes(start)}–{formatMinutes(end % 1440 === 0 && end > 0 ? 1440 : end)} · {durationLabel(end - start)}
+          </span>
+        </div>
+        {popover.kind === 'edit' && (
+          <MoreMenu
+            label="블록 메뉴"
+            items={[
+              {
+                label: '실제로 기록하기',
+                onClick: () => run(() => actualFromBlock(popover.block.id)).then((ok) => ok && onClose()),
+              },
+              {
+                label: '블록 지우기',
+                danger: true,
+                onClick: () => run(() => deleteTimeBlock(popover.block.id)).then((ok) => ok && onClose()),
+              },
+            ]}
+          />
+        )}
         <button className="icon" onClick={onClose} aria-label="닫기">
           ×
         </button>
@@ -741,50 +768,48 @@ function SchedulePopover({ popover, goals, run, onClose }: PopoverProps) {
       {popover.kind === 'new' && allGoals === null ? (
         <p className="muted small">불러오는 중…</p>
       ) : (
-      <TimeBlockForm
-        date={date}
-        goals={choosable}
-        allowFree
-        planGoals={planGoals}
-        usedColors={(allGoals ?? []).map((g) => g.category.color)}
-        dailyGoalId={popover.kind === 'edit' ? popover.block.dailyGoalId : (choosable[0]?.id ?? null)}
-        title={popover.kind === 'edit' ? popover.block.title : null}
-        startMinutes={start}
-        endMinutes={end}
-        submitLabel={popover.kind === 'new' ? '추가' : '저장'}
-        onSubmit={(input, target) =>
-          run(() => (popover.kind === 'new' ? createWithTarget(input, target) : updateTimeBlock(popover.block.id, input))).then(
-            (ok) => ok && onClose(),
-          )
-        }
-        onCancel={onClose}
-        onDelete={
-          popover.kind === 'edit'
-            ? () => run(() => deleteTimeBlock(popover.block.id)).then((ok) => ok && onClose())
-            : undefined
-        }
-      />
-      )}
-      {popover.kind === 'edit' && (
-        <BlockColorPicker
-          value={popover.block.color}
-          fallback={popover.block.category?.color ?? null}
-          onPick={(color) => run(() => setTimeBlockColor(popover.block.id, color))}
+        <TimeBlockForm
+          date={date}
+          goals={choosable}
+          allowFree
+          planGoals={planGoals}
+          usedColors={(allGoals ?? []).map((g) => g.category.color)}
+          dailyGoalId={popover.kind === 'edit' ? popover.block.dailyGoalId : (choosable[0]?.id ?? null)}
+          title={popover.kind === 'edit' ? popover.block.title : null}
+          startMinutes={start}
+          endMinutes={end}
+          submitLabel={popover.kind === 'new' ? '추가' : '저장'}
+          onSubmit={(input, target) =>
+            run(() => (popover.kind === 'new' ? createWithTarget(input, target) : updateTimeBlock(popover.block.id, input))).then(
+              (ok) => ok && onClose(),
+            )
+          }
+          onCancel={onClose}
+          extra={
+            popover.kind === 'edit' && (
+              <BlockColorPicker
+                value={popover.block.color}
+                fallback={popover.block.category?.color ?? null}
+                onPick={(color) => run(() => setTimeBlockColor(popover.block.id, color))}
+              />
+            )
+          }
+          footerLeft={
+            goal && (
+              <button
+                type="button"
+                className="ghost block-done"
+                onClick={() =>
+                  run(() =>
+                    updateDailyGoal(goal.id, { ...toDailyGoalUpdateInput(goal), status: goal.status === 'DONE' ? 'TODO' : 'DONE' }),
+                  ).then((ok) => ok && onClose())
+                }
+              >
+                {goal.status === 'DONE' ? '완료 취소' : '✓ 할 일 완료'}
+              </button>
+            )
+          }
         />
-      )}
-      {goal && (
-        <span className="row-actions">
-          <button
-            className="ghost"
-            onClick={() =>
-              run(() =>
-                updateDailyGoal(goal.id, { ...toDailyGoalUpdateInput(goal), status: goal.status === 'DONE' ? 'TODO' : 'DONE' }),
-              ).then((ok) => ok && onClose())
-            }
-          >
-            {goal.status === 'DONE' ? '완료 취소' : '✓ 할 일 완료'}
-          </button>
-        </span>
       )}
     </div>
   )
@@ -810,7 +835,9 @@ function BlockColorPicker({
   }
   return (
     <div className="block-colors" role="radiogroup" aria-label="블록 색">
-      <span className="muted small">색</span>
+      <span className="block-form-label block-colors-head">
+        블록 색 <span className="muted">기본은 목표 색</span>
+      </span>
       <button
         type="button"
         role="radio"
