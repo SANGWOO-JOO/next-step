@@ -325,7 +325,7 @@ type FormProps = {
 /** 목표 이름, 분류, 기한(선택) */
 function GoalForm({ categories, initial, submitLabel, onSubmit, onCancel }: FormProps) {
   const [title, setTitle] = useState(initial?.title ?? '')
-  const [categoryId, setCategoryId] = useState<number | ''>(initial?.category.id ?? categories[0]?.id ?? '')
+  const [categoryId, setCategoryId] = useState<number | ''>(initial?.category.id ?? '')
   const [targetDate, setTargetDate] = useState(initial?.targetDate ?? '')
 
   const submit = (e: FormEvent) => {
@@ -345,7 +345,11 @@ function GoalForm({ categories, initial, submitLabel, onSubmit, onCancel }: Form
       </label>
       <label>
         <span className="small muted">분류</span>
+        {/* 미리 채우면 그대로 저장해 일정의 할 일과 분류가 어긋나기 쉬워 직접 고르게 한다 */}
         <select value={categoryId} onChange={(e) => setCategoryId(Number(e.target.value))} required>
+          <option value="" disabled>
+            분류 고르기
+          </option>
           {options.map((c) => (
             <option key={c.id} value={c.id}>
               {c.icon ? `${c.icon} ` : ''}
