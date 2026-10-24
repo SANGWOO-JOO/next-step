@@ -1651,3 +1651,5 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .tip-right[data-tip]::after, .tip-right[data-tip]:hover::after { left: auto; right: 0; transform: none; }
 /* 계획만·실제만·둘 다 툴팁이 둥근 묶음 밖으로 나오게(잘림 방지) */
 .segmented.lane-switch { overflow: visible; }
+/* 시간표 위 도구 줄의 툴팁이 아래 시간표 머리(고정, z-index 4)에 가리지 않게 */
+.schedule-card > .cal-header { position: relative; z-index: 6; }
