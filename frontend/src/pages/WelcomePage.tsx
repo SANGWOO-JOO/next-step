@@ -17,7 +17,7 @@ const PURPOSES: { id: Purpose; title: string; desc: string; goals: string[] }[] 
     id: 'CAREER_CHANGER',
     title: '이직 준비 중',
     desc: '다니면서, 또는 그만두고 다음 회사를 찾고 있어요',
-    goals: ['이력서·경력기술서 정리', '면접 준비', '코딩 테스트 준비'],
+    goals: ['이력서와 경력기술서 정리', '면접 준비', '코딩 테스트 준비'],
   },
 ]
 
@@ -213,7 +213,7 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
               <input value={own} onChange={(e) => setOwn(e.target.value)} placeholder="예: 토익 스피킹 IH" maxLength={50} />
             </label>
             <p className="welcome-label welcome-label-inline">
-              언제까지? <span className="muted">· 몰라도 괜찮아요</span>
+              언제까지? <span className="muted">몰라도 괜찮아요</span>
             </p>
             <div className="welcome-chips">
               {DEADLINES.map((d) => (
@@ -238,7 +238,7 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
               {Number(shiftDate(monday, 6).slice(8))}일. 칠한 칸은 &lsquo;{title}&rsquo; 일정으로 들어가요. 나중에 시간표에서 옮길 수 있어요.
             </p>
             <div className="welcome-grid-head">
-              <span className="muted small">누르거나 끌어서 칠해요 · 지금 {hours}시간</span>
+              <span className="muted small">누르거나 끌어서 칠해요. 지금 {hours}시간이에요</span>
               <button type="button" className="ghost small" onClick={() => setCells(new Set())}>
                 다 지우기
               </button>
