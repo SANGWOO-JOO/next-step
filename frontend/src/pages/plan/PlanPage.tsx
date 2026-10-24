@@ -9,7 +9,6 @@ import {
   getWeekPlan,
   GOAL_STATUS_LABEL,
   MAX_ACTIVE_GOALS,
-  setGoalWeekMinutes,
   updateGoal,
   type Goal,
   type GoalInput,
@@ -23,9 +22,6 @@ import IconButton from '../../components/IconButton'
 import MoreMenu from '../../components/MoreMenu'
 import { availableColors } from '../../utils/categoryColors'
 import type { Run } from './planData'
-
-/** −/+ 한 번에 바꾸는 시간 */
-const STEP = 30
 
 /** 분 → "3시간 30분", "45분", "0분" */
 const hoursLabel = (minutes: number) => {
@@ -101,7 +97,7 @@ export default function PlanPage() {
       <div className="plan-header cal-header">
         <div>
           <h1 className="plan-title">이번 주에 무엇을 할까요?</h1>
-          <p className="muted small">얼마나 할지는 정해도 되고 안 정해도 돼요. 언제 할지는 일정에서 정해요.</p>
+          <p className="muted small">언제 할지는 일정에서 정하고, 여기서는 이번 주에 쓴 시간을 봐요.</p>
         </div>
         <span className="cal-nav">
           <button className="ghost" onClick={() => goWeek(thisMonday)} disabled={monday === thisMonday}>
@@ -127,9 +123,7 @@ export default function PlanPage() {
       ) : (
         <>
           {/* 쓸 수 있는 시간·남은 시간은 2-3 시작 설정 뒤에 넣는다(2-2 ⑧) */}
-          {/* 목표 시간은 선택이라(2-2 추가 결정) 정한 것이 있을 때만 보인다 */}
-          <div className={plan.targetMinutes > 0 ? 'plan-summary card' : 'plan-summary card two'}>
-            {plan.targetMinutes > 0 && <Stat label="정한 목표 시간" value={plan.targetMinutes} />}
+          <div className="plan-summary card two">
             <Stat label="일정에 잡은 시간" value={plan.scheduledMinutes} />
             <Stat label="실제로 한 시간" value={plan.actualMinutes} />
           </div>
@@ -142,10 +136,10 @@ export default function PlanPage() {
 
           <div className="plan-goals">
             {rows.map((row) => (
-              <GoalCard key={row.goal.id} row={row} monday={monday} goals={goals} run={run} full={full} />
+              <GoalCard key={row.goal.id} row={row} goals={goals} run={run} full={full} />
             ))}
             {pastRows.map((row) => (
-              <GoalCard key={row.goal.id} row={row} monday={monday} goals={goals} run={run} full={full} />
+              <GoalCard key={row.goal.id} row={row} goals={goals} run={run} full={full} />
             ))}
           </div>
 
@@ -219,17 +213,14 @@ function Stat({ label, value }: { label: string; value: number }) {
   )
 }
 
-type CardProps = { row: GoalWeekRow; monday: string; goals: Goal[]; run: Run; full: boolean }
+type CardProps = { row: GoalWeekRow; goals: Goal[]; run: Run; full: boolean }
 
-/** 목표 한 장: 이번 주 목표 시간(−/+), 일정에 잡은 시간, 실제로 한 시간, 일정에 잡기 */
-function GoalCard({ row, monday, goals, run, full }: CardProps) {
-  const { goal, targetMinutes, scheduledMinutes, actualMinutes } = row
+/** 목표 한 장: 일정에 잡은 시간, 실제로 한 시간, 일정에 잡기 */
+function GoalCard({ row, goals, run, full }: CardProps) {
+  const { goal, scheduledMinutes, actualMinutes } = row
   const [editing, setEditing] = useState(false)
   const activeGoal = goal.status === 'ACTIVE'
-  const setMinutes = (m: number) => run(() => setGoalWeekMinutes(goal.id, monday, Math.max(0, m)))
   const status = (s: Goal['status']) => run(() => changeGoalStatus(goal.id, s))
-  // 목표 시간 대비 비율. 목표 시간이 없으면 막대를 그리지 않는다
-  const pct = (v: number) => (targetMinutes > 0 ? Math.min(100, Math.round((v / targetMinutes) * 100)) : 0)
 
   if (editing) {
     return (
@@ -270,74 +261,23 @@ function GoalCard({ row, monday, goals, run, full }: CardProps) {
         />
       </header>
 
-      {/* 목표 시간은 선택(2-2 추가 결정): 정하지 않았으면 숫자만, 정한 목표에만 −/+와 막대 */}
-      {targetMinutes === 0 ? (
-        <div className="plan-goal-plain">
-          {scheduledMinutes + actualMinutes > 0 ? (
-            <span className="small">
-              일정 <strong>{hoursLabel(scheduledMinutes)}</strong>
-              <span className="muted"> · </span>
-              실제 <strong>{hoursLabel(actualMinutes)}</strong>
-            </span>
-          ) : (
-            <span className="muted small">이번 주엔 아직 잡은 일정이 없어요</span>
-          )}
-          {activeGoal && (
-            <button className="ghost small plan-set-time" onClick={() => setMinutes(STEP * 2)}>
-              목표 시간 정하기
-            </button>
-          )}
-          {activeGoal && (
-            <Link className="plan-schedule-link" to="/">
-              일정에 잡기 →
-            </Link>
-          )}
-        </div>
-      ) : (
-      <div className="plan-goal-body">
-        <div className="plan-stepper" role="group" aria-label="이번 주 목표 시간">
-          <button
-            className="icon"
-            onClick={() => setMinutes(targetMinutes - STEP)}
-            aria-label="30분 줄이기"
-            title={targetMinutes <= STEP ? '0분이 되면 목표 시간을 정하지 않은 상태로 돌아가요' : undefined}
-          >
-            −
-          </button>
-          <span className="plan-target">{hoursLabel(targetMinutes)}</span>
-          <button className="icon" onClick={() => setMinutes(targetMinutes + STEP)} aria-label="30분 늘리기">
-            +
-          </button>
-        </div>
-        <dl className="plan-bars">
-          <div>
-            <dt className="muted small">일정에 잡음</dt>
-            <dd>
-              <span className="plan-bar">
-                <span className="plan-bar-fill scheduled" style={{ width: `${pct(scheduledMinutes)}%`, background: goal.category.color }} />
-              </span>
-              <span className="small">
-                {hoursLabel(scheduledMinutes)} / {hoursLabel(targetMinutes)}
-              </span>
-            </dd>
-          </div>
-          <div>
-            <dt className="muted small">실제로 함</dt>
-            <dd>
-              <span className="plan-bar">
-                <span className="plan-bar-fill" style={{ width: `${pct(actualMinutes)}%`, background: goal.category.color }} />
-              </span>
-              <span className="small">{hoursLabel(actualMinutes)}</span>
-            </dd>
-          </div>
-        </dl>
+      {/* 목표 시간은 두지 않는다(2-2 추가 결정): 일정에 잡은 시간과 실제로 한 시간만 */}
+      <div className="plan-goal-plain">
+        {scheduledMinutes + actualMinutes > 0 ? (
+          <span className="small">
+            일정 <strong>{hoursLabel(scheduledMinutes)}</strong>
+            <span className="muted"> · </span>
+            실제 <strong>{hoursLabel(actualMinutes)}</strong>
+          </span>
+        ) : (
+          <span className="muted small">이번 주엔 아직 잡은 일정이 없어요</span>
+        )}
         {activeGoal && (
           <Link className="plan-schedule-link" to="/">
             일정에 잡기 →
           </Link>
         )}
       </div>
-      )}
     </article>
   )
 }
