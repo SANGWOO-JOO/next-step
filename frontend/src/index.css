@@ -1451,3 +1451,5 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
   .plan-goal-body { grid-template-columns: 1fr; gap: 0.6rem; }
   .plan-form { grid-template-columns: 1fr; }
 }
+/* 목표 카드의 ⋯는 늘 보이게(고치기·상태 바꾸기를 찾기 쉽게) */
+.plan-goal .more-trigger { opacity: 1; }
