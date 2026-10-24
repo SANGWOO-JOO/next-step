@@ -10,13 +10,13 @@ const PURPOSES: { id: Purpose; title: string; desc: string; goals: string[] }[] 
   {
     id: 'JOB_SEEKER',
     title: '취업 준비생',
-    desc: '첫 취업 준비 중 · 코테·면접·자격증',
+    desc: '첫 직장을 찾고 있어요',
     goals: ['코딩 테스트 합격', '기술 면접 준비', '정보처리기사', '포트폴리오 완성'],
   },
   {
     id: 'CAREER_CHANGER',
     title: '이직 준비 중',
-    desc: '회사 다니면서, 또는 퇴직 후 · 이력서·면접',
+    desc: '다니면서, 또는 그만두고 다음 회사를 찾고 있어요',
     goals: ['이력서·경력기술서 정리', '면접 준비', '코딩 테스트 준비'],
   },
 ]
@@ -171,7 +171,7 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
         {step === 1 && (
           <section>
             <h1 className="welcome-title">반가워요, {name}님</h1>
-            <p className="welcome-lead">요즘 어떤 시간을 보내고 있나요? 상황에 맞춰 목표 예시와 공부 시간을 골라 둘게요.</p>
+            <p className="welcome-lead">지금 뭘 준비하고 있는지 알려 주세요. 다음 화면을 거기에 맞춰 채워 둘게요.</p>
             <div className="welcome-purposes">
               {PURPOSES.map((p) => (
                 <button
@@ -191,8 +191,8 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
 
         {step === 2 && (
           <section>
-            <h1 className="welcome-title">먼저 목표 하나만 정해 볼까요?</h1>
-            <p className="welcome-lead">지금 가장 하고 싶은 것 하나요. 쓰다가 언제든 바꾸거나 더할 수 있어요.</p>
+            <h1 className="welcome-title">제일 먼저 하고 싶은 걸 하나 골라요</h1>
+            <p className="welcome-lead">나중에 얼마든지 바꾸거나 더할 수 있어요.</p>
             <div className="welcome-chips">
               {P.goals.map((g) => (
                 <button
@@ -209,7 +209,7 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
               ))}
             </div>
             <label className="welcome-label">
-              목록에 없으면 직접 써도 돼요
+              여기 없으면 직접 써요
               <input value={own} onChange={(e) => setOwn(e.target.value)} placeholder="예: 토익 스피킹 IH" maxLength={50} />
             </label>
             <p className="welcome-label welcome-label-inline">
@@ -235,10 +235,10 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
             <h1 className="welcome-title">{nextWeek ? '다음 주' : '이번 주'}에 언제 시간이 나요?</h1>
             <p className="welcome-lead">
               {Number(monday.slice(5, 7))}월 {Number(monday.slice(8))}일 – {Number(shiftDate(monday, 6).slice(5, 7))}월{' '}
-              {Number(shiftDate(monday, 6).slice(8))}일. 칠한 칸이 &lsquo;{title}&rsquo; 일정이 돼요. 시작한 뒤에 끌어서 옮길 수 있어요.
+              {Number(shiftDate(monday, 6).slice(8))}일. 칠한 칸은 &lsquo;{title}&rsquo; 일정으로 들어가요. 나중에 시간표에서 옮길 수 있어요.
             </p>
             <div className="welcome-grid-head">
-              <span className="muted small">칸을 누르거나 끌어서 칠하고 지워요 · 일주일에 {hours}시간</span>
+              <span className="muted small">누르거나 끌어서 칠해요 · 지금 {hours}시간</span>
               <button type="button" className="ghost small" onClick={() => setCells(new Set())}>
                 다 지우기
               </button>
