@@ -1640,5 +1640,4 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .ld-signin a:hover { color: #ddd6fe !important; }
 .ld-google, .ld-google:hover { text-decoration: none; }
 .ld-contact { position: relative; display: inline-flex; gap: 8px; }
-.ld-contact-mail { color: #6b6a73; user-select: all; }
 .ld-contact-tip { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); padding: 5px 10px; border-radius: 8px; background: #33313f; border: 1px solid #4a4757; color: #f4f4f5; font-size: 12px; white-space: nowrap; }

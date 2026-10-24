@@ -247,7 +247,6 @@ function ContactLink() {
       <a href={`mailto:${CONTACT_EMAIL}`} onClick={copy}>
         문의
       </a>
-      <span className="ld-contact-mail">{CONTACT_EMAIL}</span>
       {copied && (
         <span className="ld-contact-tip" role="status">
           메일 주소를 복사했어요
