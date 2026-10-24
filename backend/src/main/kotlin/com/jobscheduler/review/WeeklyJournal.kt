@@ -19,8 +19,10 @@ class WeeklyJournal(
     var good: String? = null,
     var bad: String? = null,
     var nextAction: String? = null,
-    /** 2단계 AI가 채운다 */
+    /** AI 주간 피드백(JSON: summary, good, suggestions). docs/design.md 9-1 */
     var aiSummary: String? = null,
+    /** 이 주에 피드백을 만든 횟수. 처음 1회 + 한 번 더 1회 */
+    var aiFeedbackCount: Int = 0,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

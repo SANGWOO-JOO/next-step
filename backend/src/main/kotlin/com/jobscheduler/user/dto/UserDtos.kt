@@ -14,9 +14,11 @@ data class MeResponse(
     val pictureUrl: String?,
     val onboarded: Boolean,
     val purpose: UserPurpose?,
+    /** AI 주간 피드백 동의(9-1) */
+    val aiAgreed: Boolean,
 ) {
     companion object {
-        fun from(u: AppUser) = MeResponse(u.id!!, u.email, u.name, u.pictureUrl, u.onboarded, u.purpose)
+        fun from(u: AppUser) = MeResponse(u.id!!, u.email, u.name, u.pictureUrl, u.onboarded, u.purpose, u.aiAgreedAt != null)
     }
 }
 

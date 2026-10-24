@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { errorMessage } from '../api/client'
-import { changePurpose, withdraw, type Purpose } from '../api/me'
+import { agreeAi, changePurpose, withdraw, withdrawAi, type Purpose } from '../api/me'
 import { useAuth } from '../auth/useAuth'
 import { CONTACT_EMAIL } from '../legal'
 
@@ -81,6 +81,27 @@ export default function SettingsPage() {
                 onClick={() => pick(p.id)}
               >
                 {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="settings-row">
+          <div className="settings-text">
+            <span>AI 주간 피드백</span>
+            <span className="muted small">기록과 주간 일지 글을 Anthropic(Claude)에 보내 피드백을 만들어요</span>
+          </div>
+          <div className="segmented" role="radiogroup" aria-label="AI 주간 피드백">
+            {[true, false].map((on) => (
+              <button
+                key={String(on)}
+                type="button"
+                role="radio"
+                aria-checked={me.aiAgreed === on}
+                className={me.aiAgreed === on ? 'active' : undefined}
+                disabled={busy}
+                onClick={() => me.aiAgreed !== on && run(async () => setMe(await (on ? agreeAi() : withdrawAi())))}
+              >
+                {on ? '켜기' : '끄기'}
               </button>
             ))}
           </div>

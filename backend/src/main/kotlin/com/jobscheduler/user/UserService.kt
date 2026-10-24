@@ -6,11 +6,14 @@ import com.jobscheduler.user.dto.MeResponse
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Clock
+import java.time.OffsetDateTime
 
 @Service
 class UserService(
     private val userRepository: AppUserRepository,
     private val categoryService: CategoryService,
+    private val clock: Clock,
 ) {
     /**
      * 구글 로그인 때마다 부른다. 처음 온 사람이면 사용자를 만들고 기본 분류를 넣는다.
@@ -35,6 +38,14 @@ class UserService(
     fun changePurpose(purpose: UserPurpose): MeResponse {
         val user = userRepository.findByIdOrNull(CurrentUser.id()) ?: throw NotFoundException("사용자를 찾을 수 없어요")
         user.purpose = purpose
+        return MeResponse.from(user)
+    }
+
+    /** AI 주간 피드백 동의 켜기와 끄기(docs/design.md 9-1) */
+    @Transactional
+    fun setAiConsent(agreed: Boolean): MeResponse {
+        val user = userRepository.findByIdOrNull(CurrentUser.id()) ?: throw NotFoundException("사용자를 찾을 수 없어요")
+        user.aiAgreedAt = if (agreed) user.aiAgreedAt ?: OffsetDateTime.now(clock) else null
         return MeResponse.from(user)
     }
 

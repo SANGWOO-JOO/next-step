@@ -1698,3 +1698,13 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 /* 목표 아이콘(2-7): 글자와 같은 줄 가운데 */
 .goal-icon { flex: none; display: inline-block; vertical-align: middle; }
 .topic-stats-group header { align-items: center; }
+
+/* AI 주간 피드백(docs/design.md 9-1) */
+.weekly-feedback { margin-bottom: 0.75rem; }
+.weekly-feedback-summary { font-weight: 600; margin: 0.5rem 0; }
+.weekly-feedback dl { margin: 0; display: grid; gap: 0.25rem; }
+.weekly-feedback dt { color: var(--muted); font-size: 0.8rem; margin-top: 0.4rem; }
+.weekly-feedback dd { margin: 0; }
+.weekly-feedback ul { margin: 0; padding-left: 1.1rem; }
+.weekly-feedback-consent { margin-top: 0.5rem; padding: 0.75rem; border-radius: 10px; background: var(--soft-fill); display: grid; gap: 0.5rem; }
+.weekly-feedback-consent p { margin: 0; }

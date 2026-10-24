@@ -11,6 +11,8 @@ export type Me = {
   pictureUrl: string | null
   onboarded: boolean
   purpose: Purpose | null
+  /** AI 주간 피드백 동의(docs/design.md 9-1) */
+  aiAgreed: boolean
 }
 
 export type OnboardingInput = {
@@ -38,6 +40,10 @@ export const skipOnboarding = (agreed: boolean) => api.post<Me>('/api/me/onboard
 
 /** 설정의 "준비 중인 것" 바꾸기(2-6) */
 export const changePurpose = (purpose: Purpose) => api.patch<Me>('/api/me/purpose', { purpose })
+
+/** AI 주간 피드백 동의 켜기와 끄기(9-1) */
+export const agreeAi = () => api.post<Me>('/api/me/ai-consent')
+export const withdrawAi = () => api.delete<Me>('/api/me/ai-consent')
 
 /** 회원 탈퇴(2-4). 모든 기록과 계정을 지우고 세션을 끝낸다 */
 export const withdraw = () => api.delete<void>('/api/me')

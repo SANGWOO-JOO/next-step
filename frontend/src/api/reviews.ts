@@ -24,7 +24,27 @@ export type WeeklyJournal = {
   updatedAt: string | null
   days: DayStats[]
   total: WeekStats
+  aiFeedback: AiFeedbackState
 }
+
+/** 주간 피드백을 받을 수 있는지(docs/design.md 9-1). blocked가 null이면 받을 수 있다 */
+export type AiFeedbackBlock = 'UNAVAILABLE' | 'NOT_ENDED' | 'TOO_LITTLE' | 'LIMIT'
+export type AiFeedbackState = { count: number; maxCount: number; blocked: AiFeedbackBlock | null }
+
+/** weekly_journal.ai_summary에 저장된 JSON */
+export type WeeklyFeedback = { summary: string; good: string; suggestions: string[] }
+
+export const parseFeedback = (aiSummary: string | null): WeeklyFeedback | null => {
+  if (!aiSummary) return null
+  try {
+    return JSON.parse(aiSummary) as WeeklyFeedback
+  } catch {
+    return null
+  }
+}
+
+/** AI 주간 피드백 만들기, 한 번 더 받기 */
+export const createWeeklyFeedback = (weekStart: string) => api.post<WeeklyJournal>(`/api/weekly-journals/${weekStart}/feedback`)
 
 export type WeeklyJournalInput = { good: string | null; bad: string | null; nextAction: string | null }
 

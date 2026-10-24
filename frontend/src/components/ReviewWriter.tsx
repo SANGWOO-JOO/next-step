@@ -9,9 +9,10 @@ import {
   type WeeklyJournal,
 } from '../api/reviews'
 import { journalDue, reviewDue } from '../pages/plan/planData'
-import { currentMonthSeoul, monthLabel, mondayOf, todaySeoul, weekLabel } from '../utils/date'
+import { currentMonthSeoul, monthLabel, mondayOf, shiftDate, todaySeoul, weekLabel } from '../utils/date'
 import { refreshReminders } from '../utils/reminders'
 import ReviewCard from './ReviewCard'
+import WeeklyFeedbackCard from './WeeklyFeedbackCard'
 
 /**
  * 기록 페이지 맨 위의 이번 주 일지·이번 달 회고 쓰기(docs/design.md 1-4f ⑳).
@@ -49,6 +50,7 @@ export default function ReviewWriter({ kind, onSaved }: { kind: 'week' | 'month'
   return (
     <div className="week-journal" id="journal">
       {error && <p className="error">{error}</p>}
+      {kind === 'week' && <WeeklyFeedbackCard weekStart={shiftDate(monday, -7)} />}
       {kind === 'week' && journal && (
         <ReviewCard
           key={`${monday}|${journal.saved}`}
@@ -60,7 +62,7 @@ export default function ReviewWriter({ kind, onSaved }: { kind: 'week' | 'month'
           ]}
           values={{ good: journal.good, bad: journal.bad, nextAction: journal.nextAction }}
           version={`${monday}|${journal.updatedAt}`}
-          aiSummary={journal.aiSummary}
+          aiSummary={null}
           saved={journal.saved}
           due={journalDue(monday, today)}
           prompt={journalDue(monday, today) && !journal.saved ? '한 주를 마무리할 때예요. 돌아보고 다음 주에 바꿀 한 가지를 정해요.' : undefined}

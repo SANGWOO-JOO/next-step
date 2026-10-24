@@ -29,6 +29,8 @@ class AppUser(
     var purpose: UserPurpose? = null,
     /** 이용약관·개인정보 수집·이용에 동의한 때(2-4) */
     var termsAgreedAt: OffsetDateTime? = null,
+    /** AI 주간 피드백에 동의한 때(docs/design.md 9-1). 끄면 비운다 */
+    var aiAgreedAt: OffsetDateTime? = null,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

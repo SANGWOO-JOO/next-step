@@ -1,5 +1,6 @@
 package com.jobscheduler.review
 
+import com.jobscheduler.ai.AiFeedbackPolicy
 import com.jobscheduler.common.BusinessRuleException
 import com.jobscheduler.record.DailyLogRepository
 import com.jobscheduler.record.DailyLogService
@@ -25,6 +26,7 @@ class ReviewService(
     private val reviewRepository: MonthlyReviewRepository,
     private val dailyLogService: DailyLogService,
     private val dailyLogRepository: DailyLogRepository,
+    private val aiFeedbackPolicy: AiFeedbackPolicy,
 ) {
     @Transactional(readOnly = true)
     fun getJournal(weekStart: LocalDate): WeeklyJournalResponse {
@@ -103,6 +105,7 @@ class ReviewService(
 
     private fun toResponse(weekStart: LocalDate, journal: WeeklyJournal?): WeeklyJournalResponse {
         val days = days(weekStart)
+        val total = weekStats(weekStart, days, journal != null)
         return WeeklyJournalResponse(
             weekStart = weekStart,
             saved = journal != null,
@@ -112,7 +115,8 @@ class ReviewService(
             aiSummary = journal?.aiSummary,
             updatedAt = journal?.updatedAt,
             days = days,
-            total = weekStats(weekStart, days, journal != null),
+            total = total,
+            aiFeedback = aiFeedbackPolicy.state(weekStart, journal?.aiFeedbackCount ?: 0, total.studySeconds),
         )
     }
 

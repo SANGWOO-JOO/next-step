@@ -49,7 +49,22 @@ data class WeeklyJournalResponse(
     val updatedAt: OffsetDateTime?,
     val days: List<DayStats>,
     val total: WeekStats,
+    val aiFeedback: AiFeedbackState,
 )
+
+/** 주간 피드백을 받을 수 있는지(9-1). blocked가 null이면 받을 수 있다 */
+data class AiFeedbackState(val count: Int, val maxCount: Int, val blocked: AiFeedbackBlock?)
+
+enum class AiFeedbackBlock {
+    /** ANTHROPIC_API_KEY가 없다 */
+    UNAVAILABLE,
+    /** 아직 끝나지 않은 주 */
+    NOT_ENDED,
+    /** 그 주 실제 기록이 2시간 미만 */
+    TOO_LITTLE,
+    /** 한 주 최대 횟수를 다 썼다 */
+    LIMIT,
+}
 
 data class MonthlyReviewResponse(
     val month: YearMonth,

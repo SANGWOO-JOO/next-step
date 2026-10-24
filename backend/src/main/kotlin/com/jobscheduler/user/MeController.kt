@@ -40,6 +40,14 @@ class MeController(
     @PatchMapping("/purpose")
     fun changePurpose(@RequestBody req: PurposeRequest): MeResponse = userService.changePurpose(req.purpose)
 
+    /** AI 주간 피드백 동의(9-1) */
+    @PostMapping("/ai-consent")
+    fun agreeAi(): MeResponse = userService.setAiConsent(true)
+
+    /** AI 주간 피드백 동의 끄기 */
+    @DeleteMapping("/ai-consent")
+    fun withdrawAi(): MeResponse = userService.setAiConsent(false)
+
     /** 회원 탈퇴(2-4). 모든 기록과 계정을 지우고 로그인 세션도 끝낸다 */
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
