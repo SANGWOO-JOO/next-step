@@ -74,7 +74,7 @@ export default function GoalIconPicker({ value, title, onChange }: Props) {
                       className={n === value ? 'on' : undefined}
                       aria-pressed={n === value}
                       aria-label={goalIconLabel(n)}
-                      title={goalIconLabel(n)}
+                      data-tip={goalIconLabel(n)}
                       onClick={() => choose(n)}
                     >
                       <img src={goalIconUrl(n)} alt="" />

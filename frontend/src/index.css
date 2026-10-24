@@ -1672,10 +1672,14 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .goal-icon-tabs button { flex: 1; min-height: 0; padding: 4px; border: 0; background: none; border-radius: 8px; cursor: pointer; }
 .goal-icon-tabs button:hover { background: var(--soft-fill); }
 .goal-icon-tabs img { width: 22px; height: 22px; display: block; margin: 0 auto; }
-.goal-icon-list { max-height: 17rem; overflow-y: auto; padding-top: 0.25rem; }
+.goal-icon-list { max-height: 17rem; overflow-y: auto; overflow-x: hidden; padding-top: 0.25rem; padding-bottom: 2rem; }
 .goal-icon-cap { font-size: 0.75rem; color: var(--muted); margin: 0.5rem 0.15rem 0.3rem; }
 .goal-icon-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; }
 .goal-icon-grid button { min-height: 0; padding: 5px; border: 0; background: none; border-radius: 9px; cursor: pointer; }
 .goal-icon-grid button:hover { background: var(--soft-fill); }
 .goal-icon-grid button.on { background: color-mix(in srgb, var(--accent) 18%, transparent); box-shadow: inset 0 0 0 1.5px var(--accent); }
 .goal-icon-grid img { width: 32px; height: 32px; display: block; margin: 0 auto; }
+/* 고르기 창 안 툴팁: 창이 열리면 칸 툴팁은 숨기고, 양 끝 열은 창 밖으로 잘리지 않게 붙인다 */
+.goal-icon-trigger.open[data-tip]::after { display: none; }
+.goal-icon-grid button:nth-child(6n + 1)[data-tip]::after { left: 0; transform: none; }
+.goal-icon-grid button:nth-child(6n)[data-tip]::after { left: auto; right: 0; transform: none; }
