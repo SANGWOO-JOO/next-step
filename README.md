@@ -75,5 +75,5 @@ job-scheduler/
   - [x] 2-7 목표 아이콘 넓히기
   - [x] 2-8 대시보드 개편
   - [x] 2-9 기록 화면 개편
-- [ ] 3단계 AI MVP: 주간 피드백 (docs/design.md 9장)
+- [x] 3단계 AI MVP: 주간 피드백 (docs/design.md 9장)
 - [ ] 배포(다른 단계를 마친 뒤 맨 마지막)
