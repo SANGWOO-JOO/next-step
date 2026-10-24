@@ -1517,12 +1517,16 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 /* 끄는 동안은 처음 누른 동작의 아이콘을 유지(지난 요일은 그대로 금지) */
 .welcome-grid.painting .welcome-cell:not(.past) { cursor: url('./assets/cursors/brush.svg') 4 18, cell; }
 .welcome-grid.erasing .welcome-cell:not(.past) { cursor: url('./assets/cursors/eraser.svg') 5 17, pointer; }
-/* 칠한 시간 배지(2-3): 보라~핑크 알약, 숫자가 바뀌면 살짝 튄다 */
 .welcome-grid-head { gap: 0.6rem; }
-.welcome-pill { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.9rem 0.3rem 0.3rem; border-radius: 999px; border: 1px solid rgb(196 181 253 / 0.45); background: linear-gradient(135deg, rgb(167 139 250 / 0.2), rgb(244 114 182 / 0.2)); font-size: 0.95rem; font-weight: 600; color: var(--text); animation: welcome-bump 0.2s ease-out; }
-.welcome-pill.empty { border-style: dashed; border-color: var(--border); background: transparent; color: var(--muted); font-weight: 400; animation: none; }
-.welcome-pill-dot { width: 1.5rem; height: 1.5rem; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(135deg, #a78bfa, #f472b6); }
-.welcome-pill.empty .welcome-pill-dot { background: color-mix(in srgb, var(--border) 80%, transparent); }
 .welcome-clear { margin-left: auto; }
 @keyframes welcome-bump { 0% { transform: scale(1); } 50% { transform: scale(1.06); } 100% { transform: scale(1); } }
-@media (prefers-reduced-motion: reduce) { .welcome-pill { animation: none; } }
+/* B안: 합계 글자 + 요일별 막대(표 아래 같은 열) */
+.welcome-total { font-size: 0.95rem; color: var(--text); }
+.welcome-total strong { display: inline-block; font-weight: 700; background: linear-gradient(90deg, #a78bfa, #f472b6); -webkit-background-clip: text; background-clip: text; color: transparent; animation: welcome-bump 0.2s ease-out; }
+.welcome-daysum { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; margin-top: 0.4rem; }
+.welcome-daysum.past { opacity: 0.3; }
+.welcome-daybar { width: 70%; height: 4px; border-radius: 999px; background: color-mix(in srgb, var(--border) 80%, transparent); overflow: hidden; }
+.welcome-daybar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #a78bfa, #f472b6); transition: width 0.2s; }
+.welcome-dayhours { font-size: 0.7rem; color: var(--text); }
+.welcome-dayhours.zero { color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .welcome-total strong { animation: none; } .welcome-daybar span { transition: none; } }

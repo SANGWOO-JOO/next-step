@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { errorMessage } from '../api/client'
 import { completeOnboarding, skipOnboarding, type Me, type Purpose } from '../api/me'
-import brushIcon from '../assets/cursors/brush.svg'
 import { availableColors } from '../utils/categoryColors'
 import { addMonths, mondayOf, seoulIso, shiftDate, todaySeoul } from '../utils/date'
 
@@ -238,25 +237,14 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
               {Number(monday.slice(5, 7))}월 {Number(monday.slice(8))}일부터 {Number(shiftDate(monday, 6).slice(5, 7))}월{' '}
               {Number(shiftDate(monday, 6).slice(8))}일까지. 칠한 칸은 &lsquo;{title}&rsquo; 일정이 돼요.
             </p>
-            {/* 칠한 시간 배지(When2meet처럼 결과는 칸 색으로, Finch처럼 바뀔 때 작은 반응) */}
+            {/* 합계는 글자로, 요일별 양은 표 아래 같은 열에(2-3, 사용자 확인 B안) */}
             <div className="welcome-grid-head">
               {hours === 0 ? (
-                <span className="welcome-pill empty">
-                  <span className="welcome-pill-dot">
-                    <img src={brushIcon} alt="" width={13} height={13} />
-                  </span>
-                  칸을 끌어서 칠해요
-                </span>
+                <span className="muted small">칸을 누르거나 끌어서 칠해요</span>
               ) : (
-                <>
-                  <span key={hours} className="welcome-pill">
-                    <span className="welcome-pill-dot">
-                      <img src={brushIcon} alt="" width={13} height={13} />
-                    </span>
-                    일주일 {hours}시간
-                  </span>
-                  <span className="muted small">하루 평균 {averageLabel(hours, 7 - firstDay)}</span>
-                </>
+                <span className="welcome-total">
+                  일주일 <strong key={hours}>{hours}시간</strong>
+                </span>
               )}
               <button type="button" className="ghost small welcome-clear" onClick={() => setCells(new Set())} disabled={hours === 0}>
                 다 지우기
@@ -304,6 +292,18 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
                   })}
                 </Row>
               ))}
+              <span />
+              {DAYS.map((d, i) => {
+                const n = HOURS.filter((h) => cells.has(key(i, h))).length
+                return (
+                  <span key={d} className={i < firstDay ? 'welcome-daysum past' : 'welcome-daysum'} aria-label={`${d}요일 ${n}시간`}>
+                    <span className="welcome-daybar">
+                      <span style={{ width: `${Math.min(100, (n / 4) * 100)}%` }} />
+                    </span>
+                    {i >= firstDay && <span className={n ? 'welcome-dayhours' : 'welcome-dayhours zero'}>{n}시간</span>}
+                  </span>
+                )
+              })}
             </div>
           </section>
         )}
@@ -350,15 +350,6 @@ function Row({ hour, children }: { hour: number; children: React.ReactNode }) {
       {children}
     </>
   )
-}
-
-/** 하루 평균을 30분 단위로: 7시간/7일 → '1시간', 5시간/7일 → '45분'은 '30분'으로 */
-function averageLabel(hours: number, days: number) {
-  const minutes = Math.round((hours * 60) / days / 30) * 30
-  const h = Math.floor(minutes / 60)
-  const m = minutes % 60
-  if (minutes === 0) return '30분 미만'
-  return h === 0 ? `${m}분` : m === 0 ? `${h}시간` : `${h}시간 ${m}분`
 }
 
 /** 목적별 기본 칸. 칠할 수 없는 요일은 뺀다 */
