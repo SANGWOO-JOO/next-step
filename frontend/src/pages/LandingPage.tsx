@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { GOOGLE_LOGIN_URL } from '../api/me'
 import { CONTACT_EMAIL } from '../legal'
@@ -215,7 +215,7 @@ export default function LandingPage() {
         <span>© 2026 Next Step</span>
         <Link to="/terms">이용약관</Link>
         <Link to="/privacy">개인정보 처리방침</Link>
-        <a href={`mailto:${CONTACT_EMAIL}`}>문의</a>
+        <ContactLink />
       </footer>
     </div>
   )
@@ -225,6 +225,36 @@ export default function LandingPage() {
 function todayLabel() {
   const today = todaySeoul()
   return `${Number(today.slice(5, 7))}월 ${Number(today.slice(8))}일`
+}
+
+/**
+ * 문의: 메일 앱이 없으면 mailto가 아무 반응이 없어서, 누르면 주소를 복사하고 바로 알려 준다.
+ * 메일 앱이 있으면 그대로 열린다
+ */
+function ContactLink() {
+  const [copied, setCopied] = useState(false)
+  const copy = () => {
+    navigator.clipboard
+      ?.writeText(CONTACT_EMAIL)
+      .then(() => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2500)
+      })
+      .catch(() => setCopied(false))
+  }
+  return (
+    <span className="ld-contact">
+      <a href={`mailto:${CONTACT_EMAIL}`} onClick={copy}>
+        문의
+      </a>
+      <span className="ld-contact-mail">{CONTACT_EMAIL}</span>
+      {copied && (
+        <span className="ld-contact-tip" role="status">
+          메일 주소를 복사했어요
+        </span>
+      )}
+    </span>
+  )
 }
 
 function BurstImg({ src, size, x, y, r, delay }: Burst) {
