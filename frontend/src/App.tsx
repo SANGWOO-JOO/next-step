@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import AuthGate from './auth/AuthGate'
 import Layout from './components/Layout'
 import TodayPage from './pages/TodayPage'
 import PlanPage from './pages/plan/PlanPage'
@@ -10,6 +11,7 @@ import SettingsPage from './pages/SettingsPage'
 export default function App() {
   return (
     <BrowserRouter>
+      <AuthGate>
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<TodayPage />} />
@@ -27,6 +29,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
+      </AuthGate>
     </BrowserRouter>
   )
 }

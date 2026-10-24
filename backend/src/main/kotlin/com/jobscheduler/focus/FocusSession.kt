@@ -18,6 +18,7 @@ import jakarta.persistence.OrderBy
 import jakarta.persistence.Table
 import java.time.LocalDate
 import java.time.OffsetDateTime
+import org.hibernate.annotations.TenantId
 
 /** 세션을 끝낼 때 고른 결과. 완료 = 하루 목표를 끝냄, 더 하기 = 목표가 남음, 딴짓 = 딴짓으로 흐지부지 */
 enum class FocusResult { COMPLETED, MORE, DISTRACTED }
@@ -46,6 +47,11 @@ class FocusSession(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null
+
+    /** 주인(docs/design.md 11-6 2-1). Hibernate가 현재 로그인 사용자로 채우고 조회 때 거른다 */
+    @TenantId
+    @Column(name = "user_id", updatable = false)
+    var userId: Long? = null
 
     var endedAt: OffsetDateTime? = null
 

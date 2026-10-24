@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import java.time.OffsetDateTime
+import org.hibernate.annotations.TenantId
 
 /** 딴짓·휴식은 집중 시간에서 빼고, 공부 자료 찾기는 집중으로 친다. */
 enum class InterruptionType(val countsAsFocus: Boolean) {
@@ -35,6 +36,11 @@ class Interruption(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null
+
+    /** 주인(docs/design.md 11-6 2-1). Hibernate가 현재 로그인 사용자로 채우고 조회 때 거른다 */
+    @TenantId
+    @Column(name = "user_id", updatable = false)
+    var userId: Long? = null
 
     var endedAt: OffsetDateTime? = null
 

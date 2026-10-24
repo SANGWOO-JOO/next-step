@@ -26,6 +26,9 @@ export function errorMessage(e: unknown): string {
   return e instanceof Error ? e.message : String(e)
 }
 
+/** 세션이 끝나 401이 오면 보내는 이벤트. AuthGate가 받아 로그인 화면으로 바꾼다 */
+export const UNAUTHORIZED_EVENT = 'auth:unauthorized'
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -36,6 +39,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   })
 
   if (!res.ok) {
+    if (res.status === 401) window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
     let errorBody: ErrorResponse | undefined
     try {
       errorBody = (await res.json()) as ErrorResponse

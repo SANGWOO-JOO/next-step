@@ -9,6 +9,7 @@ import jakarta.persistence.PreUpdate
 import jakarta.persistence.Table
 import java.time.LocalDate
 import java.time.OffsetDateTime
+import org.hibernate.annotations.TenantId
 
 /** 하루 기록. 날짜당 1개. 집중·딴짓 시간은 저장하지 않고 조회할 때 계산한다. */
 @Entity
@@ -24,6 +25,11 @@ class DailyLog(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null
+
+    /** 주인(docs/design.md 11-6 2-1). Hibernate가 현재 로그인 사용자로 채우고 조회 때 거른다 */
+    @TenantId
+    @Column(name = "user_id", updatable = false)
+    var userId: Long? = null
 
     @Column(updatable = false)
     val createdAt: OffsetDateTime = OffsetDateTime.now()

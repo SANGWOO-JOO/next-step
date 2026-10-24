@@ -27,6 +27,13 @@ class CategoryService(
         return categories.map { CategoryResponse.from(it).copy(deletable = it.id !in used) }
     }
 
+    /** 새 사용자의 기본 분류(docs/design.md 11-6 2-1). 목적별 분류는 2-3에서 바꾼다 */
+    fun createDefaults() {
+        DEFAULTS.forEachIndexed { i, (name, color, icon) ->
+            categoryRepository.save(Category(name = name, color = color, sortOrder = i + 1, icon = icon))
+        }
+    }
+
     fun create(req: CategoryRequest): CategoryResponse {
         val name = req.name.trim()
         if (categoryRepository.existsByName(name)) throw duplicateName(name)
@@ -114,6 +121,14 @@ class CategoryService(
         BusinessRuleException("이미 있는 분류 이름이에요: $name", "DUPLICATE_NAME")
 
     companion object {
+        private val DEFAULTS = listOf(
+            Triple("이력서 작성", "#2563eb", "📝"),
+            Triple("면접 준비", "#dc2626", "💬"),
+            Triple("CS 공부", "#16a34a", "📘"),
+            Triple("코딩 테스트", "#9333ea", "💻"),
+            Triple("사이드 프로젝트", "#ea580c", "🛠️"),
+            Triple("기타", "#6b7280", "📌"),
+        )
         private val USAGE_TABLES = listOf("daily_goal", "weekly_goal", "actual_log", "checklist_item", "focus_session")
     }
 }

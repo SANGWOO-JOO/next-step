@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import logoDark from '../assets/brand/logo-horizontal-dark.svg'
 import logoLight from '../assets/brand/logo-horizontal-light.svg'
+import { useAuth } from '../auth/useAuth'
 import NavIcon from './NavIcon'
 import ReminderStack from './ReminderStack'
 
@@ -46,6 +47,7 @@ export default function Layout() {
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const location = useLocation()
+  const { me, signOut } = useAuth()
 
   // 화면을 옮기면 서랍은 닫는다
   useEffect(() => setDrawerOpen(false), [location.pathname, location.search])
@@ -119,6 +121,17 @@ export default function Layout() {
           ))}
         </nav>
         <div className="side-foot">
+          <div className="side-user" title={me.email}>
+            {me.pictureUrl ? (
+              <img className="side-avatar" src={me.pictureUrl} alt="" referrerPolicy="no-referrer" />
+            ) : (
+              <span className="side-avatar">{(me.name ?? me.email).slice(0, 1)}</span>
+            )}
+            <span className="side-label side-user-name">{me.name ?? me.email}</span>
+            <button type="button" className="side-logout side-label" onClick={signOut}>
+              로그아웃
+            </button>
+          </div>
           {link(SETTINGS)}
           <button
             type="button"
