@@ -10,13 +10,13 @@ const PURPOSES: { id: Purpose; title: string; desc: string; goals: string[] }[] 
   {
     id: 'JOB_SEEKER',
     title: '취업 준비생',
-    desc: '첫 직장을 찾고 있어요',
+    desc: '첫 회사를 찾는 중',
     goals: ['코딩 테스트 합격', '기술 면접 준비', '정보처리기사', '포트폴리오 완성'],
   },
   {
     id: 'CAREER_CHANGER',
     title: '이직 준비 중',
-    desc: '다니면서, 또는 그만두고 다음 회사를 찾고 있어요',
+    desc: '다른 회사로 옮기려는 중',
     goals: ['이력서와 경력기술서 정리', '면접 준비', '코딩 테스트 준비'],
   },
 ]
@@ -164,14 +164,14 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
             ))}
           </span>
           <button type="button" className="ghost small" onClick={skip} disabled={busy}>
-            이미 쓰고 있어요, 건너뛰기
+            건너뛰기
           </button>
         </div>
 
         {step === 1 && (
           <section>
-            <h1 className="welcome-title">반가워요, {name}님</h1>
-            <p className="welcome-lead">지금 뭘 준비하고 있는지 알려 주세요. 다음 화면을 거기에 맞춰 채워 둘게요.</p>
+            <h1 className="welcome-title">{name}님, 지금 어떤 준비 중이에요?</h1>
+            <p className="welcome-lead">고른 쪽에 맞는 목표 예시를 보여 줘요.</p>
             <div className="welcome-purposes">
               {PURPOSES.map((p) => (
                 <button
@@ -191,8 +191,8 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
 
         {step === 2 && (
           <section>
-            <h1 className="welcome-title">제일 먼저 하고 싶은 걸 하나 골라요</h1>
-            <p className="welcome-lead">나중에 얼마든지 바꾸거나 더할 수 있어요.</p>
+            <h1 className="welcome-title">첫 목표를 정해요</h1>
+            <p className="welcome-lead">목표는 나중에 바꾸거나 더할 수 있어요.</p>
             <div className="welcome-chips">
               {P.goals.map((g) => (
                 <button
@@ -209,11 +209,11 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
               ))}
             </div>
             <label className="welcome-label">
-              여기 없으면 직접 써요
+              직접 쓰기
               <input value={own} onChange={(e) => setOwn(e.target.value)} placeholder="예: 토익 스피킹 IH" maxLength={50} />
             </label>
             <p className="welcome-label welcome-label-inline">
-              언제까지? <span className="muted">몰라도 괜찮아요</span>
+              기한
             </p>
             <div className="welcome-chips">
               {DEADLINES.map((d) => (
@@ -232,13 +232,13 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
 
         {step === 3 && (
           <section>
-            <h1 className="welcome-title">{nextWeek ? '다음 주' : '이번 주'}에 언제 시간이 나요?</h1>
+            <h1 className="welcome-title">{nextWeek ? '다음 주' : '이번 주'}에 공부할 시간을 칠해요</h1>
             <p className="welcome-lead">
-              {Number(monday.slice(5, 7))}월 {Number(monday.slice(8))}일 – {Number(shiftDate(monday, 6).slice(5, 7))}월{' '}
-              {Number(shiftDate(monday, 6).slice(8))}일. 칠한 칸은 &lsquo;{title}&rsquo; 일정으로 들어가요. 나중에 시간표에서 옮길 수 있어요.
+              {Number(monday.slice(5, 7))}월 {Number(monday.slice(8))}일부터 {Number(shiftDate(monday, 6).slice(5, 7))}월{' '}
+              {Number(shiftDate(monday, 6).slice(8))}일까지. 칠한 칸은 &lsquo;{title}&rsquo; 일정이 돼요.
             </p>
             <div className="welcome-grid-head">
-              <span className="muted small">누르거나 끌어서 칠해요. 지금 {hours}시간이에요</span>
+              <span className="muted small">누르거나 끌어서 칠하기. 지금 {hours}시간</span>
               <button type="button" className="ghost small" onClick={() => setCells(new Set())}>
                 다 지우기
               </button>
@@ -304,7 +304,7 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
           <span className="welcome-foot-right">
             {step === 3 && (
               <button type="button" className="ghost" onClick={() => finish(false)} disabled={busy}>
-                빈 시간표로 시작할게요
+                칠하지 않고 시작
               </button>
             )}
             {step < 3 ? (
@@ -313,7 +313,7 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
               </button>
             ) : (
               <button type="button" onClick={() => finish(true)} disabled={busy}>
-                이대로 시작하기
+                시작하기
               </button>
             )}
           </span>
