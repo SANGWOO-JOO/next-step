@@ -49,7 +49,7 @@ export default function ReviewFields({ fields, values, version, aiSummary, onSav
         <button type="submit">저장</button>
         {message && <span className="muted small">{message}</span>}
       </span>
-      <p className="muted small">AI 요약: {aiSummary ?? '2단계에서 추가돼요.'}</p>
+      {aiSummary && <p className="muted small">AI 요약: {aiSummary}</p>}
     </form>
   )
 }
