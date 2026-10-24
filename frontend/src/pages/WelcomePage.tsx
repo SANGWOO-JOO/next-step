@@ -17,7 +17,7 @@ const PURPOSES: { id: Purpose; title: string; desc: string; goals: string[] }[] 
     id: 'CAREER_CHANGER',
     title: '이직 준비 중',
     desc: '회사 다니면서, 또는 퇴직 후 · 이력서·면접',
-    goals: ['이력서·경력기술서 정리', '모의 면접 10번', '코딩 테스트 감 되찾기', '포트폴리오 업데이트', '자격증 하나 따기'],
+    goals: ['이력서·경력기술서 정리', '면접 준비', '코딩 테스트 준비'],
   },
 ]
 
@@ -207,8 +207,8 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
               목록에 없으면 직접 써도 돼요
               <input value={own} onChange={(e) => setOwn(e.target.value)} placeholder="예: 토익 스피킹 IH" maxLength={50} />
             </label>
-            <p className="welcome-label">
-              언제까지? <span className="muted">몰라도 괜찮아요</span>
+            <p className="welcome-label welcome-label-inline">
+              언제까지? <span className="muted">· 몰라도 괜찮아요</span>
             </p>
             <div className="welcome-chips">
               {DEADLINES.map((d) => (

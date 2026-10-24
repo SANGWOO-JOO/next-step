@@ -1513,3 +1513,4 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .welcome-foot-right { margin-left: auto; display: flex; gap: 0.5rem; }
 @media (max-width: 560px) { .welcome-purposes { grid-template-columns: 1fr; } .welcome-card { padding: 1.25rem; } }
 .welcome-date { font-size: 0.7rem; opacity: 0.7; }
+.welcome-label-inline { flex-direction: row; gap: 0.3rem; }
