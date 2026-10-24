@@ -55,4 +55,6 @@ allOpen {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    // 운영은 main()에서 시간대를 정하지만 테스트는 main()을 거치지 않는다. CI 러너(UTC)에서도 같게 맞춘다
+    systemProperty("user.timezone", "Asia/Seoul")
 }
