@@ -11,8 +11,6 @@ export type WeekStats = {
   distractionSeconds: number
   goalsDone: number
   goalsTotal: number
-  weeklyGoalsAchieved: number
-  weeklyGoalsTotal: number
   journalWritten: boolean
 }
 

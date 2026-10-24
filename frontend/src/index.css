@@ -1407,3 +1407,47 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .side-user-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem; }
 .side-logout { border: none; background: none; color: var(--muted); font-size: 0.75rem; cursor: pointer; padding: 0.2rem; }
 .side-logout:hover { color: var(--text); }
+
+/* 계획 화면(2-2): 이번 주에 무엇을 얼마나 */
+.plan-page { max-width: 56rem; }
+.plan-title { margin: 0; font-size: 1.25rem; }
+.plan-week { min-width: 9.5rem; text-align: center; font-size: 0.95rem; }
+.plan-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-top: 1rem; }
+.plan-stat { display: flex; flex-direction: column; gap: 0.2rem; }
+.plan-stat strong { font-size: 1.15rem; }
+.plan-empty { margin-top: 0.75rem; }
+.plan-empty p { margin: 0; }
+.plan-goals { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.75rem; }
+.plan-goal { margin: 0; border-left: 4px solid var(--border); }
+.plan-goal.inactive { opacity: 0.7; }
+.plan-goal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
+.plan-goal-name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 0.6rem; min-width: 0; }
+.plan-goal-name strong { font-size: 1.05rem; overflow-wrap: anywhere; }
+.plan-cat { width: 100%; }
+.plan-badge { font-size: 0.75rem; padding: 0.1rem 0.45rem; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+.plan-goal-body { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 1rem; margin-top: 0.75rem; }
+.plan-stepper { display: inline-flex; align-items: center; gap: 0.25rem; border: 1px solid var(--border); border-radius: 10px; padding: 0.15rem; }
+.plan-stepper .icon { width: 2rem; height: 2rem; font-size: 1.1rem; }
+.plan-target { min-width: 5.5rem; text-align: center; font-weight: 600; }
+.plan-bars { display: flex; flex-direction: column; gap: 0.35rem; margin: 0; min-width: 0; }
+.plan-bars > div { display: grid; grid-template-columns: 5rem 1fr; align-items: center; gap: 0.5rem; }
+.plan-bars dd { display: grid; grid-template-columns: 1fr 5rem; align-items: center; gap: 0.5rem; margin: 0; }
+.plan-bar { display: block; height: 0.5rem; border-radius: 999px; background: var(--border); overflow: hidden; }
+.plan-bar-fill { display: block; height: 100%; border-radius: inherit; }
+.plan-bar-fill.scheduled { opacity: 0.45; }
+.plan-schedule-link { white-space: nowrap; font-size: 0.9rem; }
+.plan-add { margin-top: 0.75rem; width: 100%; padding: 0.7rem; border: 1px dashed var(--border); border-radius: 12px; background: none; color: var(--text); cursor: pointer; }
+.plan-add:disabled { cursor: not-allowed; color: var(--muted); }
+.plan-form { display: grid; grid-template-columns: 2fr 1fr 1fr auto; align-items: end; gap: 0.75rem; margin-top: 0.75rem; }
+.plan-form label { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+.plan-past { margin-top: 1.25rem; }
+.plan-past-list { list-style: none; margin: 0.5rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.plan-past-list li { display: flex; align-items: center; gap: 0.5rem; }
+.plan-past-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plan-dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; flex: none; }
+@media (max-width: 720px) {
+  .plan-summary { grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; }
+  .plan-stat strong { font-size: 1rem; }
+  .plan-goal-body { grid-template-columns: 1fr; gap: 0.6rem; }
+  .plan-form { grid-template-columns: 1fr; }
+}

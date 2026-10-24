@@ -10,11 +10,7 @@ import com.jobscheduler.focus.dto.FocusStartRequest
 import com.jobscheduler.focus.dto.InterruptionEndRequest
 import com.jobscheduler.focus.dto.InterruptionStartRequest
 import com.jobscheduler.goal.GoalService
-import com.jobscheduler.goal.MonthlyGoalService
-import com.jobscheduler.goal.WeeklyGoalService
 import com.jobscheduler.goal.dto.GoalRequest
-import com.jobscheduler.goal.dto.MonthlyGoalCreateRequest
-import com.jobscheduler.goal.dto.WeeklyGoalCreateRequest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -42,8 +38,6 @@ class FocusSessionServiceTest(
     @Autowired private val dailyGoalService: DailyGoalService,
     @Autowired private val categoryService: CategoryService,
     @Autowired private val goalService: GoalService,
-    @Autowired private val monthlyGoalService: MonthlyGoalService,
-    @Autowired private val weeklyGoalService: WeeklyGoalService,
     @Autowired private val clock: MutableClock,
 ) {
     private val thursday = LocalDate.of(2026, 10, 22)
@@ -56,14 +50,8 @@ class FocusSessionServiceTest(
         clock.instant = Instant.parse("2026-10-22T00:00:00Z")
         val categories = categoryService.list(includeInactive = false)
         csCategoryId = categories.first { it.name == "CS 공부" }.id
-        val goal = goalService.create(
-            GoalRequest(title = "이직", startDate = LocalDate.of(2026, 10, 20), targetDate = LocalDate.of(2027, 3, 31)),
-        )
-        val monthly = monthlyGoalService.create(MonthlyGoalCreateRequest(goal.id, YearMonth.of(2026, 10), "이력서"))
-        val weekly = weeklyGoalService.create(
-            WeeklyGoalCreateRequest(monthly.id, LocalDate.of(2026, 10, 19), "경력기술서", categories.first().id),
-        )
-        resume = dailyGoalService.create(DailyGoalCreateRequest(weekly.id, thursday, "성과 정리", firstAction = "문서 열기"))
+        val goal = goalService.create(GoalRequest(title = "이직", categoryId = categories.first().id))
+        resume = dailyGoalService.create(DailyGoalCreateRequest(goal.id, thursday, "성과 정리", firstAction = "문서 열기"))
     }
 
     private fun minutes(m: Long) = clock.advance(Duration.ofMinutes(m))

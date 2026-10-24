@@ -18,7 +18,7 @@ interface FocusSessionRepository : JpaRepository<FocusSession, Long> {
 
     /** [from, to) 와 겹치는 세션 (진행 중 포함). 집계용이라 분류 결정에 필요한 연관을 함께 읽는다. */
     @EntityGraph(
-        attributePaths = ["category", "dailyGoal", "dailyGoal.category", "dailyGoal.weeklyGoal", "dailyGoal.weeklyGoal.category"],
+        attributePaths = ["category", "dailyGoal", "dailyGoal.category", "dailyGoal.goal", "dailyGoal.goal.category"],
     )
     @Query("select s from FocusSession s where s.startedAt < :to and (s.endedAt is null or s.endedAt > :from)")
     fun findOverlapping(@Param("from") from: OffsetDateTime, @Param("to") to: OffsetDateTime): List<FocusSession>

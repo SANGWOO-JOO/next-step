@@ -35,16 +35,12 @@ class DailyGoalControllerTest(
 
     @BeforeEach
     fun setUp() {
-        val goalId = createdId("/api/goals", """{"title":"이직","startDate":"2026-10-20","targetDate":"2027-03-31"}""")
-        val monthlyId = createdId("/api/monthly-goals", """{"goalId":$goalId,"month":"2026-10","content":"이력서"}""")
-        weeklyGoalId = createdId(
-            "/api/weekly-goals",
-            """{"monthlyGoalId":$monthlyId,"weekStart":"2026-10-19","content":"경력기술서","categoryId":1}""",
-        )
+        val goalId = createdId("/api/goals", """{"title":"이직","categoryId":1}""")
+        weeklyGoalId = goalId
     }
 
     private fun dailyBody(content: String, type: String? = null) =
-        """{"weeklyGoalId":$weeklyGoalId,"date":"2026-10-22","content":"$content","firstAction":"노션 열기"""" +
+        """{"goalId":$weeklyGoalId,"date":"2026-10-22","content":"$content","firstAction":"노션 열기"""" +
             (type?.let { ""","type":"$it"""" } ?: "") + "}"
 
     @Test
@@ -53,7 +49,7 @@ class DailyGoalControllerTest(
             status { isCreated() }
             jsonPath("$.type") { value("CORE") }
             jsonPath("$.category.name") { value("이력서 작성") }
-            jsonPath("$.weeklyGoalContent") { value("경력기술서") }
+            jsonPath("$.goalTitle") { value("이직") }
         }
         mockMvc.get("/api/daily-goals?date=2026-10-22").andExpect {
             status { isOk() }

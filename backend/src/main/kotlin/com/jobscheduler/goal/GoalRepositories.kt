@@ -5,24 +5,15 @@ import org.springframework.data.jpa.repository.JpaRepository
 import java.time.LocalDate
 
 interface GoalRepository : JpaRepository<Goal, Long> {
-    fun findAllByOrderByStartDateAscIdAsc(): List<Goal>
-    fun existsByStatusAndIdNot(status: GoalStatus, id: Long): Boolean
-    fun existsByStatus(status: GoalStatus): Boolean
+    @EntityGraph(attributePaths = ["category"])
+    fun findAllByOrderByIdAsc(): List<Goal>
+
+    fun countByStatus(status: GoalStatus): Long
+    fun findAllByCategoryIdAndStatus(categoryId: Long, status: GoalStatus): List<Goal>
 }
 
-interface MonthlyGoalRepository : JpaRepository<MonthlyGoal, Long> {
-    fun findAllByGoalIdInOrderByMonthStartAscIdAsc(goalIds: Collection<Long>): List<MonthlyGoal>
-    fun findAllByMonthStartOrderByIdAsc(monthStart: LocalDate): List<MonthlyGoal>
-    fun existsByGoalId(goalId: Long): Boolean
-}
-
-interface WeeklyGoalRepository : JpaRepository<WeeklyGoal, Long> {
-    @EntityGraph(attributePaths = ["category"])
-    fun findAllByMonthlyGoalIdInOrderByWeekStartAscIdAsc(monthlyGoalIds: Collection<Long>): List<WeeklyGoal>
-
-    @EntityGraph(attributePaths = ["category"])
-    fun findAllByWeekStartOrderByIdAsc(weekStart: LocalDate): List<WeeklyGoal>
-
-    fun findAllByMonthlyGoalId(monthlyGoalId: Long): List<WeeklyGoal>
-    fun existsByMonthlyGoalId(monthlyGoalId: Long): Boolean
+interface GoalWeekRepository : JpaRepository<GoalWeek, Long> {
+    fun findAllByWeekStart(weekStart: LocalDate): List<GoalWeek>
+    fun findByGoalIdAndWeekStart(goalId: Long, weekStart: LocalDate): GoalWeek?
+    fun deleteAllByGoalId(goalId: Long)
 }

@@ -60,12 +60,12 @@ class DailyGoalController(private val dailyGoalService: DailyGoalService) {
 
     @PostMapping("/{id}/move")
     fun move(@PathVariable id: Long, @RequestBody req: DailyGoalMoveRequest): DailyGoalMoveResponse =
-        dailyGoalService.move(id, req.date, req.weeklyGoalId)
+        dailyGoalService.move(id, req.date)
 
-    /** 주간 목표 연결·해제(1-4f) */
-    @PutMapping("/{id}/weekly-goal")
+    /** 목표에 묶기·풀기(2-2) */
+    @PutMapping("/{id}/goal")
     fun link(@PathVariable id: Long, @RequestBody req: DailyGoalLinkRequest): DailyGoalResponse =
-        dailyGoalService.link(id, req.weeklyGoalId)
+        dailyGoalService.link(id, req.goalId)
 
     @PatchMapping("/{id}/type")
     fun changeType(@PathVariable id: Long, @RequestBody req: DailyGoalTypeRequest): DailyGoalResponse =

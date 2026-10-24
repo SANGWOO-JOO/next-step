@@ -35,15 +35,11 @@ class TimeBlockControllerTest(
 
     @BeforeEach
     fun setUp() {
-        val goalId = createdId("/api/goals", """{"title":"이직","startDate":"2026-10-20","targetDate":"2027-03-31"}""")
-        val monthlyId = createdId("/api/monthly-goals", """{"goalId":$goalId,"month":"2026-10","content":"이력서"}""")
-        val weeklyId = createdId(
-            "/api/weekly-goals",
-            """{"monthlyGoalId":$monthlyId,"weekStart":"2026-10-19","content":"경력기술서"}""",
-        )
+        val goalId = createdId("/api/goals", """{"title":"이직","categoryId":1}""")
+        val weeklyId = goalId
         dailyGoalId = createdId(
             "/api/daily-goals",
-            """{"weeklyGoalId":$weeklyId,"date":"2026-10-22","content":"성과 정리"}""",
+            """{"goalId":$weeklyId,"date":"2026-10-22","content":"성과 정리"}""",
         )
     }
 

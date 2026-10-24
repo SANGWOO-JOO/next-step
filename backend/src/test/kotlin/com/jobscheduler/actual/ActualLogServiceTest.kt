@@ -7,11 +7,7 @@ import com.jobscheduler.daily.DailyGoalService
 import com.jobscheduler.daily.dto.DailyGoalCreateRequest
 import com.jobscheduler.daily.dto.DailyGoalResponse
 import com.jobscheduler.goal.GoalService
-import com.jobscheduler.goal.MonthlyGoalService
-import com.jobscheduler.goal.WeeklyGoalService
 import com.jobscheduler.goal.dto.GoalRequest
-import com.jobscheduler.goal.dto.MonthlyGoalCreateRequest
-import com.jobscheduler.goal.dto.WeeklyGoalCreateRequest
 import com.jobscheduler.timeblock.TimeBlockService
 import com.jobscheduler.timeblock.dto.TimeBlockRequest
 import org.junit.jupiter.api.BeforeEach
@@ -36,8 +32,6 @@ class ActualLogServiceTest(
     @Autowired private val dailyGoalService: DailyGoalService,
     @Autowired private val categoryService: CategoryService,
     @Autowired private val goalService: GoalService,
-    @Autowired private val monthlyGoalService: MonthlyGoalService,
-    @Autowired private val weeklyGoalService: WeeklyGoalService,
 ) {
     private val day = LocalDate.of(2026, 10, 22)
     private lateinit var resume: DailyGoalResponse
@@ -48,12 +42,8 @@ class ActualLogServiceTest(
     @BeforeEach
     fun setUp() {
         csId = categoryService.list(includeInactive = false).first { it.name == "CS 공부" }.id
-        val goal = goalService.create(
-            GoalRequest(title = "이직", startDate = LocalDate.of(2026, 10, 1), targetDate = LocalDate.of(2027, 3, 31)),
-        )
-        val monthly = monthlyGoalService.create(MonthlyGoalCreateRequest(goal.id, YearMonth.of(2026, 10), "이력서"))
-        val weekly = weeklyGoalService.create(WeeklyGoalCreateRequest(monthly.id, LocalDate.of(2026, 10, 19), "경력기술서"))
-        resume = dailyGoalService.create(DailyGoalCreateRequest(weekly.id, day, "이력서 작성"))
+        val goal = goalService.create(GoalRequest(title = "이직", categoryId = 1L))
+        resume = dailyGoalService.create(DailyGoalCreateRequest(goal.id, day, "이력서 작성"))
     }
 
     private fun goalLog(h1: Int, m1: Int, h2: Int, m2: Int) =
@@ -145,7 +135,8 @@ class ActualLogServiceTest(
         dailyGoalService.delete(resume.id)
         val logs = service.list(day, day)
         assertEquals(listOf("09:00-10:00 이력서 작성"), spans(logs))
-        assertEquals(ActualKind.OTHER, logs[0].kind)
+        // 목표의 분류를 물려받은 할 일이라 공부 기록으로 남는다
+        assertEquals(ActualKind.STUDY, logs[0].kind)
     }
 
     @Test

@@ -10,15 +10,15 @@ import jakarta.validation.constraints.Size
 import java.time.LocalDate
 
 data class DailyGoalCreateRequest(
-    /** 비우면 주간 목표에 연결하지 않는다 */
-    val weeklyGoalId: Long? = null,
+    /** 비우면 목표에 묶지 않는다 */
+    val goalId: Long? = null,
     val date: LocalDate,
     @field:NotBlank(message = "내용을 입력해주세요.")
     @field:Size(max = 500, message = "내용은 500자 이하로 입력해주세요.")
     val content: String,
     @field:Size(max = 500, message = "첫 행동은 500자 이하로 입력해주세요.")
     val firstAction: String? = null,
-    /** 비우면 연결한 주간 목표의 분류를 물려받는다. */
+    /** 비우면 묶은 목표의 분류를 물려받는다. */
     val categoryId: Long? = null,
     /** 비우면 핵심 자리가 남아 있을 때 CORE, 아니면 EXTRA */
     val type: DailyGoalType? = null,
@@ -36,14 +36,12 @@ data class DailyGoalUpdateRequest(
 
 data class DailyGoalMoveRequest(
     val date: LocalDate,
-    /** 다른 주로 넘길 때 연결할 그 주의 주간 목표. 같은 주면 비워 둔다. */
-    val weeklyGoalId: Long? = null,
 )
 
 data class DailyGoalTypeRequest(val type: DailyGoalType)
 
-/** 주간 목표 연결·해제. null이면 연결을 푼다 */
-data class DailyGoalLinkRequest(val weeklyGoalId: Long?)
+/** 목표에 묶기·풀기. null이면 푼다 */
+data class DailyGoalLinkRequest(val goalId: Long?)
 
 data class DailyGoalOrderRequest(
     val date: LocalDate,
@@ -54,8 +52,8 @@ data class DailyGoalOrderRequest(
 
 data class DailyGoalResponse(
     val id: Long,
-    val weeklyGoalId: Long?,
-    val weeklyGoalContent: String?,
+    val goalId: Long?,
+    val goalTitle: String?,
     val date: LocalDate,
     val content: String,
     val firstAction: String?,
@@ -68,8 +66,8 @@ data class DailyGoalResponse(
     companion object {
         fun from(d: DailyGoal) = DailyGoalResponse(
             id = d.id!!,
-            weeklyGoalId = d.weeklyGoal?.id,
-            weeklyGoalContent = d.weeklyGoal?.content,
+            goalId = d.goal?.id,
+            goalTitle = d.goal?.title,
             date = d.date,
             content = d.content,
             firstAction = d.firstAction,

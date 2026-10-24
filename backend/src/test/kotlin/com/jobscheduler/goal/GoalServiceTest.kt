@@ -1,15 +1,14 @@
 package com.jobscheduler.goal
 
-import com.jobscheduler.category.CategoryService
-import com.jobscheduler.category.dto.CategoryRequest
+import com.jobscheduler.actual.ActualKind
+import com.jobscheduler.actual.ActualLogService
+import com.jobscheduler.actual.dto.ActualLogRequest
 import com.jobscheduler.common.BusinessRuleException
-import com.jobscheduler.common.NotFoundException
+import com.jobscheduler.daily.DailyGoalService
+import com.jobscheduler.daily.dto.DailyGoalCreateRequest
 import com.jobscheduler.goal.dto.GoalRequest
-import com.jobscheduler.goal.dto.MonthlyGoalCreateRequest
-import com.jobscheduler.goal.dto.MonthlyGoalUpdateRequest
-import com.jobscheduler.goal.dto.Progress
-import com.jobscheduler.goal.dto.WeeklyGoalCreateRequest
-import com.jobscheduler.goal.dto.WeeklyGoalUpdateRequest
+import com.jobscheduler.timeblock.TimeBlockService
+import com.jobscheduler.timeblock.dto.TimeBlockRequest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
@@ -17,171 +16,101 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
-import java.time.YearMonth
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
 class GoalServiceTest(
     @Autowired private val goalService: GoalService,
-    @Autowired private val monthlyGoalService: MonthlyGoalService,
-    @Autowired private val weeklyGoalService: WeeklyGoalService,
-    @Autowired private val categoryService: CategoryService,
+    @Autowired private val dailyGoalService: DailyGoalService,
+    @Autowired private val timeBlockService: TimeBlockService,
+    @Autowired private val actualLogService: ActualLogService,
 ) {
-    private val october = YearMonth.of(2026, 10)
-    private val november = YearMonth.of(2026, 11)
+    // 테스트 데이터의 사용자 1 분류: 1 이력서 작성, 3 CS 공부
+    private val monday = LocalDate.of(2026, 10, 19)
+    private val thursday = LocalDate.of(2026, 10, 22)
+    private fun at(hour: Int, minute: Int = 0) = OffsetDateTime.of(2026, 10, 22, hour, minute, 0, 0, ZoneOffset.ofHours(9))
 
-    private fun createGoal() = goalService.create(
-        GoalRequest(
-            title = "백엔드 개발자로 이직",
-            startDate = LocalDate.of(2026, 10, 20),
-            targetDate = LocalDate.of(2027, 3, 31),
-        ),
-    )
-
-    private fun createMonthly(goalId: Long, month: YearMonth = october) =
-        monthlyGoalService.create(MonthlyGoalCreateRequest(goalId = goalId, month = month, content = "이력서 완성"))
-
-    private fun createWeekly(monthlyGoalId: Long, weekStart: LocalDate, categoryId: Long? = null) =
-        weeklyGoalService.create(
-            WeeklyGoalCreateRequest(monthlyGoalId = monthlyGoalId, weekStart = weekStart, content = "경력기술서", categoryId = categoryId),
-        )
+    private fun goal(title: String, categoryId: Long = 1) = goalService.create(GoalRequest(title, categoryId))
 
     @Test
-    fun `진행률은 하위 목표 달성 비율로 계산된다`() {
-        val goal = createGoal()
-        val oct = createMonthly(goal.id, october)
-        createMonthly(goal.id, november)
-        val w1 = createWeekly(oct.id, LocalDate.of(2026, 10, 19))
-        createWeekly(oct.id, LocalDate.of(2026, 10, 26))
-        createWeekly(oct.id, LocalDate.of(2026, 9, 28)) // 목요일이 10월이라 10월 소속
+    fun `목표는 분류를 갖고 기한은 비워도 된다`() {
+        val created = goalService.create(GoalRequest(" 이력서 완성 ", 1, LocalDate.of(2026, 12, 31)))
+        assertEquals("이력서 완성", created.title)
+        assertEquals("이력서 작성", created.category.name)
+        assertEquals(GoalStatus.ACTIVE, created.status)
 
-        weeklyGoalService.update(w1.id, WeeklyGoalUpdateRequest(weekStart = w1.weekStart, content = w1.content, achieved = true))
-        monthlyGoalService.update(oct.id, MonthlyGoalUpdateRequest(month = october, content = oct.content, achieved = true))
-
-        val tree = goalService.get(goal.id)
-        assertEquals(Progress(1, 2, 50), tree.progress)
-        val octTree = tree.monthlyGoals.first { it.id == oct.id }
-        assertEquals(Progress(1, 3, 33), octTree.progress)
-        assertEquals(LocalDate.of(2026, 9, 28), octTree.weeklyGoals.first().weekStart)
-        assertEquals(Progress(0, 0, 0), tree.monthlyGoals.first { it.month == november }.progress)
+        val updated = goalService.update(created.id, GoalRequest("이력서·경력기술서", 3, null))
+        assertEquals("CS 공부", updated.category.name)
+        assertNull(updated.targetDate)
     }
 
     @Test
-    fun `없는 상위 목표에는 연결할 수 없다`() {
-        assertThrows<NotFoundException> { createMonthly(goalId = 999_999) }
-        assertThrows<NotFoundException> { createWeekly(999_999, LocalDate.of(2026, 10, 19)) }
+    fun `진행 중 목표는 3개까지이고 멈추면 자리가 생긴다`() {
+        val first = goal("하나")
+        goal("둘")
+        goal("셋")
+        val e = assertThrows<BusinessRuleException> { goal("넷") }
+        assertEquals("ACTIVE_GOAL_LIMIT", e.code)
+
+        goalService.changeStatus(first.id, GoalStatus.PAUSED)
+        val fourth = goal("넷")
+        // 다시 진행으로 돌릴 때도 개수를 본다
+        assertThrows<BusinessRuleException> { goalService.changeStatus(first.id, GoalStatus.ACTIVE) }
+        goalService.changeStatus(fourth.id, GoalStatus.DONE)
+        assertEquals(GoalStatus.ACTIVE, goalService.changeStatus(first.id, GoalStatus.ACTIVE).status)
     }
 
     @Test
-    fun `월간 목표는 최종 목표 기간 밖의 달로 만들 수 없다`() {
-        val goal = createGoal()
-        val e = assertThrows<BusinessRuleException> { createMonthly(goal.id, YearMonth.of(2026, 9)) }
-        assertEquals("MONTH_OUT_OF_GOAL_PERIOD", e.code)
+    fun `주 목표 시간은 주마다 따로 저장하고 다시 정하면 덮어쓴다`() {
+        val resume = goal("이력서")
+        goalService.setWeekMinutes(resume.id, monday, 300)
+        goalService.setWeekMinutes(resume.id, monday, 240)
+        goalService.setWeekMinutes(resume.id, monday.plusWeeks(1), 60)
+
+        assertEquals(240, goalService.week(monday).goals.single().targetMinutes)
+        assertEquals(60, goalService.week(monday.plusWeeks(1)).goals.single().targetMinutes)
+        assertEquals(0, goalService.week(monday.minusWeeks(1)).goals.single().targetMinutes)
+
+        val e = assertThrows<BusinessRuleException> { goalService.setWeekMinutes(resume.id, thursday, 60) }
+        assertEquals("WEEK_START_NOT_MONDAY", e.code)
     }
 
     @Test
-    fun `주간 목표는 월간 목표의 달에 속한 주여야 한다`() {
-        val nov = createMonthly(createGoal().id, november)
-        val e = assertThrows<BusinessRuleException> { createWeekly(nov.id, LocalDate.of(2026, 11, 30)) }
-        assertEquals("WEEK_NOT_IN_MONTH", e.code)
+    fun `계획 화면은 목표마다 일정에 잡은 시간과 실제로 한 시간을 묶인 할 일로 센다`() {
+        val resume = goal("이력서")
+        val cs = goal("CS", 3)
+        goalService.setWeekMinutes(resume.id, monday, 180)
+        val daily = dailyGoalService.create(DailyGoalCreateRequest(resume.id, thursday, "경력기술서"))
+        val loose = dailyGoalService.create(DailyGoalCreateRequest(null, thursday, "목표 없는 할 일"))
+        timeBlockService.create(TimeBlockRequest(daily.id, startAt = at(9), endAt = at(11)))
+        timeBlockService.create(TimeBlockRequest(loose.id, startAt = at(13), endAt = at(14)))
+        actualLogService.create(ActualLogRequest(thursday, at(9), at(10, 30), ActualKind.GOAL, dailyGoalId = daily.id))
+        actualLogService.create(ActualLogRequest(thursday, at(20), at(21), ActualKind.DISTRACTION, title = "유튜브"))
+
+        val week = goalService.week(monday)
+        val row = week.goals.first { it.goal.id == resume.id }
+        assertEquals(180, row.targetMinutes)
+        assertEquals(120, row.scheduledMinutes)
+        assertEquals(90, row.actualMinutes)
+        assertEquals(0, week.goals.first { it.goal.id == cs.id }.scheduledMinutes)
+        assertEquals(120, week.scheduledMinutes)
+        assertEquals(90, week.actualMinutes)
     }
 
     @Test
-    fun `연결된 주간 목표가 다른 달이 되도록 월간 목표의 달을 바꿀 수 없다`() {
-        val oct = createMonthly(createGoal().id, october)
-        createWeekly(oct.id, LocalDate.of(2026, 10, 19))
-        val e = assertThrows<BusinessRuleException> {
-            monthlyGoalService.update(oct.id, MonthlyGoalUpdateRequest(month = november, content = oct.content))
-        }
-        assertEquals("WEEK_NOT_IN_MONTH", e.code)
-    }
+    fun `지난 목표는 그 주에 시간이 있을 때만 계획 화면에 나온다`() {
+        val done = goal("끝난 목표")
+        val dropped = goal("그만둔 목표")
+        goalService.setWeekMinutes(done.id, monday, 60)
+        goalService.changeStatus(done.id, GoalStatus.DONE)
+        goalService.changeStatus(dropped.id, GoalStatus.DROPPED)
 
-    @Test
-    fun `연결된 월간 목표가 기간 밖이 되도록 최종 목표 기간을 줄일 수 없다`() {
-        val goal = createGoal()
-        createMonthly(goal.id, YearMonth.of(2027, 3))
-        val e = assertThrows<BusinessRuleException> {
-            goalService.update(
-                goal.id,
-                GoalRequest(title = goal.title, startDate = goal.startDate, targetDate = LocalDate.of(2027, 2, 28)),
-            )
-        }
-        assertEquals("MONTH_OUT_OF_GOAL_PERIOD", e.code)
-    }
-
-    @Test
-    fun `하위 목표가 있으면 삭제할 수 없다`() {
-        val goal = createGoal()
-        val oct = createMonthly(goal.id)
-        val weekly = createWeekly(oct.id, LocalDate.of(2026, 10, 19))
-
-        assertEquals("HAS_CHILDREN", assertThrows<BusinessRuleException> { goalService.delete(goal.id) }.code)
-        assertEquals("HAS_CHILDREN", assertThrows<BusinessRuleException> { monthlyGoalService.delete(oct.id) }.code)
-
-        // 주간 목표가 없어지면 남은 빈 월간 목표는 최종 목표와 함께 지운다
-        weeklyGoalService.delete(weekly.id)
-        goalService.delete(goal.id)
-        assertThrows<NotFoundException> { goalService.get(goal.id) }
-        assertThrows<NotFoundException> { monthlyGoalService.delete(oct.id) }
-    }
-
-    @Test
-    fun `비활성 분류는 새로 지정할 수 없지만 이미 지정된 분류는 유지된다`() {
-        val oct = createMonthly(createGoal().id)
-        val category = categoryService.list(includeInactive = false).first()
-        val weekly = createWeekly(oct.id, LocalDate.of(2026, 10, 19), category.id)
-
-        categoryService.update(category.id, CategoryRequest(name = category.name, color = category.color, active = false))
-
-        val kept = weeklyGoalService.update(
-            weekly.id,
-            WeeklyGoalUpdateRequest(weekStart = weekly.weekStart, content = "수정", categoryId = category.id),
-        )
-        assertEquals(category.id, kept.category?.id)
-
-        val e = assertThrows<BusinessRuleException> { createWeekly(oct.id, LocalDate.of(2026, 10, 26), category.id) }
-        assertEquals("CATEGORY_INACTIVE", e.code)
-    }
-
-    @Test
-    fun `못 끝낸 주간 목표를 다음 주로 이어가고 달이 바뀌면 월간 목표를 골라야 한다`() {
-        val goal = createGoal()
-        val oct = createMonthly(goal.id, october)
-        val nov = createMonthly(goal.id, november)
-        val w = createWeekly(oct.id, LocalDate.of(2026, 10, 19))
-
-        val next = weeklyGoalService.carryOver(w.id, null)
-        assertEquals(LocalDate.of(2026, 10, 26), next.weekStart)
-        assertEquals("경력기술서", next.content)
-        val again = assertThrows<BusinessRuleException> { weeklyGoalService.carryOver(w.id, null) }
-        assertEquals("ALREADY_CARRIED", again.code)
-
-        // 10/26 주의 다음 주(11/2)는 11월이라 11월 월간 목표가 필요하다
-        val e = assertThrows<BusinessRuleException> { weeklyGoalService.carryOver(next.id, null) }
-        assertEquals("MONTHLY_GOAL_REQUIRED", e.code)
-        assertEquals(nov.id, weeklyGoalService.carryOver(next.id, nov.id).monthlyGoalId)
-        assertEquals(true, weeklyGoalService.list(oct.id, null).first { it.id == w.id }.carriedOver)
-    }
-
-    @Test
-    fun `진행 중인 최종 목표는 하나만 둘 수 있다`() {
-        val first = createGoal()
-        assertEquals("ONE_ACTIVE_GOAL", assertThrows<BusinessRuleException> { createGoal() }.code)
-
-        // 중단한 목표는 따로 만들 수 있지만, 다시 진행 중으로 바꿀 수는 없다
-        val paused = goalService.create(
-            GoalRequest(title = "중단한 목표", startDate = first.startDate, targetDate = first.targetDate, status = GoalStatus.DROPPED),
-        )
-        val reopen = GoalRequest(title = paused.title, startDate = paused.startDate, targetDate = paused.targetDate)
-        assertEquals("ONE_ACTIVE_GOAL", assertThrows<BusinessRuleException> { goalService.update(paused.id, reopen) }.code)
-
-        // 지금 목표를 완료하면 새 목표를 진행할 수 있다
-        goalService.update(
-            first.id,
-            GoalRequest(title = first.title, startDate = first.startDate, targetDate = first.targetDate, status = GoalStatus.DONE),
-        )
-        assertEquals(GoalStatus.ACTIVE, goalService.update(paused.id, reopen).status)
+        assertEquals(listOf(done.id), goalService.week(monday).goals.map { it.goal.id })
+        assertEquals(emptyList(), goalService.week(monday.plusWeeks(1)).goals)
     }
 }

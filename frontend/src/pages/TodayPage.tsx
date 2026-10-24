@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { getCategories, type Category } from '../api/categories'
 import { errorMessage } from '../api/client'
 import { createDailyGoal, getDailyGoalsBetween, getUnfinishedDailyGoals, type DailyGoal } from '../api/dailyGoals'
-import { getWeeklyGoalsOfWeek } from '../api/goals'
+import { getWeekPlan } from '../api/goals'
 import { formatDuration } from '../api/focus'
 import { getHealth } from '../api/health'
 import { getActualLogsBetween, type ActualLog } from '../api/actualLogs'
@@ -39,8 +39,8 @@ export default function TodayPage() {
       return 'day'
     }
   })
-  /** 이번 주(오늘이 속한 주)에 주간 목표가 있는지. 알림 칸용(보는 주와 다를 수 있음) */
-  const [thisWeekHasWeekly, setThisWeekHasWeekly] = useState<boolean | null>(null)
+  /** 이번 주(오늘이 속한 주)에 목표 시간을 나눴는지. 알림 칸용(보는 주와 다를 수 있음) */
+  const [thisWeekHasPlan, setThisWeekHasPlan] = useState<boolean | null>(null)
   const [unfinished, setUnfinished] = useState<DailyGoal[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [blocks, setBlocks] = useState<TimeBlock[]>([])
@@ -131,15 +131,14 @@ export default function TodayPage() {
       Promise.all(ranges.map(([f, t]) => get(f, t))).then((all) => all.flat())
     Promise.all([
       each(getDailyGoalsBetween),
-      getWeeklyGoalsOfWeek(viewMonday),
       getUnfinishedDailyGoals(today),
       getCategories(),
       each(getTimeBlocksBetween),
       each(getActualLogsBetween),
-      viewMonday === thisMonday ? null : getWeeklyGoalsOfWeek(thisMonday),
+      getWeekPlan(thisMonday),
     ])
-      .then(([d, w, u, c, b, actual, thisWeek]) => {
-        setThisWeekHasWeekly((thisWeek ?? w).length > 0)
+      .then(([d, u, c, b, actual, plan]) => {
+        setThisWeekHasPlan(plan.targetMinutes > 0)
         setActuals(actual)
         setWeekGoals(d)
         setUnfinished(u)
@@ -192,7 +191,7 @@ export default function TodayPage() {
       <AlertSlot
         today={today}
         monday={thisMonday}
-        hasWeeklyGoals={thisWeekHasWeekly}
+        hasWeekPlan={thisWeekHasPlan}
       />
 
       <div
@@ -403,17 +402,17 @@ export default function TodayPage() {
 /** 지금 걸친 시간 블록, 없으면 다음 블록을 한 줄로 알려준다(Structured의 지금/다음 강조 참고) */
 
 /**
- * 알림 한 칸(docs/design.md 6장 1-4d): 주간 목표 없음 > 월요일 계획하기.
+ * 알림 한 칸(docs/design.md 6장 1-4d): 이번 주 계획 없음(목표에 나눈 시간 0) > 월요일 계획하기.
  * 금~일 돌아보기와 21시 이후 하루 마무리는 오른쪽 위 알림 카드(ReminderStack, 1-4f ⑬)로 옮겼다.
  */
 function AlertSlot({
   today,
   monday,
-  hasWeeklyGoals,
+  hasWeekPlan,
 }: {
   today: string
   monday: string
-  hasWeeklyGoals: boolean | null
+  hasWeekPlan: boolean | null
 }) {
   const [planDismissed, setPlanDismissed] = useState(() => {
     try {
@@ -431,11 +430,11 @@ function AlertSlot({
     setPlanDismissed(true)
   }
 
-  if (hasWeeklyGoals === null) return null
-  const planLink = `/plan?level=week&date=${monday}`
+  if (hasWeekPlan === null) return null
+  const planLink = `/plan?week=${monday}`
   let alert: { text: string; action: ReactNode; onClose?: () => void } | null = null
-  if (!hasWeeklyGoals) {
-    alert = { text: '이번 주 주간 목표가 아직 없어요.', action: <Link className="button-link" to={planLink}>이번 주 계획하기 ▶</Link> }
+  if (!hasWeekPlan) {
+    alert = { text: '이번 주 계획이 아직 없어요.', action: <Link className="button-link" to={planLink}>이번 주 계획하기 ▶</Link> }
   } else if (today === monday && !planDismissed) {
     alert = {
       text: '새로운 한 주예요. 지난주를 돌아보고 이번 주를 계획해요.',

@@ -16,8 +16,8 @@ type Props = {
 export default function PullSection({ today, unfinished, run }: Props) {
   if (unfinished.length === 0) return null
 
-  // 지난주 목표는 오늘로 오면 주간 목표 연결이 풀린다(1-4f, 나중에 ⋯ 메뉴로 연결)
-  const moveToToday = (g: DailyGoal) => moveDailyGoal(g.id, today, null)
+  // 묶인 목표는 그대로 둔 채 오늘로 옮긴다(2-2)
+  const moveToToday = (g: DailyGoal) => moveDailyGoal(g.id, today)
 
   const moveAll = () => {
     const targets = unfinished

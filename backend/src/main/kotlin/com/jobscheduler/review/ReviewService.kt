@@ -1,8 +1,6 @@
 package com.jobscheduler.review
 
 import com.jobscheduler.common.BusinessRuleException
-import com.jobscheduler.goal.GoalRules
-import com.jobscheduler.goal.WeeklyGoalRepository
 import com.jobscheduler.record.DailyLogRepository
 import com.jobscheduler.record.DailyLogService
 import com.jobscheduler.review.dto.DayStats
@@ -27,7 +25,6 @@ class ReviewService(
     private val reviewRepository: MonthlyReviewRepository,
     private val dailyLogService: DailyLogService,
     private val dailyLogRepository: DailyLogRepository,
-    private val weeklyGoalRepository: WeeklyGoalRepository,
 ) {
     @Transactional(readOnly = true)
     fun getJournal(weekStart: LocalDate): WeeklyJournalResponse {
@@ -78,9 +75,12 @@ class ReviewService(
     /** 그 달에 속한 주(목요일이 그 달에 있는 주)의 월요일 */
     fun mondaysOf(month: YearMonth): List<LocalDate> {
         var monday = month.atDay(1).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-        if (GoalRules.isoMonthOf(monday) != month) monday = monday.plusWeeks(1)
-        return generateSequence(monday) { it.plusWeeks(1) }.takeWhile { GoalRules.isoMonthOf(it) == month }.toList()
+        if (isoMonthOf(monday) != month) monday = monday.plusWeeks(1)
+        return generateSequence(monday) { it.plusWeeks(1) }.takeWhile { isoMonthOf(it) == month }.toList()
     }
+
+    /** 월에 걸친 주는 목요일이 속한 달(ISO)에 속한다 */
+    private fun isoMonthOf(weekStart: LocalDate): YearMonth = YearMonth.from(weekStart.plusDays(3))
 
     private fun days(weekStart: LocalDate): List<DayStats> {
         val dates = (0L..6L).map { weekStart.plusDays(it) }
@@ -89,7 +89,6 @@ class ReviewService(
     }
 
     private fun weekStats(weekStart: LocalDate, days: List<DayStats>, journalWritten: Boolean): WeekStats {
-        val weeklyGoals = weeklyGoalRepository.findAllByWeekStartOrderByIdAsc(weekStart)
         return WeekStats(
             weekStart = weekStart,
             studySeconds = days.sumOf { it.summary.studySeconds },
@@ -98,8 +97,6 @@ class ReviewService(
             distractionSeconds = days.sumOf { it.summary.distractionSeconds },
             goalsDone = days.sumOf { it.summary.goalsDone },
             goalsTotal = days.sumOf { it.summary.goalsTotal },
-            weeklyGoalsAchieved = weeklyGoals.count { it.achieved },
-            weeklyGoalsTotal = weeklyGoals.size,
             journalWritten = journalWritten,
         )
     }

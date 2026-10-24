@@ -9,37 +9,24 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
-import java.math.BigDecimal
 import java.time.LocalDate
-import java.time.OffsetDateTime
-import java.time.YearMonth
 import org.hibernate.annotations.TenantId
 
+/** 목표의 한 주 목표 시간(분). 주는 월요일 시작 */
 @Entity
-@Table(name = "monthly_goal")
-class MonthlyGoal(
+@Table(name = "goal_week")
+class GoalWeek(
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "goal_id")
     val goal: Goal,
-    /** 해당 월의 1일 */
-    var monthStart: LocalDate,
-    var content: String,
-    var targetValue: BigDecimal? = null,
-    var currentValue: BigDecimal? = null,
-    var unit: String? = null,
-    var achieved: Boolean = false,
+    val weekStart: LocalDate,
+    var minutes: Int,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null
 
-    /** 주인(docs/design.md 11-6 2-1). Hibernate가 현재 로그인 사용자로 채우고 조회 때 거른다 */
     @TenantId
     @Column(name = "user_id", updatable = false)
     var userId: Long? = null
-
-    @Column(updatable = false)
-    val createdAt: OffsetDateTime = OffsetDateTime.now()
-
-    val month: YearMonth get() = YearMonth.from(monthStart)
 }

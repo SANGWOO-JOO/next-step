@@ -1,89 +1,134 @@
 package com.jobscheduler.goal
 
+import com.jobscheduler.actual.ActualKind
+import com.jobscheduler.actual.ActualLogRepository
+import com.jobscheduler.category.CategoryService
 import com.jobscheduler.common.BusinessRuleException
 import com.jobscheduler.common.NotFoundException
+import com.jobscheduler.daily.DailyGoalRepository
 import com.jobscheduler.goal.dto.GoalRequest
 import com.jobscheduler.goal.dto.GoalResponse
-import com.jobscheduler.goal.dto.MonthlyGoalResponse
+import com.jobscheduler.goal.dto.GoalWeekRow
+import com.jobscheduler.goal.dto.WeekPlanResponse
+import com.jobscheduler.timeblock.TimeBlockRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.DayOfWeek
+import java.time.Duration
+import java.time.LocalDate
 
 @Service
 @Transactional
 class GoalService(
     private val goalRepository: GoalRepository,
-    private val monthlyGoalRepository: MonthlyGoalRepository,
-    private val weeklyGoalRepository: WeeklyGoalRepository,
+    private val goalWeekRepository: GoalWeekRepository,
+    private val categoryService: CategoryService,
+    private val dailyGoalRepository: DailyGoalRepository,
+    private val timeBlockRepository: TimeBlockRepository,
+    private val actualLogRepository: ActualLogRepository,
 ) {
+    companion object {
+        /** 진행 중 목표 최대 개수(docs/design.md 11-6 2-2 ⑦) */
+        const val MAX_ACTIVE = 3
+    }
 
     @Transactional(readOnly = true)
-    fun list(): List<GoalResponse> = toResponses(goalRepository.findAllByOrderByStartDateAscIdAsc())
+    fun list(): List<GoalResponse> = goalRepository.findAllByOrderByIdAsc().map(GoalResponse::from)
 
     @Transactional(readOnly = true)
-    fun get(id: Long): GoalResponse = toResponses(listOf(getEntity(id))).single()
+    fun get(id: Long): GoalResponse = GoalResponse.from(getEntity(id))
 
     fun create(req: GoalRequest): GoalResponse {
-        GoalRules.requirePeriod(req.startDate, req.targetDate)
-        if (req.status == GoalStatus.ACTIVE && goalRepository.existsByStatus(GoalStatus.ACTIVE)) throw oneActive()
+        requireActiveSlot()
         val goal = goalRepository.save(
-            Goal(
-                title = req.title.trim(),
-                description = req.description?.trim()?.ifEmpty { null },
-                startDate = req.startDate,
-                targetDate = req.targetDate,
-                status = req.status,
-            ),
+            Goal(title = req.title.trim(), category = categoryService.getAssignable(req.categoryId), targetDate = req.targetDate),
         )
-        return GoalResponse.from(goal, emptyList())
+        return GoalResponse.from(goal)
     }
 
     fun update(id: Long, req: GoalRequest): GoalResponse {
         val goal = getEntity(id)
-        GoalRules.requirePeriod(req.startDate, req.targetDate)
-        if (req.status == GoalStatus.ACTIVE && goalRepository.existsByStatusAndIdNot(GoalStatus.ACTIVE, id)) throw oneActive()
-        // 기간을 줄여도 이미 연결된 월간 목표는 기간 안에 남아 있어야 한다
-        monthlyGoalRepository.findAllByGoalIdInOrderByMonthStartAscIdAsc(listOf(id)).forEach {
-            GoalRules.requireMonthInPeriod(it.month, req.startDate, req.targetDate)
-        }
-
+        // 이미 지정된 분류는 비활성이어도 유지하고, 바꿀 때만 활성 여부를 본다
+        if (req.categoryId != goal.category.id) goal.category = categoryService.getAssignable(req.categoryId)
         goal.title = req.title.trim()
-        goal.description = req.description?.trim()?.ifEmpty { null }
-        goal.startDate = req.startDate
         goal.targetDate = req.targetDate
-        goal.status = req.status
-        return get(id)
+        return GoalResponse.from(goal)
     }
 
-    /** 주간 목표가 없는 월간 목표는 함께 지운다. 주간 목표가 연결된 월간 목표가 있으면 지울 수 없다. */
+    /** 완료·멈춤·그만둠으로 바꿔도 기록과 묶인 할 일은 그대로 둔다. 다시 진행으로 돌릴 때만 개수를 본다 */
+    fun changeStatus(id: Long, status: GoalStatus): GoalResponse {
+        val goal = getEntity(id)
+        if (status == GoalStatus.ACTIVE && goal.status != GoalStatus.ACTIVE) requireActiveSlot()
+        goal.status = status
+        return GoalResponse.from(goal)
+    }
+
+    /** 목표를 지우면 주별 목표 시간도 지우고, 묶인 할 일은 연결만 푼다 */
     fun delete(id: Long) {
         val goal = getEntity(id)
-        val monthlyGoals = monthlyGoalRepository.findAllByGoalIdInOrderByMonthStartAscIdAsc(listOf(id))
-        if (monthlyGoals.any { weeklyGoalRepository.existsByMonthlyGoalId(it.id!!) }) {
-            throw BusinessRuleException(
-                "주간 목표가 연결된 월간 목표가 있어 삭제할 수 없어요. [주] 보기에서 주간 목표를 먼저 지워 주세요.",
-                "HAS_CHILDREN",
-            )
-        }
-        monthlyGoalRepository.deleteAll(monthlyGoals)
+        dailyGoalRepository.findAllByGoalId(id).forEach { it.goal = null }
+        goalWeekRepository.deleteAllByGoalId(id)
         goalRepository.delete(goal)
     }
 
-    /** 진행 중인 최종 목표는 하나만(docs/design.md 1-4f ⑥) */
-    private fun oneActive() =
-        BusinessRuleException("진행 중인 최종 목표는 하나만 둘 수 있어요. 지금 목표를 완료하거나 중단한 뒤 만들어 주세요.", "ONE_ACTIVE_GOAL")
-
-    private fun getEntity(id: Long): Goal =
-        goalRepository.findByIdOrNull(id) ?: throw NotFoundException("최종 목표를 찾을 수 없어요: $id")
-
-    private fun toResponses(goals: List<Goal>): List<GoalResponse> {
-        val monthlyGoals = monthlyGoalRepository.findAllByGoalIdInOrderByMonthStartAscIdAsc(goals.map { it.id!! })
-        val weeklyByMonthly = weeklyGoalRepository
-            .findAllByMonthlyGoalIdInOrderByWeekStartAscIdAsc(monthlyGoals.map { it.id!! })
-            .groupBy { it.monthlyGoal.id!! }
-        val monthlyByGoal = monthlyGoals
-            .map { MonthlyGoalResponse.from(it, weeklyByMonthly[it.id].orEmpty()) }
-            .groupBy { it.goalId }
-        return goals.map { GoalResponse.from(it, monthlyByGoal[it.id].orEmpty()) }
+    /** 이번 주 목표 시간을 정한다. 0분도 그대로 저장한다 */
+    fun setWeekMinutes(id: Long, weekStart: LocalDate, minutes: Int): GoalWeekRow {
+        requireMonday(weekStart)
+        val goal = getEntity(id)
+        val week = goalWeekRepository.findByGoalIdAndWeekStart(id, weekStart)
+            ?: goalWeekRepository.save(GoalWeek(goal, weekStart, minutes))
+        week.minutes = minutes
+        return week(weekStart).goals.first { it.goal.id == id }
     }
+
+    /**
+     * 계획 화면(docs/design.md 11-4): 목표마다 이번 주 목표 시간, 일정에 잡은 시간(묶인 할 일의 시간 블록),
+     * 실제로 한 시간(묶인 할 일의 실제 기록). 진행 중 목표와, 지난 목표 중 이번 주에 시간이 있는 것을 보여 준다.
+     */
+    @Transactional(readOnly = true)
+    fun week(weekStart: LocalDate): WeekPlanResponse {
+        requireMonday(weekStart)
+        val weekEnd = weekStart.plusDays(6)
+        val targets = goalWeekRepository.findAllByWeekStart(weekStart).associate { it.goal.id!! to it.minutes }
+        val scheduled = timeBlockRepository.findAllByDateBetween(weekStart, weekEnd)
+            .mapNotNull { b -> b.dailyGoal?.goal?.id?.let { it to minutes(b.startAt, b.endAt) } }
+            .groupBy({ it.first }, { it.second }).mapValues { it.value.sum() }
+        val actual = actualLogRepository.findAllByDateBetween(weekStart, weekEnd)
+            .filter { it.kind == ActualKind.GOAL || it.kind == ActualKind.STUDY }
+            .mapNotNull { l -> l.dailyGoal?.goal?.id?.let { it to minutes(l.startAt, l.endAt) } }
+            .groupBy({ it.first }, { it.second }).mapValues { it.value.sum() }
+
+        val rows = goalRepository.findAllByOrderByIdAsc()
+            .map { GoalWeekRow(GoalResponse.from(it), targets[it.id] ?: 0, scheduled[it.id] ?: 0, actual[it.id] ?: 0) }
+            .filter { it.goal.status == GoalStatus.ACTIVE || it.targetMinutes + it.scheduledMinutes + it.actualMinutes > 0 }
+        return WeekPlanResponse(
+            weekStart = weekStart,
+            goals = rows,
+            targetMinutes = rows.sumOf { it.targetMinutes },
+            scheduledMinutes = rows.sumOf { it.scheduledMinutes },
+            actualMinutes = rows.sumOf { it.actualMinutes },
+        )
+    }
+
+    fun getEntity(id: Long): Goal =
+        goalRepository.findByIdOrNull(id) ?: throw NotFoundException("목표를 찾을 수 없어요: $id")
+
+    private fun requireActiveSlot() {
+        if (goalRepository.countByStatus(GoalStatus.ACTIVE) >= MAX_ACTIVE) {
+            throw BusinessRuleException(
+                "진행 중인 목표는 ${MAX_ACTIVE}개까지예요. 하나를 완료하거나 멈춘 뒤 추가해 주세요.",
+                "ACTIVE_GOAL_LIMIT",
+            )
+        }
+    }
+
+    private fun requireMonday(weekStart: LocalDate) {
+        if (weekStart.dayOfWeek != DayOfWeek.MONDAY) {
+            throw BusinessRuleException("주 시작일은 월요일이어야 해요: $weekStart", "WEEK_START_NOT_MONDAY")
+        }
+    }
+
+    private fun minutes(from: java.time.OffsetDateTime, to: java.time.OffsetDateTime) =
+        Duration.between(from, to).toMinutes().toInt().coerceAtLeast(0)
 }

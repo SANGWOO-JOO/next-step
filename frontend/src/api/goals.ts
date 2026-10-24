@@ -1,113 +1,48 @@
 import { api } from './client'
 
-export type GoalStatus = 'ACTIVE' | 'DONE' | 'DROPPED'
+/** 진행·완료·멈춤·그만둠(docs/design.md 11-4) */
+export type GoalStatus = 'ACTIVE' | 'DONE' | 'PAUSED' | 'DROPPED'
 
 export const GOAL_STATUS_LABEL: Record<GoalStatus, string> = {
   ACTIVE: '진행 중',
   DONE: '완료',
-  DROPPED: '중단',
+  PAUSED: '멈춤',
+  DROPPED: '그만둠',
 }
 
-export type Progress = { achieved: number; total: number; percent: number }
+/** 진행 중 목표 최대 개수(docs/design.md 11-6 2-2 ⑦) */
+export const MAX_ACTIVE_GOALS = 3
 
 export type CategoryRef = { id: number; name: string; color: string; active: boolean; icon?: string | null }
-
-export type WeeklyGoal = {
-  id: number
-  monthlyGoalId: number
-  weekStart: string
-  content: string
-  category: CategoryRef | null
-  achieved: boolean
-  /** 다음 주로 이어갔는지 */
-  carriedOver: boolean
-}
-
-export type MonthlyGoal = {
-  id: number
-  goalId: number
-  month: string
-  content: string
-  targetValue: number | null
-  currentValue: number | null
-  unit: string | null
-  achieved: boolean
-  progress: Progress
-  weeklyGoals: WeeklyGoal[]
-}
 
 export type Goal = {
   id: number
   title: string
-  description: string | null
-  startDate: string
-  targetDate: string
-  status: GoalStatus
-  progress: Progress
-  monthlyGoals: MonthlyGoal[]
-}
-
-export type GoalInput = {
-  title: string
-  description: string | null
-  startDate: string
-  targetDate: string
+  category: CategoryRef
+  /** 기한. null이면 정하지 않음 */
+  targetDate: string | null
   status: GoalStatus
 }
 
-export type MonthlyGoalInput = {
-  month: string
-  content: string
-  targetValue: number | null
-  currentValue: number | null
-  unit: string | null
-  achieved: boolean
-}
+export type GoalInput = { title: string; categoryId: number; targetDate: string | null }
 
-export type WeeklyGoalInput = {
+/** 계획 화면의 목표 한 줄(분) */
+export type GoalWeekRow = { goal: Goal; targetMinutes: number; scheduledMinutes: number; actualMinutes: number }
+
+export type WeekPlan = {
   weekStart: string
-  content: string
-  categoryId: number | null
-  achieved: boolean
+  goals: GoalWeekRow[]
+  targetMinutes: number
+  scheduledMinutes: number
+  actualMinutes: number
 }
-
-export const toWeeklyInput = (w: WeeklyGoal): WeeklyGoalInput => ({
-  weekStart: w.weekStart,
-  content: w.content,
-  categoryId: w.category?.id ?? null,
-  achieved: w.achieved,
-})
 
 export const getGoals = () => api.get<Goal[]>('/api/goals')
 export const createGoal = (input: GoalInput) => api.post<Goal>('/api/goals', input)
 export const updateGoal = (id: number, input: GoalInput) => api.put<Goal>(`/api/goals/${id}`, input)
+export const changeGoalStatus = (id: number, status: GoalStatus) => api.patch<Goal>(`/api/goals/${id}/status`, { status })
 export const deleteGoal = (id: number) => api.delete<void>(`/api/goals/${id}`)
 
-export const createMonthlyGoal = (goalId: number, input: MonthlyGoalInput) =>
-  api.post<MonthlyGoal>('/api/monthly-goals', { goalId, ...input })
-export const updateMonthlyGoal = (id: number, input: MonthlyGoalInput) =>
-  api.put<MonthlyGoal>(`/api/monthly-goals/${id}`, input)
-export const deleteMonthlyGoal = (id: number) => api.delete<void>(`/api/monthly-goals/${id}`)
-
-export const getWeeklyGoalsOfWeek = (weekStart: string) =>
-  api.get<WeeklyGoal[]>(`/api/weekly-goals?weekStart=${weekStart}`)
-export const createWeeklyGoal = (monthlyGoalId: number, input: WeeklyGoalInput) =>
-  api.post<WeeklyGoal>('/api/weekly-goals', { monthlyGoalId, ...input })
-export const updateWeeklyGoal = (id: number, input: WeeklyGoalInput) =>
-  api.put<WeeklyGoal>(`/api/weekly-goals/${id}`, input)
-export const deleteWeeklyGoal = (id: number) => api.delete<void>(`/api/weekly-goals/${id}`)
-
-export const getMonthlyGoalsOfMonth = (month: string) => api.get<MonthlyGoal[]>(`/api/monthly-goals?month=${month}`)
-
-export const toMonthlyInput = (m: MonthlyGoal): MonthlyGoalInput => ({
-  month: m.month,
-  content: m.content,
-  targetValue: m.targetValue,
-  currentValue: m.currentValue,
-  unit: m.unit,
-  achieved: m.achieved,
-})
-
-/** 못 끝낸 주간 목표를 다음 주로 이어간다. 다음 주가 다른 달이면 그 달의 월간 목표가 필요하다 */
-export const carryOverWeeklyGoal = (id: number, monthlyGoalId: number | null = null) =>
-  api.post<WeeklyGoal>(`/api/weekly-goals/${id}/carry-over`, { monthlyGoalId })
+export const getWeekPlan = (weekStart: string) => api.get<WeekPlan>(`/api/plan/week?start=${weekStart}`)
+export const setGoalWeekMinutes = (id: number, weekStart: string, minutes: number) =>
+  api.put<GoalWeekRow>(`/api/goals/${id}/weeks/${weekStart}`, { minutes })

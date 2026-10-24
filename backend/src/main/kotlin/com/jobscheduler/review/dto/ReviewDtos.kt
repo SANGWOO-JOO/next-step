@@ -35,8 +35,6 @@ data class WeekStats(
     val distractionSeconds: Long,
     val goalsDone: Int,
     val goalsTotal: Int,
-    val weeklyGoalsAchieved: Int,
-    val weeklyGoalsTotal: Int,
     val journalWritten: Boolean,
 )
 

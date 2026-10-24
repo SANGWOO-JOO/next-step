@@ -29,7 +29,6 @@ type Props = {
   date: string
   /** 그날의 하루 목표 */
   goals: DailyGoal[]
-  /** 그 주의 주간 목표 (하루 목표를 연결할 대상) */
   categories: Category[]
   run: Run
   title?: string
@@ -131,7 +130,6 @@ type ItemProps = {
   onNotice: (message: string | null) => void
   /** undefined면 시간 블록 기능을 숨긴다 */
   blocks?: TimeBlock[]
-  /** 그 주의 주간 목표(연결할 대상) */
   nextBlockStart: number
 }
 
@@ -153,9 +151,9 @@ function DailyGoalItem({
   const toggleDone = () =>
     run(() => updateDailyGoal(goal.id, { ...toDailyGoalUpdateInput(goal), status: done ? 'TODO' : 'DONE' }))
 
-  const move = (date: string, weeklyGoalId: number | null) =>
+  const move = (date: string) =>
     run(async () => {
-      const result = await moveDailyGoal(goal.id, date, weeklyGoalId)
+      const result = await moveDailyGoal(goal.id, date)
       const messages = [
         result.downgradedToExtra
           ? `${dayLabel(date)}은 핵심이 이미 ${MAX_CORE}개라 '${goal.content}'을(를) 추가 목록에 넣었어요.`
@@ -165,8 +163,7 @@ function DailyGoalItem({
       onNotice(messages.join(' '))
     })
 
-  // 다음 주로 넘어가면 주간 목표 연결은 풀린다(1-4f)
-  const moveTomorrow = () => move(tomorrow, null)
+  const moveTomorrow = () => move(tomorrow)
 
   const remove = () => {
     if (confirm(`'${goal.content}' 하루 목표를 삭제할까요?`)) run(() => deleteDailyGoal(goal.id))
@@ -262,7 +259,7 @@ function DailyGoalItem({
       {mode === 'move' && (
         <MoveForm
           initialDate={tomorrow}
-          onSubmit={(date, weeklyGoalId) => move(date, weeklyGoalId).then((ok) => ok && setMode('view'))}
+          onSubmit={(date) => move(date).then((ok) => ok && setMode('view'))}
           onCancel={() => setMode('view')}
         />
       )}
@@ -272,17 +269,17 @@ function DailyGoalItem({
 
 type MoveFormProps = {
   initialDate: string
-  onSubmit: (date: string, weeklyGoalId: number | null) => void
+  onSubmit: (date: string) => void
   onCancel: () => void
 }
 
-/** 날짜만 고른다. 주간 목표 연결은 주간 계획 화면에서(1-4f ㊲) */
+/** 날짜만 고른다. 묶인 목표는 그대로 둔다(2-2) */
 function MoveForm({ initialDate, onSubmit, onCancel }: MoveFormProps) {
   const [date, setDate] = useState(initialDate)
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    onSubmit(date, null)
+    onSubmit(date)
   }
 
   return (
@@ -367,7 +364,7 @@ export function NewDailyGoalForm({ date, categories, onSubmit, placeholder, auto
   }
 
   const add = (category: Category) =>
-    onSubmit({ weeklyGoalId: null, date, content: category.name, firstAction: null, categoryId: category.id, type: null })
+    onSubmit({ goalId: null, date, content: category.name, firstAction: null, categoryId: category.id, type: null })
 
   const act = async (make: () => Promise<Category>) => {
     if (busy) return

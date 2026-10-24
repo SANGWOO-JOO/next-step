@@ -53,6 +53,7 @@ class UserIsolationTest(
     @Autowired private val dailyLogService: DailyLogService,
 ) {
     private val day = LocalDate.of(2031, 3, 3)
+    private val monday = day // 2031-03-03은 월요일
     private fun at(hour: Int) = OffsetDateTime.of(2031, 3, 3, hour, 0, 0, 0, ZoneOffset.ofHours(9))
 
     /** 테스트 데이터의 사용자 2 분류 */
@@ -61,15 +62,17 @@ class UserIsolationTest(
     @Test
     fun `다른 사용자의 데이터는 목록에 안 보이고 id로 고치거나 지울 수 없다`() {
         TestUsers.loginAs(TestUsers.OTHER)
-        val goal = goalService.create(GoalRequest(title = "남의 목표", startDate = day, targetDate = day.plusMonths(3)))
+        val goal = goalService.create(GoalRequest(title = "남의 목표", categoryId = otherCategoryId))
         val daily = dailyGoalService.create(DailyGoalCreateRequest(date = day, content = "남의 할 일", categoryId = otherCategoryId))
         val block = timeBlockService.create(TimeBlockRequest(daily.id, startAt = at(9), endAt = at(10)))
         val log = actualLogService.create(ActualLogRequest(day, at(11), at(12), ActualKind.STUDY, categoryId = otherCategoryId)).single()
         val item = checklistService.create(ChecklistItemRequest(categoryId = otherCategoryId, content = "남의 체크"))
         dailyLogService.save(day, DailyLogRequest(memo = "남의 메모"))
+        goalService.setWeekMinutes(goal.id, monday, 120)
 
         TestUsers.loginAs(TestUsers.ME)
         assertTrue(goalService.list().none { it.id == goal.id })
+        assertTrue(goalService.week(monday).goals.none { it.goal.id == goal.id })
         assertTrue(dailyGoalService.list(day, day).isEmpty())
         assertTrue(timeBlockService.list(day, day).isEmpty())
         assertTrue(actualLogService.list(day, day).isEmpty())
@@ -79,6 +82,11 @@ class UserIsolationTest(
 
         assertThrows<NotFoundException> { goalService.get(goal.id) }
         assertThrows<NotFoundException> { goalService.delete(goal.id) }
+        assertThrows<NotFoundException> { goalService.setWeekMinutes(goal.id, monday, 60) }
+        // 남의 목표에 내 할 일을 묶을 수도 없다
+        assertThrows<NotFoundException> {
+            dailyGoalService.create(DailyGoalCreateRequest(goalId = goal.id, date = day, content = "몰래"))
+        }
         assertThrows<NotFoundException> { dailyGoalService.delete(daily.id) }
         assertThrows<NotFoundException> { timeBlockService.delete(block.id) }
         assertThrows<NotFoundException> { actualLogService.delete(log.id) }

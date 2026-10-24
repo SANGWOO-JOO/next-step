@@ -129,6 +129,6 @@ class CategoryService(
             Triple("사이드 프로젝트", "#ea580c", "🛠️"),
             Triple("기타", "#6b7280", "📌"),
         )
-        private val USAGE_TABLES = listOf("daily_goal", "weekly_goal", "actual_log", "checklist_item", "focus_session")
+        private val USAGE_TABLES = listOf("daily_goal", "goal", "actual_log", "checklist_item", "focus_session")
     }
 }

@@ -5,11 +5,7 @@ import com.jobscheduler.daily.DailyGoalService
 import com.jobscheduler.daily.dto.DailyGoalCreateRequest
 import com.jobscheduler.daily.dto.DailyGoalResponse
 import com.jobscheduler.goal.GoalService
-import com.jobscheduler.goal.MonthlyGoalService
-import com.jobscheduler.goal.WeeklyGoalService
 import com.jobscheduler.goal.dto.GoalRequest
-import com.jobscheduler.goal.dto.MonthlyGoalCreateRequest
-import com.jobscheduler.goal.dto.WeeklyGoalCreateRequest
 import com.jobscheduler.timeblock.dto.TimeBlockRequest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -33,8 +29,6 @@ class TimeBlockServiceTest(
     @Autowired private val timeBlockService: TimeBlockService,
     @Autowired private val dailyGoalService: DailyGoalService,
     @Autowired private val goalService: GoalService,
-    @Autowired private val monthlyGoalService: MonthlyGoalService,
-    @Autowired private val weeklyGoalService: WeeklyGoalService,
 ) {
     private val thursday = LocalDate.of(2026, 10, 22)
     private lateinit var resume: DailyGoalResponse
@@ -46,13 +40,9 @@ class TimeBlockServiceTest(
 
     @BeforeEach
     fun setUp() {
-        val goal = goalService.create(
-            GoalRequest(title = "이직", startDate = LocalDate.of(2026, 10, 20), targetDate = LocalDate.of(2027, 3, 31)),
-        )
-        val monthly = monthlyGoalService.create(MonthlyGoalCreateRequest(goal.id, YearMonth.of(2026, 10), "이력서"))
-        val weekly = weeklyGoalService.create(WeeklyGoalCreateRequest(monthly.id, LocalDate.of(2026, 10, 19), "경력기술서", 1))
-        resume = dailyGoalService.create(DailyGoalCreateRequest(weekly.id, thursday, "성과 정리"))
-        cs = dailyGoalService.create(DailyGoalCreateRequest(weekly.id, thursday, "운영체제"))
+        val goal = goalService.create(GoalRequest(title = "이직", categoryId = 1L))
+        resume = dailyGoalService.create(DailyGoalCreateRequest(goal.id, thursday, "성과 정리"))
+        cs = dailyGoalService.create(DailyGoalCreateRequest(goal.id, thursday, "운영체제"))
     }
 
     private fun block(goal: DailyGoalResponse, start: OffsetDateTime, end: OffsetDateTime) =
@@ -118,7 +108,7 @@ class TimeBlockServiceTest(
         block(resume, at(13), at(14))
         block(cs, at(15), at(16))
 
-        val moved = dailyGoalService.move(resume.id, thursday.plusDays(1), null)
+        val moved = dailyGoalService.move(resume.id, thursday.plusDays(1))
         assertEquals(2, moved.removedTimeBlocks)
 
         dailyGoalService.delete(cs.id)

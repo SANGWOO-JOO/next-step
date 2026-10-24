@@ -10,8 +10,9 @@ import com.jobscheduler.daily.dto.DailyGoalUpdateRequest
 import com.jobscheduler.actual.ActualKind
 import com.jobscheduler.actual.ActualLogRepository
 import com.jobscheduler.focus.FocusSessionRepository
-import com.jobscheduler.goal.WeeklyGoal
-import com.jobscheduler.goal.WeeklyGoalRepository
+import com.jobscheduler.goal.Goal
+import com.jobscheduler.goal.GoalRepository
+import com.jobscheduler.goal.GoalStatus
 import com.jobscheduler.timeblock.TimeBlockRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -23,7 +24,7 @@ import java.time.temporal.ChronoUnit
 @Transactional
 class DailyGoalService(
     private val dailyGoalRepository: DailyGoalRepository,
-    private val weeklyGoalRepository: WeeklyGoalRepository,
+    private val goalRepository: GoalRepository,
     private val categoryService: CategoryService,
     private val timeBlockRepository: TimeBlockRepository,
     private val focusSessionRepository: FocusSessionRepository,
@@ -51,8 +52,10 @@ class DailyGoalService(
             .map(DailyGoalResponse::from)
 
     fun create(req: DailyGoalCreateRequest): DailyGoalResponse {
-        val weeklyGoal = req.weeklyGoalId?.let(::getWeeklyGoal)
-        weeklyGoal?.let { requireDateInWeek(req.date, it) }
+        val category = req.categoryId?.let(categoryService::getAssignable)
+        // 목표를 고르지 않았어도 그 분류의 진행 중 목표가 하나뿐이면 거기에 묶는다(docs/design.md 11-6 2-2 ⑨)
+        val goal = req.goalId?.let(::getGoal)
+            ?: category?.let { c -> goalRepository.findAllByCategoryIdAndStatus(c.id!!, GoalStatus.ACTIVE).singleOrNull() }
 
         val coreCount = dailyGoalRepository.countByDateAndType(req.date, DailyGoalType.CORE)
         val type = req.type ?: if (coreCount < MAX_CORE) DailyGoalType.CORE else DailyGoalType.EXTRA
@@ -60,12 +63,12 @@ class DailyGoalService(
 
         val dailyGoal = dailyGoalRepository.save(
             DailyGoal(
-                weeklyGoal = weeklyGoal,
+                goal = goal,
                 date = req.date,
                 content = req.content.trim(),
                 firstAction = req.firstAction?.trim()?.ifEmpty { null },
-                // 분류를 고르지 않으면 연결한 주간 목표의 분류를 물려받는다
-                category = req.categoryId?.let(categoryService::getAssignable) ?: weeklyGoal?.category,
+                // 분류를 고르지 않으면 묶은 목표의 분류를 물려받는다
+                category = category ?: goal?.category,
                 type = type,
                 sortOrder = nextSortOrder(req.date, type),
             ),
@@ -99,21 +102,20 @@ class DailyGoalService(
         dailyGoalRepository.delete(dailyGoal)
     }
 
-    /** 주간 목표에 연결하거나(같은 주만) 연결을 푼다(1-4f). 분류가 없으면 주간 목표의 분류를 물려받는다 */
-    fun link(id: Long, weeklyGoalId: Long?): DailyGoalResponse {
+    /** 목표에 묶거나 푼다(2-2). 분류가 없으면 목표의 분류를 물려받는다 */
+    fun link(id: Long, goalId: Long?): DailyGoalResponse {
         val dailyGoal = getEntity(id)
-        val weeklyGoal = weeklyGoalId?.let(::getWeeklyGoal)
-        weeklyGoal?.let { requireDateInWeek(dailyGoal.date, it) }
-        dailyGoal.weeklyGoal = weeklyGoal
-        if (dailyGoal.category == null) dailyGoal.category = weeklyGoal?.category
+        val goal = goalId?.let(::getGoal)
+        dailyGoal.goal = goal
+        if (dailyGoal.category == null) dailyGoal.category = goal?.category
         return DailyGoalResponse.from(dailyGoal)
     }
 
     /**
-     * 다른 날로 넘긴다. 같은 주면 주간 목표를 그대로 두고, 다른 주면 받은 그 주의 주간 목표에 연결하거나 연결을 푼다.
+     * 다른 날로 넘긴다. 묶인 목표는 그대로 둔다.
      * 넘길 날에 핵심이 이미 3개면 추가(EXTRA)로 넣는다. 원래 날의 시간 블록은 지운다.
      */
-    fun move(id: Long, date: LocalDate, weeklyGoalId: Long?): DailyGoalMoveResponse {
+    fun move(id: Long, date: LocalDate): DailyGoalMoveResponse {
         val dailyGoal = getEntity(id)
         if (dailyGoal.status == DailyGoalStatus.DONE) {
             throw BusinessRuleException("완료한 목표는 넘길 수 없어요.", "ALREADY_DONE")
@@ -122,15 +124,10 @@ class DailyGoalService(
             throw BusinessRuleException("같은 날짜로는 넘길 수 없어요.", "SAME_DATE")
         }
 
-        val weeklyGoal = weeklyGoalId?.let(::getWeeklyGoal)
-            ?: dailyGoal.weeklyGoal?.takeIf { isInWeek(date, it) }
-        weeklyGoal?.let { requireDateInWeek(date, it) }
-
         val downgraded = dailyGoal.type == DailyGoalType.CORE &&
             dailyGoalRepository.countByDateAndType(date, DailyGoalType.CORE) >= MAX_CORE
         val type = if (downgraded) DailyGoalType.EXTRA else dailyGoal.type
 
-        dailyGoal.weeklyGoal = weeklyGoal
         dailyGoal.date = date
         dailyGoal.type = type
         dailyGoal.sortOrder = nextSortOrder(date, type)
@@ -174,23 +171,11 @@ class DailyGoalService(
     private fun nextSortOrder(date: LocalDate, type: DailyGoalType) =
         (dailyGoalRepository.findAllByDateAndType(date, type).maxOfOrNull { it.sortOrder } ?: 0) + 1
 
-    private fun isInWeek(date: LocalDate, weeklyGoal: WeeklyGoal) =
-        !date.isBefore(weeklyGoal.weekStart) && !date.isAfter(weeklyGoal.weekStart.plusDays(6))
-
-    private fun requireDateInWeek(date: LocalDate, weeklyGoal: WeeklyGoal) {
-        if (!isInWeek(date, weeklyGoal)) {
-            throw BusinessRuleException(
-                "$date 은(는) 주간 목표 '${weeklyGoal.content}'의 주(${weeklyGoal.weekStart}~) 밖이에요.",
-                "DATE_NOT_IN_WEEK",
-            )
-        }
-    }
-
     private fun coreLimit() =
         BusinessRuleException("핵심 목표는 하루 ${MAX_CORE}개까지예요. 추가 목록으로 넣어주세요.", "CORE_LIMIT")
 
-    private fun getWeeklyGoal(id: Long): WeeklyGoal =
-        weeklyGoalRepository.findByIdOrNull(id) ?: throw NotFoundException("주간 목표를 찾을 수 없어요: $id")
+    private fun getGoal(id: Long): Goal =
+        goalRepository.findByIdOrNull(id) ?: throw NotFoundException("목표를 찾을 수 없어요: $id")
 
     private fun getEntity(id: Long): DailyGoal =
         dailyGoalRepository.findByIdOrNull(id) ?: throw NotFoundException("하루 목표를 찾을 수 없어요: $id")

@@ -41,9 +41,9 @@ class StudySliceCollector(
     companion object {
         val ZONE: ZoneId = ZoneId.of(JobSchedulerApplication.APP_ZONE)
 
-        /** 분류 우선순위: 세션 → 하루 목표 → 주간 목표 → 미분류(null) */
+        /** 분류 우선순위: 세션 → 하루 목표 → 목표 → 미분류(null) */
         fun categoryOf(s: FocusSession): Category? =
-            s.category ?: s.dailyGoal?.category ?: s.dailyGoal?.weeklyGoal?.category
+            s.category ?: s.dailyGoal?.category ?: s.dailyGoal?.goal?.category
 
         /** base에서 holes를 뺀 구간들 */
         fun subtract(base: Interval, holes: List<Interval>): List<Interval> {
@@ -89,7 +89,7 @@ class StudySliceCollector(
                 ActualKind.DISTRACTION -> SliceKind.DISTRACTION
                 ActualKind.OTHER -> continue
             }
-            val category = log.category ?: log.dailyGoal?.category ?: log.dailyGoal?.weeklyGoal?.category
+            val category = log.category ?: log.dailyGoal?.category ?: log.dailyGoal?.goal?.category
             splitByHour(Interval(log.startAt, log.endAt)).forEach { (date, hour, seconds) ->
                 slices += StudySlice(date, hour, category.takeIf { kind == SliceKind.FOCUS }, seconds, kind)
             }

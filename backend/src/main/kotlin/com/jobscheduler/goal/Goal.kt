@@ -1,27 +1,35 @@
 package com.jobscheduler.goal
 
+import com.jobscheduler.category.Category
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
 import jakarta.persistence.PreUpdate
 import jakarta.persistence.Table
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import org.hibernate.annotations.TenantId
 
-enum class GoalStatus { ACTIVE, DONE, DROPPED }
+/** 진행·완료·멈춤·그만둠(docs/design.md 11-4) */
+enum class GoalStatus { ACTIVE, DONE, PAUSED, DROPPED }
 
+/** 지금 목표(2-2). 여러 개를 두고, 주마다의 목표 시간은 GoalWeek에 둔다 */
 @Entity
 @Table(name = "goal")
 class Goal(
     var title: String,
-    var description: String?,
-    var startDate: LocalDate,
-    var targetDate: LocalDate,
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "category_id")
+    var category: Category,
+    /** 기한. 정하지 않아도 된다 */
+    var targetDate: LocalDate? = null,
     @Enumerated(EnumType.STRING)
     var status: GoalStatus = GoalStatus.ACTIVE,
 ) {

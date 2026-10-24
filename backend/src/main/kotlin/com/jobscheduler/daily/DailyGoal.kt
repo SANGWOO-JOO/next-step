@@ -1,7 +1,7 @@
 package com.jobscheduler.daily
 
 import com.jobscheduler.category.Category
-import com.jobscheduler.goal.WeeklyGoal
+import com.jobscheduler.goal.Goal
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -27,8 +27,8 @@ enum class DailyGoalStatus { TODO, DONE }
 class DailyGoal(
     /** 없으면 주간 목표에 연결하지 않은 할 일(1-4f) */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "weekly_goal_id")
-    var weeklyGoal: WeeklyGoal?,
+    @JoinColumn(name = "goal_id")
+    var goal: Goal?,
     @Column(name = "goal_date")
     var date: LocalDate,
     var content: String,

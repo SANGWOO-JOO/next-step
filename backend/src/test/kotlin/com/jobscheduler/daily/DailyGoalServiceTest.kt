@@ -6,13 +6,9 @@ import com.jobscheduler.daily.dto.DailyGoalCreateRequest
 import com.jobscheduler.daily.dto.DailyGoalResponse
 import com.jobscheduler.daily.dto.DailyGoalUpdateRequest
 import com.jobscheduler.goal.GoalService
-import com.jobscheduler.goal.MonthlyGoalService
-import com.jobscheduler.goal.WeeklyGoalService
+import com.jobscheduler.goal.GoalStatus
 import com.jobscheduler.goal.dto.GoalRequest
-import com.jobscheduler.goal.dto.MonthlyGoalCreateRequest
-import com.jobscheduler.goal.dto.WeeklyGoalCreateRequest
-import com.jobscheduler.goal.dto.WeeklyGoalResponse
-import com.jobscheduler.goal.dto.WeeklyGoalUpdateRequest
+import com.jobscheduler.goal.dto.GoalResponse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -21,7 +17,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
-import java.time.YearMonth
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -33,33 +28,19 @@ import kotlin.test.assertTrue
 class DailyGoalServiceTest(
     @Autowired private val dailyGoalService: DailyGoalService,
     @Autowired private val goalService: GoalService,
-    @Autowired private val monthlyGoalService: MonthlyGoalService,
-    @Autowired private val weeklyGoalService: WeeklyGoalService,
     @Autowired private val categoryService: CategoryService,
 ) {
-    // 2026-10-19(월) ~ 10-25(일) 주, 다음 주는 10-26(월) ~ 11-01(일)
     private val thursday = LocalDate.of(2026, 10, 22)
     private val friday = LocalDate.of(2026, 10, 23)
     private val nextMonday = LocalDate.of(2026, 10, 26)
 
     private var resumeCategoryId = 0L
-    private lateinit var thisWeek: WeeklyGoalResponse
-    private lateinit var nextWeek: WeeklyGoalResponse
+    private lateinit var resumeGoal: GoalResponse
 
     @BeforeEach
     fun setUp() {
-        val goal = goalService.create(
-            GoalRequest(title = "이직", startDate = LocalDate.of(2026, 10, 20), targetDate = LocalDate.of(2027, 3, 31)),
-        )
-        val october = monthlyGoalService.create(
-            MonthlyGoalCreateRequest(goalId = goal.id, month = YearMonth.of(2026, 10), content = "이력서 완성"),
-        )
-        val resume = categoryService.list(includeInactive = false).first { it.name == "이력서 작성" }
-        resumeCategoryId = resume.id
-        thisWeek = weeklyGoalService.create(
-            WeeklyGoalCreateRequest(october.id, LocalDate.of(2026, 10, 19), "경력기술서 초안", resume.id),
-        )
-        nextWeek = weeklyGoalService.create(WeeklyGoalCreateRequest(october.id, nextMonday, "포트폴리오 정리"))
+        resumeCategoryId = categoryService.list(includeInactive = false).first { it.name == "이력서 작성" }.id
+        resumeGoal = goalService.create(GoalRequest(title = "경력기술서 완성", categoryId = resumeCategoryId))
     }
 
     private fun create(
@@ -67,9 +48,9 @@ class DailyGoalServiceTest(
         date: LocalDate = thursday,
         type: DailyGoalType? = null,
         categoryId: Long? = null,
-        weeklyGoalId: Long? = thisWeek.id,
+        goalId: Long? = resumeGoal.id,
     ) = dailyGoalService.create(
-        DailyGoalCreateRequest(weeklyGoalId, date, content, firstAction = "노션 열기", categoryId = categoryId, type = type),
+        DailyGoalCreateRequest(goalId, date, content, firstAction = "노션 열기", categoryId = categoryId, type = type),
     )
 
     private fun done(goal: DailyGoalResponse) = dailyGoalService.update(
@@ -78,14 +59,14 @@ class DailyGoalServiceTest(
     )
 
     @Test
-    fun `분류를 고르지 않으면 주간 목표의 분류를 물려받는다`() {
+    fun `분류를 고르지 않으면 목표의 분류를 물려받는다`() {
         assertEquals(resumeCategoryId, create().category?.id)
 
         val cs = categoryService.list(includeInactive = false).first { it.name == "CS 공부" }
         assertEquals(cs.id, create(categoryId = cs.id).category?.id)
 
-        // 주간 목표에도 분류가 없으면 미분류
-        assertNull(create(date = nextMonday, weeklyGoalId = nextWeek.id).category)
+        // 목표에 묶지 않으면 미분류
+        assertNull(create(goalId = null).category)
     }
 
     @Test
@@ -98,38 +79,18 @@ class DailyGoalServiceTest(
     }
 
     @Test
-    fun `날짜는 주간 목표의 주 안이어야 한다`() {
-        val e = assertThrows<BusinessRuleException> { create(date = nextMonday) }
-        assertEquals("DATE_NOT_IN_WEEK", e.code)
-    }
-
-    @Test
-    fun `같은 주로 넘기면 주간 목표를 유지하고 넘긴 횟수가 늘어난다`() {
-        val moved = dailyGoalService.move(create().id, friday, null)
-        assertEquals(friday, moved.dailyGoal.date)
-        assertEquals(thisWeek.id, moved.dailyGoal.weeklyGoalId)
+    fun `다른 주로 넘겨도 묶인 목표를 유지하고 넘긴 횟수가 늘어난다`() {
+        val moved = dailyGoalService.move(create().id, nextMonday)
+        assertEquals(nextMonday, moved.dailyGoal.date)
+        assertEquals(resumeGoal.id, moved.dailyGoal.goalId)
         assertEquals(1, moved.dailyGoal.carryCount)
         assertFalse(moved.downgradedToExtra)
     }
 
     @Test
-    fun `다른 주로 넘기면 연결이 풀리고 그 주의 주간 목표를 고르면 연결된다`() {
-        val goal = create()
-        val unlinked = dailyGoalService.move(goal.id, nextMonday, null)
-        assertNull(unlinked.dailyGoal.weeklyGoalId)
-        dailyGoalService.move(goal.id, thursday, thisWeek.id)
-
-        val wrong = assertThrows<BusinessRuleException> { dailyGoalService.move(goal.id, friday, nextWeek.id) }
-        assertEquals("DATE_NOT_IN_WEEK", wrong.code)
-
-        val moved = dailyGoalService.move(goal.id, nextMonday, nextWeek.id)
-        assertEquals(nextWeek.id, moved.dailyGoal.weeklyGoalId)
-    }
-
-    @Test
     fun `핵심이 꽉 찬 날로 넘기면 추가로 들어간다`() {
         repeat(3) { create(content = "금요일 핵심 $it", date = friday) }
-        val moved = dailyGoalService.move(create().id, friday, null)
+        val moved = dailyGoalService.move(create().id, friday)
         assertEquals(DailyGoalType.EXTRA, moved.dailyGoal.type)
         assertTrue(moved.downgradedToExtra)
     }
@@ -137,7 +98,7 @@ class DailyGoalServiceTest(
     @Test
     fun `완료한 목표는 넘길 수 없다`() {
         val goal = done(create())
-        val e = assertThrows<BusinessRuleException> { dailyGoalService.move(goal.id, friday, null) }
+        val e = assertThrows<BusinessRuleException> { dailyGoalService.move(goal.id, friday) }
         assertEquals("ALREADY_DONE", e.code)
     }
 
@@ -173,33 +134,46 @@ class DailyGoalServiceTest(
     }
 
     @Test
-    fun `하루 목표가 연결된 주간 목표는 삭제하거나 주를 바꿀 수 없다`() {
-        create()
-        val delete = assertThrows<BusinessRuleException> { weeklyGoalService.delete(thisWeek.id) }
-        assertEquals("HAS_CHILDREN", delete.code)
-
-        val update = assertThrows<BusinessRuleException> {
-            weeklyGoalService.update(thisWeek.id, WeeklyGoalUpdateRequest(nextMonday, thisWeek.content, null))
-        }
-        assertEquals("HAS_CHILDREN", update.code)
+    fun `목표를 지우면 할 일은 남고 연결만 풀린다`() {
+        val daily = create()
+        goalService.delete(resumeGoal.id)
+        val left = dailyGoalService.list(thursday, thursday).single { it.id == daily.id }
+        assertNull(left.goalId)
+        assertEquals(resumeCategoryId, left.category?.id)
     }
 
     @Test
-    fun `주간 목표 없이 하루 목표를 만들고 나중에 연결하거나 풀 수 있다`() {
-        val goal = create(weeklyGoalId = null)
-        assertNull(goal.weeklyGoalId)
+    fun `멈춘 목표에 묶인 할 일도 그대로 남는다`() {
+        val daily = create()
+        goalService.changeStatus(resumeGoal.id, GoalStatus.PAUSED)
+        assertEquals(resumeGoal.id, dailyGoalService.list(thursday, thursday).single { it.id == daily.id }.goalId)
+    }
+
+    @Test
+    fun `분류만 고르면 그 분류의 진행 중 목표가 하나일 때만 자동으로 묶인다`() {
+        assertEquals(resumeGoal.id, create(goalId = null, categoryId = resumeCategoryId).goalId)
+
+        val second = goalService.create(GoalRequest(title = "자소서", categoryId = resumeCategoryId))
+        assertNull(create(goalId = null, categoryId = resumeCategoryId).goalId)
+
+        goalService.changeStatus(second.id, GoalStatus.DONE)
+        assertEquals(resumeGoal.id, create(goalId = null, categoryId = resumeCategoryId).goalId)
+    }
+
+    @Test
+    fun `목표 없이 할 일을 만들고 나중에 묶거나 풀 수 있다`() {
+        val goal = create(goalId = null)
+        assertNull(goal.goalId)
         assertNull(goal.category)
 
-        val linked = dailyGoalService.link(goal.id, thisWeek.id)
-        assertEquals(thisWeek.id, linked.weeklyGoalId)
-        // 분류가 없던 목표는 주간 목표의 분류를 물려받는다
+        val linked = dailyGoalService.link(goal.id, resumeGoal.id)
+        assertEquals(resumeGoal.id, linked.goalId)
+        assertEquals("경력기술서 완성", linked.goalTitle)
+        // 분류가 없던 할 일은 목표의 분류를 물려받는다
         assertEquals(resumeCategoryId, linked.category?.id)
 
-        val wrong = assertThrows<BusinessRuleException> { dailyGoalService.link(goal.id, nextWeek.id) }
-        assertEquals("DATE_NOT_IN_WEEK", wrong.code)
-
         val unlinked = dailyGoalService.link(goal.id, null)
-        assertNull(unlinked.weeklyGoalId)
+        assertNull(unlinked.goalId)
         assertEquals(resumeCategoryId, unlinked.category?.id)
     }
 }

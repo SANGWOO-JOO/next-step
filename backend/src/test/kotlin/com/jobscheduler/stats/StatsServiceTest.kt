@@ -16,11 +16,7 @@ import com.jobscheduler.focus.dto.FocusStartRequest
 import com.jobscheduler.focus.dto.InterruptionEndRequest
 import com.jobscheduler.focus.dto.InterruptionStartRequest
 import com.jobscheduler.goal.GoalService
-import com.jobscheduler.goal.MonthlyGoalService
-import com.jobscheduler.goal.WeeklyGoalService
 import com.jobscheduler.goal.dto.GoalRequest
-import com.jobscheduler.goal.dto.MonthlyGoalCreateRequest
-import com.jobscheduler.goal.dto.WeeklyGoalCreateRequest
 import com.jobscheduler.record.ManualStudyLogService
 import com.jobscheduler.record.dto.ManualStudyLogRequest
 import com.jobscheduler.stats.dto.StatsUnit
@@ -51,8 +47,6 @@ class StatsServiceTest(
     @Autowired private val dailyGoalService: DailyGoalService,
     @Autowired private val categoryService: CategoryService,
     @Autowired private val goalService: GoalService,
-    @Autowired private val monthlyGoalService: MonthlyGoalService,
-    @Autowired private val weeklyGoalService: WeeklyGoalService,
     @Autowired private val clock: MutableClock,
     @Autowired private val actualLogService: ActualLogService,
 ) {
@@ -72,11 +66,8 @@ class StatsServiceTest(
         val categories = categoryService.list(includeInactive = false)
         resumeId = categories.first { it.name == "이력서 작성" }.id
         csId = categories.first { it.name == "CS 공부" }.id
-        val goal = goalService.create(
-            GoalRequest(title = "이직", startDate = LocalDate.of(2026, 10, 1), targetDate = LocalDate.of(2027, 3, 31)),
-        )
-        val monthly = monthlyGoalService.create(MonthlyGoalCreateRequest(goal.id, YearMonth.of(2026, 10), "이력서"))
-        weeklyId = weeklyGoalService.create(WeeklyGoalCreateRequest(monthly.id, LocalDate.of(2026, 10, 19), "경력기술서", resumeId)).id
+        val goal = goalService.create(GoalRequest(title = "이직", categoryId = resumeId))
+        weeklyId = goal.id
     }
 
     /** start부터 focusMinutes 동안 집중하고 끝낸다 */
@@ -113,7 +104,7 @@ class StatsServiceTest(
     }
 
     @Test
-    fun `분류는 세션, 하루 목표, 주간 목표 순으로 정하고 없으면 미분류다`() {
+    fun `분류는 세션, 할 일, 목표 순으로 정하고 없으면 미분류다`() {
         val daily = dailyGoalService.create(DailyGoalCreateRequest(weeklyId, thursday, "성과 정리"))
         // 하루 목표 분류(주간 목표에서 상속한 이력서 작성)
         session(at(22, 9), 30, FocusStartRequest(dailyGoalId = daily.id))

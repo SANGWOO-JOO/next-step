@@ -8,9 +8,9 @@ export const MAX_CORE = 3
 
 export type DailyGoal = {
   id: number
-  /** null이면 주간 목표에 연결하지 않은 할 일 */
-  weeklyGoalId: number | null
-  weeklyGoalContent: string | null
+  /** null이면 목표에 묶지 않은 할 일 */
+  goalId: number | null
+  goalTitle: string | null
   date: string
   content: string
   firstAction: string | null
@@ -22,12 +22,12 @@ export type DailyGoal = {
 }
 
 export type DailyGoalCreateInput = {
-  /** null이면 연결하지 않음 */
-  weeklyGoalId: number | null
+  /** null이면 고른 분류의 진행 중 목표가 하나일 때만 거기에 묶인다 */
+  goalId: number | null
   date: string
   content: string
   firstAction: string | null
-  /** null이면 주간 목표의 분류를 물려받는다 */
+  /** null이면 목표의 분류를 물려받는다 */
   categoryId: number | null
   /** null이면 핵심 자리가 있을 때 CORE, 아니면 EXTRA */
   type: DailyGoalType | null
@@ -64,12 +64,12 @@ export const updateDailyGoal = (id: number, input: DailyGoalUpdateInput) =>
 
 export const deleteDailyGoal = (id: number) => api.delete<void>(`/api/daily-goals/${id}`)
 
-/** 주간 목표 연결·해제(null) */
-export const linkDailyGoal = (id: number, weeklyGoalId: number | null) =>
-  api.put<DailyGoal>(`/api/daily-goals/${id}/weekly-goal`, { weeklyGoalId })
+/** 목표에 묶기·풀기(null) */
+export const linkDailyGoal = (id: number, goalId: number | null) =>
+  api.put<DailyGoal>(`/api/daily-goals/${id}/goal`, { goalId })
 
-export const moveDailyGoal = (id: number, date: string, weeklyGoalId: number | null = null) =>
-  api.post<DailyGoalMoveResult>(`/api/daily-goals/${id}/move`, { date, weeklyGoalId })
+export const moveDailyGoal = (id: number, date: string) =>
+  api.post<DailyGoalMoveResult>(`/api/daily-goals/${id}/move`, { date })
 
 export const changeDailyGoalType = (id: number, type: DailyGoalType) =>
   api.patch<DailyGoal>(`/api/daily-goals/${id}/type`, { type })

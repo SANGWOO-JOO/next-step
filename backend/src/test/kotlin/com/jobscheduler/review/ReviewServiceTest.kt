@@ -8,12 +8,7 @@ import com.jobscheduler.common.BusinessRuleException
 import com.jobscheduler.focus.MutableClock
 import com.jobscheduler.focus.TestClockConfig
 import com.jobscheduler.goal.GoalService
-import com.jobscheduler.goal.MonthlyGoalService
-import com.jobscheduler.goal.WeeklyGoalService
 import com.jobscheduler.goal.dto.GoalRequest
-import com.jobscheduler.goal.dto.MonthlyGoalCreateRequest
-import com.jobscheduler.goal.dto.WeeklyGoalCreateRequest
-import com.jobscheduler.goal.dto.WeeklyGoalUpdateRequest
 import com.jobscheduler.record.DailyLogService
 import com.jobscheduler.record.ManualStudyLogService
 import com.jobscheduler.record.dto.DailyLogRequest
@@ -47,8 +42,6 @@ class ReviewServiceTest(
     @Autowired private val manualLogService: ManualStudyLogService,
     @Autowired private val categoryService: CategoryService,
     @Autowired private val goalService: GoalService,
-    @Autowired private val monthlyGoalService: MonthlyGoalService,
-    @Autowired private val weeklyGoalService: WeeklyGoalService,
     @Autowired private val clock: MutableClock,
     @Autowired private val actualLogService: ActualLogService,
 ) {
@@ -93,21 +86,12 @@ class ReviewServiceTest(
     }
 
     @Test
-    fun `월간 회고는 주차별 주간 목표 달성과 일지 작성 여부를 함께 준다`() {
-        val goal = goalService.create(
-            GoalRequest(title = "이직", startDate = LocalDate.of(2026, 10, 1), targetDate = LocalDate.of(2027, 3, 31)),
-        )
-        val monthly = monthlyGoalService.create(MonthlyGoalCreateRequest(goal.id, YearMonth.of(2026, 10), "이력서"))
-        val weekly = weeklyGoalService.create(WeeklyGoalCreateRequest(monthly.id, monday, "경력기술서"))
-        weeklyGoalService.create(WeeklyGoalCreateRequest(monthly.id, monday, "자소서"))
-        weeklyGoalService.update(weekly.id, WeeklyGoalUpdateRequest(monday, "경력기술서", null, true))
+    fun `월간 회고는 주차별 일지 작성 여부를 함께 준다`() {
         reviewService.saveJournal(monday, WeeklyJournalRequest(good = "좋음"))
 
         val review = reviewService.saveReview(YearMonth.of(2026, 10), MonthlyReviewRequest(review = "이력서 완성", nextDirection = "면접"))
         assertTrue(review.saved)
         val week = review.weeks.first { it.weekStart == monday }
-        assertEquals(1, week.weeklyGoalsAchieved)
-        assertEquals(2, week.weeklyGoalsTotal)
         assertTrue(week.journalWritten)
         assertFalse(review.weeks.first().journalWritten)
     }

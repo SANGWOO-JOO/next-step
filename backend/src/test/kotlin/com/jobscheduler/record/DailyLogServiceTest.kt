@@ -15,11 +15,7 @@ import com.jobscheduler.focus.dto.FocusStartRequest
 import com.jobscheduler.focus.dto.InterruptionEndRequest
 import com.jobscheduler.focus.dto.InterruptionStartRequest
 import com.jobscheduler.goal.GoalService
-import com.jobscheduler.goal.MonthlyGoalService
-import com.jobscheduler.goal.WeeklyGoalService
 import com.jobscheduler.goal.dto.GoalRequest
-import com.jobscheduler.goal.dto.MonthlyGoalCreateRequest
-import com.jobscheduler.goal.dto.WeeklyGoalCreateRequest
 import com.jobscheduler.record.dto.DailyLogRequest
 import com.jobscheduler.record.dto.ManualStudyLogRequest
 import org.junit.jupiter.api.BeforeEach
@@ -50,8 +46,6 @@ class DailyLogServiceTest(
     @Autowired private val dailyGoalService: DailyGoalService,
     @Autowired private val categoryService: CategoryService,
     @Autowired private val goalService: GoalService,
-    @Autowired private val monthlyGoalService: MonthlyGoalService,
-    @Autowired private val weeklyGoalService: WeeklyGoalService,
     @Autowired private val clock: MutableClock,
 ) {
     private val thursday = LocalDate.of(2026, 10, 22)
@@ -62,11 +56,8 @@ class DailyLogServiceTest(
     fun setUp() {
         clock.instant = Instant.parse("2026-10-22T00:00:00Z")
         categoryId = categoryService.list(includeInactive = false).first().id
-        val goal = goalService.create(
-            GoalRequest(title = "이직", startDate = LocalDate.of(2026, 10, 1), targetDate = LocalDate.of(2027, 3, 31)),
-        )
-        val monthly = monthlyGoalService.create(MonthlyGoalCreateRequest(goal.id, YearMonth.of(2026, 10), "이력서"))
-        weeklyId = weeklyGoalService.create(WeeklyGoalCreateRequest(monthly.id, LocalDate.of(2026, 10, 19), "경력기술서")).id
+        val goal = goalService.create(GoalRequest(title = "이직", categoryId = categoryId))
+        weeklyId = goal.id
     }
 
     @Test
