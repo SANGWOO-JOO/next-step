@@ -64,18 +64,18 @@ class GoalServiceTest(
     }
 
     @Test
-    fun `진행 중 목표는 3개까지이고 보관하면 자리가 생긴다`() {
+    fun `진행 중 목표는 3개까지이고 완료하면 자리가 생긴다`() {
         val first = goal("하나")
         goal("둘")
         goal("셋")
         val e = assertThrows<BusinessRuleException> { goal("넷") }
         assertEquals("ACTIVE_GOAL_LIMIT", e.code)
 
-        goalService.changeStatus(first.id, GoalStatus.ARCHIVED)
+        goalService.changeStatus(first.id, GoalStatus.DONE)
         val fourth = goal("넷")
         // 다시 진행으로 돌릴 때도 개수를 본다
         assertThrows<BusinessRuleException> { goalService.changeStatus(first.id, GoalStatus.ACTIVE) }
-        goalService.changeStatus(fourth.id, GoalStatus.DONE)
+        goalService.delete(fourth.id)
         assertEquals(GoalStatus.ACTIVE, goalService.changeStatus(first.id, GoalStatus.ACTIVE).status)
     }
 
@@ -108,11 +108,11 @@ class GoalServiceTest(
     @Test
     fun `지난 목표는 그 주에 시간이 있을 때만 계획 화면에 나온다`() {
         val done = goal("끝난 목표")
-        val dropped = goal("보관한 목표")
+        val other = goal("시간 없이 끝난 목표")
         val daily = dailyGoalService.create(DailyGoalCreateRequest(done.id, thursday, "끝내기 전에 잡은 일정"))
         timeBlockService.create(TimeBlockRequest(daily.id, startAt = at(9), endAt = at(10)))
         goalService.changeStatus(done.id, GoalStatus.DONE)
-        goalService.changeStatus(dropped.id, GoalStatus.ARCHIVED)
+        goalService.changeStatus(other.id, GoalStatus.DONE)
 
         assertEquals(listOf(done.id), goalService.week(monday).goals.map { it.goal.id })
         assertEquals(emptyList(), goalService.week(monday.plusWeeks(1)).goals)

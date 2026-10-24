@@ -41,8 +41,8 @@ class GoalControllerTest(
         }
         mockMvc.patch("/api/goals/$id/status") {
             contentType = MediaType.APPLICATION_JSON
-            content = """{"status":"ARCHIVED"}"""
-        }.andExpect { jsonPath("$.status") { value("ARCHIVED") } }
+            content = """{"status":"DONE"}"""
+        }.andExpect { jsonPath("$.status") { value("DONE") } }
     }
 
     @Test

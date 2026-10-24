@@ -145,9 +145,9 @@ class DailyGoalServiceTest(
     }
 
     @Test
-    fun `보관한 목표에 묶인 할 일도 그대로 남는다`() {
+    fun `완료한 목표에 묶인 할 일도 그대로 남는다`() {
         val daily = create()
-        goalService.changeStatus(resumeGoal.id, GoalStatus.ARCHIVED)
+        goalService.changeStatus(resumeGoal.id, GoalStatus.DONE)
         assertEquals(resumeGoal.id, dailyGoalService.list(thursday, thursday).single { it.id == daily.id }.goalId)
     }
 
@@ -155,7 +155,7 @@ class DailyGoalServiceTest(
     fun `목표의 분류로 할 일을 만들면 진행 중일 때만 그 목표에 묶인다`() {
         assertEquals(resumeGoal.id, create(goalId = null, categoryId = resumeCategoryId).goalId)
 
-        goalService.changeStatus(resumeGoal.id, GoalStatus.ARCHIVED)
+        goalService.changeStatus(resumeGoal.id, GoalStatus.DONE)
         assertNull(create(goalId = null, categoryId = resumeCategoryId).goalId)
     }
 

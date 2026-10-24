@@ -17,8 +17,8 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 import org.hibernate.annotations.TenantId
 
-/** 진행·완료·보관(docs/design.md 11-6 2-2 추가 결정) */
-enum class GoalStatus { ACTIVE, DONE, ARCHIVED }
+/** 진행·완료. 그만둔 목표는 지운다(docs/design.md 11-6 2-2 추가 결정) */
+enum class GoalStatus { ACTIVE, DONE }
 
 /** 지금 목표(2-2). 여러 개를 두고, 같은 이름·색의 분류를 1:1로 갖는다 */
 @Entity

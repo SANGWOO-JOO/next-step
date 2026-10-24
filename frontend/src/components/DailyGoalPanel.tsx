@@ -533,7 +533,7 @@ export function NewDailyGoalForm({ date, categories, onSubmit, placeholder, auto
               )}
               {o.kind === 'full' && (
                 <span className="muted small">
-                  진행 중 목표가 {MAX_ACTIVE_GOALS}개예요. 목표 화면에서 하나를 완료하거나 보관하면 새 목표를 만들 수 있어요
+                  진행 중 목표가 {MAX_ACTIVE_GOALS}개예요. 목표 화면에서 하나를 완료하거나 지우면 새 목표를 만들 수 있어요
                 </span>
               )}
               {i === current && o.kind !== 'full' && <span className="quick-add-key">Enter</span>}

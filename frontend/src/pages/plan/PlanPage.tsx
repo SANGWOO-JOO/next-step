@@ -155,7 +155,7 @@ export default function PlanPage() {
               className="plan-add"
               onClick={() => setAdding(true)}
               disabled={full}
-              title={full ? `진행 중인 목표는 ${MAX_ACTIVE_GOALS}개까지예요. 하나를 완료하거나 보관한 뒤 추가해 주세요.` : undefined}
+              title={full ? `진행 중인 목표는 ${MAX_ACTIVE_GOALS}개까지예요. 하나를 완료하거나 지운 뒤 추가해 주세요.` : undefined}
             >
               + 목표 추가 {full && <span className="muted small">(진행 중 {MAX_ACTIVE_GOALS}개까지)</span>}
             </button>
@@ -185,7 +185,7 @@ export default function PlanPage() {
                         <button
                           className="ghost small danger"
                           onClick={() =>
-                            confirm(`'${g.title}' 목표를 지울까요? 묶인 할 일과 기록은 남고 연결만 풀려요.`) &&
+                            confirm(`'${g.title}' 목표를 지울까요? 할 일과 시간 기록은 그대로 남아요. 나중에 같은 이름으로 다시 만들면 지난 기록과 이어져요.`) &&
                             run(() => deleteGoal(g.id))
                           }
                         >
@@ -247,13 +247,12 @@ function GoalCard({ row, goals, run, full }: CardProps) {
           items={[
             { label: '고치기', onClick: () => setEditing(true) },
             { label: '완료', onClick: () => status('DONE'), show: activeGoal },
-            { label: '보관', onClick: () => status('ARCHIVED'), show: activeGoal },
             { label: '다시 진행', onClick: () => status('ACTIVE'), show: !activeGoal, disabled: full },
             {
               label: '지우기',
               danger: true,
               onClick: () =>
-                confirm(`'${goal.title}' 목표를 지울까요? 묶인 할 일과 기록은 남고 연결만 풀려요.`) &&
+                confirm(`'${goal.title}' 목표를 지울까요? 할 일과 시간 기록은 그대로 남아요. 나중에 같은 이름으로 다시 만들면 지난 기록과 이어져요.`) &&
                 run(() => deleteGoal(goal.id)),
             },
           ]}
