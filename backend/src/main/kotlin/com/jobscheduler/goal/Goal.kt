@@ -20,7 +20,7 @@ import org.hibernate.annotations.TenantId
 /** 진행·완료·멈춤·그만둠(docs/design.md 11-4) */
 enum class GoalStatus { ACTIVE, DONE, PAUSED, DROPPED }
 
-/** 지금 목표(2-2). 여러 개를 두고, 주마다의 목표 시간은 GoalWeek에 둔다 */
+/** 지금 목표(2-2). 여러 개를 두고, 같은 이름·색의 분류를 1:1로 갖는다 */
 @Entity
 @Table(name = "goal")
 class Goal(

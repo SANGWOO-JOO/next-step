@@ -24,7 +24,6 @@ import java.time.LocalDate
 @Transactional
 class GoalService(
     private val goalRepository: GoalRepository,
-    private val goalWeekRepository: GoalWeekRepository,
     private val categoryService: CategoryService,
     private val dailyGoalRepository: DailyGoalRepository,
     private val timeBlockRepository: TimeBlockRepository,
@@ -79,29 +78,17 @@ class GoalService(
     fun delete(id: Long) {
         val goal = getEntity(id)
         dailyGoalRepository.findAllByGoalId(id).forEach { it.goal = null }
-        goalWeekRepository.deleteAllByGoalId(id)
         goalRepository.delete(goal)
     }
 
-    /** 이번 주 목표 시간을 정한다. 0분도 그대로 저장한다 */
-    fun setWeekMinutes(id: Long, weekStart: LocalDate, minutes: Int): GoalWeekRow {
-        requireMonday(weekStart)
-        val goal = getEntity(id)
-        val week = goalWeekRepository.findByGoalIdAndWeekStart(id, weekStart)
-            ?: goalWeekRepository.save(GoalWeek(goal, weekStart, minutes))
-        week.minutes = minutes
-        return week(weekStart).goals.first { it.goal.id == id }
-    }
-
     /**
-     * 계획 화면(docs/design.md 11-4): 목표마다 이번 주 목표 시간, 일정에 잡은 시간(묶인 할 일의 시간 블록),
+     * 계획 화면(docs/design.md 11-4): 목표마다 일정에 잡은 시간(묶인 할 일의 시간 블록),
      * 실제로 한 시간(묶인 할 일의 실제 기록). 진행 중 목표와, 지난 목표 중 이번 주에 시간이 있는 것을 보여 준다.
      */
     @Transactional(readOnly = true)
     fun week(weekStart: LocalDate): WeekPlanResponse {
         requireMonday(weekStart)
         val weekEnd = weekStart.plusDays(6)
-        val targets = goalWeekRepository.findAllByWeekStart(weekStart).associate { it.goal.id!! to it.minutes }
         val scheduled = timeBlockRepository.findAllByDateBetween(weekStart, weekEnd)
             .mapNotNull { b -> b.dailyGoal?.goal?.id?.let { it to minutes(b.startAt, b.endAt) } }
             .groupBy({ it.first }, { it.second }).mapValues { it.value.sum() }
@@ -111,12 +98,11 @@ class GoalService(
             .groupBy({ it.first }, { it.second }).mapValues { it.value.sum() }
 
         val rows = goalRepository.findAllByOrderByIdAsc()
-            .map { GoalWeekRow(GoalResponse.from(it), targets[it.id] ?: 0, scheduled[it.id] ?: 0, actual[it.id] ?: 0) }
-            .filter { it.goal.status == GoalStatus.ACTIVE || it.targetMinutes + it.scheduledMinutes + it.actualMinutes > 0 }
+            .map { GoalWeekRow(GoalResponse.from(it), scheduled[it.id] ?: 0, actual[it.id] ?: 0) }
+            .filter { it.goal.status == GoalStatus.ACTIVE || it.scheduledMinutes + it.actualMinutes > 0 }
         return WeekPlanResponse(
             weekStart = weekStart,
             goals = rows,
-            targetMinutes = rows.sumOf { it.targetMinutes },
             scheduledMinutes = rows.sumOf { it.scheduledMinutes },
             actualMinutes = rows.sumOf { it.actualMinutes },
         )

@@ -3,8 +3,6 @@ package com.jobscheduler.goal.dto
 import com.jobscheduler.category.Category
 import com.jobscheduler.goal.Goal
 import com.jobscheduler.goal.GoalStatus
-import jakarta.validation.constraints.Max
-import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
@@ -24,12 +22,6 @@ data class GoalRequest(
 )
 
 data class GoalStatusRequest(val status: GoalStatus)
-
-data class GoalWeekRequest(
-    @field:Min(value = 0, message = "목표 시간은 0분 이상이어야 해요.")
-    @field:Max(value = 7 * 24 * 60, message = "목표 시간은 한 주를 넘을 수 없어요.")
-    val minutes: Int,
-)
 
 // ---- 응답 ----
 
@@ -51,10 +43,9 @@ data class GoalResponse(
     }
 }
 
-/** 계획 화면의 목표 한 줄: 이번 주 목표 시간, 일정에 잡은 시간, 실제로 한 시간(분) */
+/** 계획 화면의 목표 한 줄: 일정에 잡은 시간, 실제로 한 시간(분) */
 data class GoalWeekRow(
     val goal: GoalResponse,
-    val targetMinutes: Int,
     val scheduledMinutes: Int,
     val actualMinutes: Int,
 )
@@ -62,7 +53,6 @@ data class GoalWeekRow(
 data class WeekPlanResponse(
     val weekStart: LocalDate,
     val goals: List<GoalWeekRow>,
-    val targetMinutes: Int,
     val scheduledMinutes: Int,
     val actualMinutes: Int,
 )

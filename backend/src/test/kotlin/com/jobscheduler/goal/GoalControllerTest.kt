@@ -11,7 +11,6 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.patch
 import org.springframework.test.web.servlet.post
-import org.springframework.test.web.servlet.put
 import org.springframework.transaction.annotation.Transactional
 
 @SpringBootTest
@@ -31,21 +30,14 @@ class GoalControllerTest(
     }
 
     @Test
-    fun `목표를 만들고 주 목표 시간을 정하면 계획 화면에 나온다`() {
+    fun `목표를 만들면 계획 화면에 나오고 상태를 바꿀 수 있다`() {
         val id = createGoal("""{"title":"이력서 완성","color":"#2563eb","targetDate":"2026-12-31"}""")
 
-        mockMvc.put("/api/goals/$id/weeks/2026-10-19") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """{"minutes":300}"""
-        }.andExpect {
-            status { isOk() }
-            jsonPath("$.targetMinutes") { value(300) }
-        }
         mockMvc.get("/api/plan/week?start=2026-10-19").andExpect {
             status { isOk() }
             jsonPath("$.goals[0].goal.title") { value("이력서 완성") }
             jsonPath("$.goals[0].goal.category.color") { value("#2563eb") }
-            jsonPath("$.targetMinutes") { value(300) }
+            jsonPath("$.scheduledMinutes") { value(0) }
         }
         mockMvc.patch("/api/goals/$id/status") {
             contentType = MediaType.APPLICATION_JSON
@@ -62,11 +54,7 @@ class GoalControllerTest(
             status { isBadRequest() }
             jsonPath("$.fieldErrors[0].field") { value("title") }
         }
-        val id = createGoal("""{"title":"이력서","color":"#2563eb"}""")
-        mockMvc.put("/api/goals/$id/weeks/2026-10-21") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """{"minutes":60}"""
-        }.andExpect {
+        mockMvc.get("/api/plan/week?start=2026-10-21").andExpect {
             status { isBadRequest() }
             jsonPath("$.code") { value("WEEK_START_NOT_MONDAY") }
         }

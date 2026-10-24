@@ -28,12 +28,11 @@ export type Goal = {
 export type GoalInput = { title: string; color: string; targetDate: string | null }
 
 /** 계획 화면의 목표 한 줄(분) */
-export type GoalWeekRow = { goal: Goal; targetMinutes: number; scheduledMinutes: number; actualMinutes: number }
+export type GoalWeekRow = { goal: Goal; scheduledMinutes: number; actualMinutes: number }
 
 export type WeekPlan = {
   weekStart: string
   goals: GoalWeekRow[]
-  targetMinutes: number
   scheduledMinutes: number
   actualMinutes: number
 }
@@ -45,5 +44,3 @@ export const changeGoalStatus = (id: number, status: GoalStatus) => api.patch<Go
 export const deleteGoal = (id: number) => api.delete<void>(`/api/goals/${id}`)
 
 export const getWeekPlan = (weekStart: string) => api.get<WeekPlan>(`/api/plan/week?start=${weekStart}`)
-export const setGoalWeekMinutes = (id: number, weekStart: string, minutes: number) =>
-  api.put<GoalWeekRow>(`/api/goals/${id}/weeks/${weekStart}`, { minutes })

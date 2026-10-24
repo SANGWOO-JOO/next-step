@@ -3,8 +3,6 @@ package com.jobscheduler.goal
 import com.jobscheduler.goal.dto.GoalRequest
 import com.jobscheduler.goal.dto.GoalResponse
 import com.jobscheduler.goal.dto.GoalStatusRequest
-import com.jobscheduler.goal.dto.GoalWeekRequest
-import com.jobscheduler.goal.dto.GoalWeekRow
 import com.jobscheduler.goal.dto.WeekPlanResponse
 import jakarta.validation.Valid
 import org.springframework.format.annotation.DateTimeFormat
@@ -44,13 +42,6 @@ class GoalController(private val goalService: GoalService) {
     @DeleteMapping("/api/goals/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun delete(@PathVariable id: Long) = goalService.delete(id)
-
-    @PutMapping("/api/goals/{id}/weeks/{weekStart}")
-    fun setWeekMinutes(
-        @PathVariable id: Long,
-        @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) weekStart: LocalDate,
-        @Valid @RequestBody req: GoalWeekRequest,
-    ): GoalWeekRow = goalService.setWeekMinutes(id, weekStart, req.minutes)
 
     /** 계획 화면: 이번 주에 무엇을 얼마나(docs/design.md 11-4) */
     @GetMapping("/api/plan/week")

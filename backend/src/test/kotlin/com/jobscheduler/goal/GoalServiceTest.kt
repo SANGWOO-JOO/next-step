@@ -80,17 +80,8 @@ class GoalServiceTest(
     }
 
     @Test
-    fun `주 목표 시간은 주마다 따로 저장하고 다시 정하면 덮어쓴다`() {
-        val resume = goal("이력서")
-        goalService.setWeekMinutes(resume.id, monday, 300)
-        goalService.setWeekMinutes(resume.id, monday, 240)
-        goalService.setWeekMinutes(resume.id, monday.plusWeeks(1), 60)
-
-        assertEquals(240, goalService.week(monday).goals.single().targetMinutes)
-        assertEquals(60, goalService.week(monday.plusWeeks(1)).goals.single().targetMinutes)
-        assertEquals(0, goalService.week(monday.minusWeeks(1)).goals.single().targetMinutes)
-
-        val e = assertThrows<BusinessRuleException> { goalService.setWeekMinutes(resume.id, thursday, 60) }
+    fun `계획 화면의 주 시작일은 월요일이어야 한다`() {
+        val e = assertThrows<BusinessRuleException> { goalService.week(thursday) }
         assertEquals("WEEK_START_NOT_MONDAY", e.code)
     }
 
@@ -98,7 +89,6 @@ class GoalServiceTest(
     fun `계획 화면은 목표마다 일정에 잡은 시간과 실제로 한 시간을 묶인 할 일로 센다`() {
         val resume = goal("이력서")
         val cs = goal("CS 공부")
-        goalService.setWeekMinutes(resume.id, monday, 180)
         val daily = dailyGoalService.create(DailyGoalCreateRequest(resume.id, thursday, "경력기술서"))
         val loose = dailyGoalService.create(DailyGoalCreateRequest(null, thursday, "목표 없는 할 일"))
         timeBlockService.create(TimeBlockRequest(daily.id, startAt = at(9), endAt = at(11)))
@@ -108,7 +98,6 @@ class GoalServiceTest(
 
         val week = goalService.week(monday)
         val row = week.goals.first { it.goal.id == resume.id }
-        assertEquals(180, row.targetMinutes)
         assertEquals(120, row.scheduledMinutes)
         assertEquals(90, row.actualMinutes)
         assertEquals(0, week.goals.first { it.goal.id == cs.id }.scheduledMinutes)
@@ -120,7 +109,8 @@ class GoalServiceTest(
     fun `지난 목표는 그 주에 시간이 있을 때만 계획 화면에 나온다`() {
         val done = goal("끝난 목표")
         val dropped = goal("그만둔 목표")
-        goalService.setWeekMinutes(done.id, monday, 60)
+        val daily = dailyGoalService.create(DailyGoalCreateRequest(done.id, thursday, "끝내기 전에 잡은 일정"))
+        timeBlockService.create(TimeBlockRequest(daily.id, startAt = at(9), endAt = at(10)))
         goalService.changeStatus(done.id, GoalStatus.DONE)
         goalService.changeStatus(dropped.id, GoalStatus.DROPPED)
 
