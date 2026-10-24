@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { errorMessage } from '../api/client'
 import { completeOnboarding, skipOnboarding, type Me, type Purpose } from '../api/me'
-import coffeeArt from '../assets/illust/deco-coffee.svg'
-import pencilArt from '../assets/illust/deco-pencil.svg'
 import starArt from '../assets/illust/deco-star.svg'
 import studentArt from '../assets/illust/mascot-student.svg'
 import workerArt from '../assets/illust/mascot-worker.svg'
@@ -26,10 +24,10 @@ const PURPOSES: { id: Purpose; title: string; desc: string; goals: string[] }[] 
   },
 ]
 
-/** 목적 카드의 스텝이와 소품 */
-const ART: Record<Purpose, { mascot: string; prop: string }> = {
-  JOB_SEEKER: { mascot: studentArt, prop: pencilArt },
-  CAREER_CHANGER: { mascot: workerArt, prop: coffeeArt },
+/** 목적 카드의 스텝이(손에 든 이력서·노트북이 상황을 말해 준다) */
+const ART: Record<Purpose, { mascot: string }> = {
+  JOB_SEEKER: { mascot: studentArt },
+  CAREER_CHANGER: { mascot: workerArt },
 }
 
 const DEADLINES: { id: string; label: string; months: number | null }[] = [
@@ -198,7 +196,6 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
                   <span className="muted small">{p.desc}</span>
                   {/* 스텝이가 오른쪽 아래에서 빼꼼(2-3 A안). 장식이라 읽지 않는다 */}
                   <img className="welcome-mascot" src={ART[p.id].mascot} alt="" aria-hidden="true" draggable={false} />
-                  <img className="welcome-prop" src={ART[p.id].prop} alt="" aria-hidden="true" draggable={false} />
                   {p.id === purpose && <img className="welcome-star" src={starArt} alt="" aria-hidden="true" draggable={false} />}
                 </button>
               ))}
