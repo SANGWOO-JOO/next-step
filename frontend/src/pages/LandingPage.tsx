@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { GOOGLE_LOGIN_URL } from '../api/me'
 import { CONTACT_EMAIL } from '../legal'
+import { todaySeoul } from '../utils/date'
 import catCoding from '../assets/illust/cat-coding.svg'
 import catMajor from '../assets/illust/cat-major.svg'
 import catResume from '../assets/illust/cat-resume.svg'
@@ -137,7 +138,8 @@ export default function LandingPage() {
             <span className="ld-notch" />
             <span className="ld-phone-top">
               <span>
-                <span className="ld-today">오늘</span>10월 24일
+                <span className="ld-today">오늘</span>
+                {todayLabel()}
               </span>
               <span className="ld-muted">3시간 30분</span>
             </span>
@@ -214,6 +216,12 @@ export default function LandingPage() {
       </footer>
     </div>
   )
+}
+
+/** 휴대폰 목업의 날짜: 오늘(서울)을 'M월 D일'로 */
+function todayLabel() {
+  const today = todaySeoul()
+  return `${Number(today.slice(5, 7))}월 ${Number(today.slice(8))}일`
 }
 
 function BurstImg({ src, size, x, y, r, delay }: Burst) {
