@@ -61,14 +61,10 @@ class OnboardingService(
         return MeResponse.from(user)
     }
 
-    /**
-     * 칠할 수 있는 날(2-3 ③): 월~목이면 오늘부터 이번 주 일요일까지, 금·토·일이면 다음 주 월~일.
-     * 화면(WelcomePage)도 같은 규칙으로 표를 그린다
-     */
+    /** 칠할 수 있는 날(2-3 ③): 오늘부터 이번 주 일요일까지. 화면(WelcomePage)도 같은 규칙으로 표를 그린다 */
     fun paintableDays(): Pair<LocalDate, LocalDate> {
         val today = LocalDate.now(clock.withZone(StudySliceCollector.ZONE))
-        val monday = today.with(DayOfWeek.MONDAY)
-        return if (today.dayOfWeek >= DayOfWeek.FRIDAY) monday.plusWeeks(1) to monday.plusDays(13) else today to monday.plusDays(6)
+        return today to today.with(DayOfWeek.SUNDAY)
     }
 
     private fun currentUser(): AppUser =

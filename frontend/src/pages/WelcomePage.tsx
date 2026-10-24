@@ -55,17 +55,16 @@ function plusMonths(date: string, months: number) {
 
 /**
  * 시작 설정(docs/design.md 11-3, 11-6 2-3): 목적 → 첫 목표 → 한 주 공부 시간 칠하기.
- * 마지막에 한 번에 저장한다. 칠하는 주는 달력 주: 월~목이면 이번 주(오늘 이후), 금·토·일이면 다음 주 7일(2-3 ③).
+ * 마지막에 한 번에 저장한다. 칠하는 주는 이번 주, 오늘 이후 요일만(2-3 ③).
  */
 export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) => void }) {
   const navigate = useNavigate()
   const today = todaySeoul()
-  // 오늘 요일 번호(월=0). 금(4)부터는 다음 주를 칠한다
-  const todayIndex = Math.round((Date.parse(today) - Date.parse(mondayOf(today))) / 86_400_000)
-  const nextWeek = todayIndex >= 4
-  const monday = nextWeek ? shiftDate(mondayOf(today), 7) : mondayOf(today)
-  // 이보다 앞 요일은 칠할 수 없다(이번 주의 지난 요일)
-  const firstDay = nextWeek ? 0 : todayIndex
+  const monday = mondayOf(today)
+  // 오늘 요일 번호(월=0). 이보다 앞 요일은 칠할 수 없다
+  const firstDay = Math.round((Date.parse(today) - Date.parse(monday)) / 86_400_000)
+  // 금·토·일에 시작하면 남은 날이 적다고 알려 준다
+  const fewDaysLeft = firstDay >= 4
 
   const [step, setStep] = useState(1)
   const [purpose, setPurpose] = useState<Purpose>('JOB_SEEKER')
@@ -235,11 +234,12 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
 
         {step === 3 && (
           <section>
-            <h1 className="welcome-title">{nextWeek ? '다음 주' : '이번 주'}에 공부할 시간을 칠해요</h1>
+            <h1 className="welcome-title">이번 주에 공부할 시간을 칠해요</h1>
             <p className="welcome-lead">
               {Number(monday.slice(5, 7))}월 {Number(monday.slice(8))}일부터 {Number(shiftDate(monday, 6).slice(5, 7))}월{' '}
               {Number(shiftDate(monday, 6).slice(8))}일까지. 칠한 칸은 &lsquo;{title}&rsquo; 일정이 돼요.
             </p>
+            {fewDaysLeft && <p className="welcome-note">이번 주는 {7 - firstDay}일 남았어요. 다음 주 시간은 일정에서 잡으면 돼요.</p>}
             {/* 합계는 글자로, 요일별 양은 표 아래 같은 열에(2-3, 사용자 확인 B안) */}
             <div className="welcome-grid-head">
               {hours === 0 ? (

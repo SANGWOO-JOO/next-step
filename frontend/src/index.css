@@ -1532,3 +1532,4 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .welcome-dayhours { font-size: 0.7rem; font-weight: 500; background: linear-gradient(90deg, #a78bfa, #f472b6); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .welcome-dayhours.zero { background: none; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .welcome-total strong { animation: none; } .welcome-daybar span { transition: none; } }
+.welcome-note { margin: -0.6rem 0 1rem; font-size: 0.85rem; color: #c4b5fd; }
