@@ -56,7 +56,8 @@ export default function TodayPage() {
     }
   }, [searchParams, setSearchParams])
   /** 고른 날: 왼쪽 목록과 [일] 보기가 보여주는 날(이번 주 안). [주] 보기의 날짜 머리로 바꾼다 */
-  const [selected, setSelected] = useState(today)
+  // ?date=로 들어오면 그 날(주)을 연다(시작 설정을 마친 직후 등)
+  const [selected, setSelected] = useState(() => searchParams.get('date') ?? today)
   /** 24시간 한눈에(1-4f ㉕). 켠 상태를 기억한다 */
   const [fitDay, setFitDay] = useState(() => {
     try {

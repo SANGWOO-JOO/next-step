@@ -93,6 +93,18 @@ class OnboardingServiceTest(
     }
 
     @Test
+    fun `금토일에 시작하면 다음 주 7일을 칠한다`() {
+        clock.instant = Instant.parse("2026-10-24T00:00:00Z") // 토요일
+        val nextMonday = monday.plusWeeks(1)
+        assertEquals(nextMonday to nextMonday.plusDays(6), onboardingService.paintableDays())
+
+        val thisWeek = assertThrows<BusinessRuleException> { onboardingService.complete(request(block(LocalDate.of(2026, 10, 25), 9, 10))) }
+        assertEquals("BLOCK_OUT_OF_WEEK", thisWeek.code)
+        onboardingService.complete(request(block(nextMonday, 20, 21)))
+        assertEquals(nextMonday, dailyGoalService.list(nextMonday, nextMonday.plusDays(6)).single().date)
+    }
+
+    @Test
     fun `건너뛰면 아무것도 만들지 않고 시작 설정만 끝낸다`() {
         val me = onboardingService.skip()
         assertTrue(me.onboarded)

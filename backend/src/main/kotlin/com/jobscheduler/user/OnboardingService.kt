@@ -34,12 +34,10 @@ class OnboardingService(
         val user = currentUser()
         if (user.onboarded) throw BusinessRuleException("이미 시작 설정을 마쳤어요.", "ALREADY_ONBOARDED")
 
-        val today = LocalDate.now(clock.withZone(StudySliceCollector.ZONE))
-        val sunday = today.with(DayOfWeek.MONDAY).plusDays(6)
+        val (from, to) = paintableDays()
         val byDate = req.blocks.groupBy { it.startAt.atZoneSameInstant(StudySliceCollector.ZONE).toLocalDate() }
-        // 오늘 이후의 이번 주 칸에만 만든다(2-3 ③)
-        byDate.keys.firstOrNull { it.isBefore(today) || it.isAfter(sunday) }?.let {
-            throw BusinessRuleException("이번 주 오늘 이후 칸만 칠할 수 있어요: $it", "BLOCK_OUT_OF_WEEK")
+        byDate.keys.firstOrNull { it.isBefore(from) || it.isAfter(to) }?.let {
+            throw BusinessRuleException("칠할 수 있는 주($from ~ $to) 밖의 칸이에요: $it", "BLOCK_OUT_OF_WEEK")
         }
 
         val goal = goalService.create(req.goal)
@@ -61,6 +59,16 @@ class OnboardingService(
         val user = currentUser()
         user.onboarded = true
         return MeResponse.from(user)
+    }
+
+    /**
+     * 칠할 수 있는 날(2-3 ③): 월~목이면 오늘부터 이번 주 일요일까지, 금·토·일이면 다음 주 월~일.
+     * 화면(WelcomePage)도 같은 규칙으로 표를 그린다
+     */
+    fun paintableDays(): Pair<LocalDate, LocalDate> {
+        val today = LocalDate.now(clock.withZone(StudySliceCollector.ZONE))
+        val monday = today.with(DayOfWeek.MONDAY)
+        return if (today.dayOfWeek >= DayOfWeek.FRIDAY) monday.plusWeeks(1) to monday.plusDays(13) else today to monday.plusDays(6)
     }
 
     private fun currentUser(): AppUser =

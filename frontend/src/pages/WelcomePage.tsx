@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { errorMessage } from '../api/client'
 import { completeOnboarding, skipOnboarding, type Me, type Purpose } from '../api/me'
 import { availableColors } from '../utils/categoryColors'
@@ -53,21 +54,25 @@ function plusMonths(date: string, months: number) {
 }
 
 /**
- * 시작 설정(docs/design.md 11-3, 11-6 2-3): 목적 → 첫 목표 → 이번 주 공부 시간 칠하기.
- * 마지막에 한 번에 저장한다. 칠한 칸은 오늘 이후의 이번 주 블록이 된다(지난 요일은 칠할 수 없음).
+ * 시작 설정(docs/design.md 11-3, 11-6 2-3): 목적 → 첫 목표 → 한 주 공부 시간 칠하기.
+ * 마지막에 한 번에 저장한다. 칠하는 주는 달력 주: 월~목이면 이번 주(오늘 이후), 금·토·일이면 다음 주 7일(2-3 ③).
  */
 export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) => void }) {
+  const navigate = useNavigate()
   const today = todaySeoul()
-  const monday = mondayOf(today)
-  // 오늘 요일 번호(월=0). 이보다 앞 요일은 칠할 수 없다
-  const todayIndex = Math.round((Date.parse(today) - Date.parse(monday)) / 86_400_000)
+  // 오늘 요일 번호(월=0). 금(4)부터는 다음 주를 칠한다
+  const todayIndex = Math.round((Date.parse(today) - Date.parse(mondayOf(today))) / 86_400_000)
+  const nextWeek = todayIndex >= 4
+  const monday = nextWeek ? shiftDate(mondayOf(today), 7) : mondayOf(today)
+  // 이보다 앞 요일은 칠할 수 없다(이번 주의 지난 요일)
+  const firstDay = nextWeek ? 0 : todayIndex
 
   const [step, setStep] = useState(1)
   const [purpose, setPurpose] = useState<Purpose>('JOB_SEEKER')
   const [goalName, setGoalName] = useState(PURPOSES[0].goals[0])
   const [own, setOwn] = useState('')
   const [deadline, setDeadline] = useState('3m')
-  const [cells, setCells] = useState<Set<string>>(() => presetCells('JOB_SEEKER', todayIndex))
+  const [cells, setCells] = useState<Set<string>>(() => presetCells('JOB_SEEKER', firstDay))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const painting = useRef<boolean | null>(null)
@@ -80,13 +85,14 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
 
   const P = PURPOSES.find((p) => p.id === purpose)!
   const title = own.trim() || goalName
-  const hours = cells.size
+  // 칠할 수 있는 칸만 센다
+  const hours = [...cells].filter((k) => Number(k.split('-')[0]) >= firstDay).length
 
   const pickPurpose = (id: Purpose) => {
     setPurpose(id)
     setGoalName(PURPOSES.find((p) => p.id === id)!.goals[0])
     setOwn('')
-    setCells(presetCells(id, todayIndex))
+    setCells(presetCells(id, firstDay))
   }
 
   const paint = (k: string, on: boolean) =>
@@ -100,6 +106,7 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
   /** 요일마다 이어진 칸을 합쳐 블록으로 */
   const blocks = () =>
     DAYS.flatMap((_, d) => {
+      if (d < firstDay) return []
       const date = shiftDate(monday, d)
       const on = HOURS.filter((h) => cells.has(key(d, h)))
       const runs: [number, number][] = []
@@ -121,6 +128,8 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
         goal: { title, color: availableColors([])[0], targetDate: months === null ? null : plusMonths(today, months) },
         blocks: withBlocks ? blocks() : [],
       })
+      // 칠한 주를 일정 화면에서 바로 보이게
+      navigate(`/?date=${monday}`, { replace: true })
       onDone(me)
     } catch (e) {
       setError(errorMessage(e))
@@ -218,9 +227,10 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
 
         {step === 3 && (
           <section>
-            <h1 className="welcome-title">이번 주에 언제 시간이 나요?</h1>
+            <h1 className="welcome-title">{nextWeek ? '다음 주' : '이번 주'}에 언제 시간이 나요?</h1>
             <p className="welcome-lead">
-              칠한 칸이 이번 주 &lsquo;{title}&rsquo; 일정이 돼요. 시작한 뒤에 끌어서 옮길 수 있어요.
+              {Number(monday.slice(5, 7))}월 {Number(monday.slice(8))}일 – {Number(shiftDate(monday, 6).slice(5, 7))}월{' '}
+              {Number(shiftDate(monday, 6).slice(8))}일. 칠한 칸이 &lsquo;{title}&rsquo; 일정이 돼요. 시작한 뒤에 끌어서 옮길 수 있어요.
             </p>
             <div className="welcome-grid-head">
               <span className="muted small">칸을 누르거나 끌어서 칠하고 지워요 · 일주일에 {hours}시간</span>
@@ -231,8 +241,8 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
             <div className="welcome-grid" role="grid" aria-label="이번 주 공부 시간" onPointerLeave={() => (painting.current = null)}>
               <span />
               {DAYS.map((d, i) => (
-                <span key={d} className={i < todayIndex ? 'welcome-day past' : 'welcome-day'}>
-                  {d}
+                <span key={d} className={i < firstDay ? 'welcome-day past' : 'welcome-day'}>
+                  {d} <span className="welcome-date">{Number(shiftDate(monday, i).slice(8))}</span>
                 </span>
               ))}
               {HOURS.map((h) => (
@@ -240,7 +250,7 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
                   {DAYS.map((d, i) => {
                     const k = key(i, h)
                     const on = cells.has(k)
-                    const past = i < todayIndex
+                    const past = i < firstDay
                     return (
                       <button
                         key={k}
@@ -309,11 +319,11 @@ function Row({ hour, children }: { hour: number; children: React.ReactNode }) {
   )
 }
 
-/** 목적별 기본 칸. 지난 요일은 뺀다 */
-function presetCells(purpose: Purpose, todayIndex: number) {
+/** 목적별 기본 칸. 칠할 수 없는 요일은 뺀다 */
+function presetCells(purpose: Purpose, firstDay: number) {
   const set = new Set<string>()
   PRESETS[purpose].forEach(([days, hours]) =>
-    days.filter((d) => d >= todayIndex).forEach((d) => hours.forEach((h) => set.add(key(d, h)))),
+    days.filter((d) => d >= firstDay).forEach((d) => hours.forEach((h) => set.add(key(d, h)))),
   )
   return set
 }
