@@ -498,19 +498,19 @@ export default function ScheduleView({
                     >
                       <span
                         className="schedule-block-title"
-                        title={`${b.dailyGoalId !== null && b.title ? `${b.title} · ` : ''}${b.label} · ${formatMinutes(start)}~${formatMinutes(end)}`}
+                        title={`${b.dailyGoalId !== null && b.title ? `${b.title}\n${b.label}` : b.label}\n${formatMinutes(start)}~${formatMinutes(end)}`}
                       >
                         {b.category?.icon && (
                           <span className="schedule-block-icon" aria-hidden="true">
                             {b.category.icon}
                           </span>
                         )}
-                        {/* 할 일 블록에 주제가 있으면 주제를 제목으로, 할 일 이름은 아래 작은 줄로(1-4f ㊽) */}
+                        {/* 세부 내용이 있으면 그걸 제목으로, 목표(할 일) 이름은 아래 작은 줄로(1-4f ㊽, 2-2 두 줄) */}
                         <span className="schedule-block-label">{b.dailyGoalId !== null && b.title ? b.title : b.label}</span>
                       </span>
+                      {!size && b.dailyGoalId !== null && b.title && <span className="schedule-block-goal">{b.label}</span>}
                       {size !== 'tiny' && (
                         <span className="schedule-block-time">
-                          {b.dailyGoalId !== null && b.title && `${b.label} · `}
                           {formatMinutes(start)}~{formatMinutes(end)}
                         </span>
                       )}
@@ -522,6 +522,7 @@ export default function ScheduleView({
                         >
                           <TopicField
                             categoryId={b.category?.id ?? null}
+                            fallbackName={b.label}
                             value={topicDraft}
                             onChange={setTopicDraft}
                             onEnter={(v) => saveTopic(b, v)}

@@ -91,7 +91,8 @@ export default function TimeBlockForm({
 
   return (
     <form className="inline-form block-form" onSubmit={submit}>
-      <select value={pick} onChange={(e) => setPick(e.target.value)} aria-label="무엇을 할까요">
+      <span className="topic-label small muted">할 일</span>
+      <select value={pick} onChange={(e) => setPick(e.target.value)} aria-label="할 일">
         {goals.length > 0 && (
           <optgroup label="이 날의 할 일">
             {goals.map((g) => (
@@ -147,6 +148,14 @@ export default function TimeBlockForm({
           }
           value={title}
           onChange={setTitle}
+          showLabel
+          fallbackName={
+            dailyGoalId !== null
+              ? goals.find((g) => g.id === dailyGoalId)?.content
+              : pick === NEW_GOAL
+                ? newTitle.trim() || undefined
+                : planGoal?.title
+          }
         />
       )}
       {isFree && (

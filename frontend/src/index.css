@@ -1462,3 +1462,7 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .plan-goal-plain strong { font-weight: 600; }
 .plan-set-time { margin-left: auto; color: var(--muted); }
 .plan-bars dd { grid-template-columns: 1fr 7.5rem; }
+/* 세부 내용 칸 이름표(2-2): 칸 이름은 칸 밖에 보인다 */
+.topic-label { display: block; width: 100%; margin: 0.15rem 0 -0.2rem; }
+/* 시간표 블록 두 줄: 세부 내용(굵게) 아래 목표 이름(작게) */
+.schedule-block-goal { display: block; font-size: 0.72rem; opacity: 0.8; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
