@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import logoDark from '../assets/brand/logo-horizontal-dark.svg'
 import logoLight from '../assets/brand/logo-horizontal-light.svg'
@@ -47,6 +47,20 @@ export default function Layout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const location = useLocation()
   const { me, signOut } = useAuth()
+  const [profileOpen, setProfileOpen] = useState(false)
+  const profileRef = useRef<HTMLDivElement>(null)
+  // 바깥을 누르거나 Esc면 프로필 메뉴를 닫는다
+  useEffect(() => {
+    if (!profileOpen) return
+    const onDown = (e: MouseEvent) => !profileRef.current?.contains(e.target as Node) && setProfileOpen(false)
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setProfileOpen(false)
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [profileOpen])
 
   // 화면을 옮기면 서랍은 닫는다
   useEffect(() => setDrawerOpen(false), [location.pathname, location.search])
@@ -120,18 +134,40 @@ export default function Layout() {
           ))}
         </nav>
         <div className="side-foot">
-          <div className="side-user" title={me.email}>
-            {me.pictureUrl ? (
-              <img className="side-avatar" src={me.pictureUrl} alt="" referrerPolicy="no-referrer" />
-            ) : (
-              <span className="side-avatar">{(me.name ?? me.email).slice(0, 1)}</span>
+          {/* 프로필 메뉴(docs/design.md 11-2, 프로토타입 Profile): 누르면 위로 이름·이메일, 설정, 로그아웃 */}
+          <div className="side-profile" ref={profileRef}>
+            {profileOpen && (
+              <div className="side-profile-menu" role="menu">
+                <div className="side-profile-head">
+                  <strong>{me.name ?? me.email}</strong>
+                  <span className="muted small">{me.email}</span>
+                </div>
+                <NavLink to="/settings" role="menuitem" className="side-profile-item" onClick={() => setProfileOpen(false)}>
+                  <NavIcon name="settings" />
+                  설정
+                </NavLink>
+                <button type="button" role="menuitem" className="side-profile-item" onClick={signOut}>
+                  <NavIcon name="logout" />
+                  로그아웃
+                </button>
+              </div>
             )}
-            <span className="side-label side-user-name">{me.name ?? me.email}</span>
-            <button type="button" className="side-logout side-label" onClick={signOut}>
-              로그아웃
+            <button
+              type="button"
+              className={profileOpen ? 'side-link side-user open' : 'side-link side-user'}
+              onClick={() => setProfileOpen(!profileOpen)}
+              aria-haspopup="menu"
+              aria-expanded={profileOpen}
+              title={collapsed ? (me.name ?? me.email) : undefined}
+            >
+              {me.pictureUrl ? (
+                <img className="side-avatar" src={me.pictureUrl} alt="" referrerPolicy="no-referrer" />
+              ) : (
+                <span className="side-avatar">{(me.name ?? me.email).slice(0, 1)}</span>
+              )}
+              <span className="side-label side-user-name">{me.name ?? me.email}</span>
             </button>
           </div>
-          {link(SETTINGS)}
           <button
             type="button"
             className="side-link side-toggle"

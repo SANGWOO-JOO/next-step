@@ -3,12 +3,13 @@ import collapse from '../assets/nav/collapse.svg'
 import dashboard from '../assets/nav/dashboard.svg'
 import expand from '../assets/nav/expand.svg'
 import log from '../assets/nav/log.svg'
+import logout from '../assets/nav/logout.svg'
 import plan from '../assets/nav/plan.svg'
 import schedule from '../assets/nav/schedule.svg'
 import settings from '../assets/nav/settings.svg'
 
 /** 메뉴는 그라데이션 아이콘 타일 이미지(1-4f ⑱, 알림 카드와 같은 스타일). 모바일 메뉴 버튼만 선 아이콘 */
-const IMAGES: Record<string, string> = { brand, schedule, plan, log, dashboard, settings, collapse, expand }
+const IMAGES: Record<string, string> = { brand, schedule, plan, log, dashboard, settings, collapse, expand, logout }
 
 /** 메뉴 아이콘(선 아이콘, 24 격자). 색은 글자색을 따른다 */
 const PATHS: Record<string, string> = {

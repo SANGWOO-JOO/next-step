@@ -1395,8 +1395,6 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .side-user { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.5rem; min-width: 0; }
 .side-avatar { flex: none; width: 1.75rem; height: 1.75rem; border-radius: 50%; display: grid; place-items: center; background: var(--border); font-size: 0.8rem; object-fit: cover; }
 .side-user-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem; }
-.side-logout { border: none; background: none; color: var(--muted); font-size: 0.75rem; cursor: pointer; padding: 0.2rem; }
-.side-logout:hover { color: var(--text); }
 
 /* 계획 화면(2-2): 이번 주에 무엇을 얼마나 */
 .plan-page { max-width: 56rem; }
@@ -1641,3 +1639,12 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .ld-google, .ld-google:hover { text-decoration: none; }
 .ld-contact { position: relative; display: inline-flex; gap: 8px; }
 .ld-contact-tip { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); padding: 5px 10px; border-radius: 8px; background: #33313f; border: 1px solid #4a4757; color: #f4f4f5; font-size: 12px; white-space: nowrap; }
+/* 사이드바 프로필 메뉴(2-1, 프로토타입 Profile): 프로필을 누르면 위로 펼친다 */
+.side-profile { position: relative; }
+.side-user { width: 100%; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.side-user.open { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.side-profile-menu { position: absolute; left: 0; bottom: calc(100% + 6px); z-index: 20; width: max(100%, 14rem); padding: 0.4rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: 0 10px 28px rgb(0 0 0 / 0.35); }
+.side-profile-head { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.5rem 0.6rem 0.6rem; margin-bottom: 0.25rem; border-bottom: 1px solid var(--border); min-width: 0; }
+.side-profile-head strong, .side-profile-head span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.side-profile-item { display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0.5rem 0.6rem; border: 0; border-radius: 8px; background: transparent; color: var(--text); font: inherit; font-size: 0.9rem; text-decoration: none; cursor: pointer; }
+.side-profile-item:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
