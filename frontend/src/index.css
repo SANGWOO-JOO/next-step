@@ -1528,6 +1528,7 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .welcome-daysum.past { opacity: 0.3; }
 .welcome-daybar { width: 70%; height: 4px; border-radius: 999px; background: color-mix(in srgb, var(--border) 80%, transparent); overflow: hidden; }
 .welcome-daybar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #a78bfa, #f472b6); transition: width 0.2s; }
-.welcome-dayhours { font-size: 0.7rem; color: var(--text); }
-.welcome-dayhours.zero { color: var(--muted); }
+/* 칠한 날 숫자는 위쪽 합계와 같은 보라~핑크 그라데이션 */
+.welcome-dayhours { font-size: 0.7rem; font-weight: 500; background: linear-gradient(90deg, #a78bfa, #f472b6); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.welcome-dayhours.zero { background: none; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .welcome-total strong { animation: none; } .welcome-daybar span { transition: none; } }
