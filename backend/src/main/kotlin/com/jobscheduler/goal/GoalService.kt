@@ -10,10 +10,12 @@ import com.jobscheduler.goal.dto.GoalRequest
 import com.jobscheduler.goal.dto.GoalResponse
 import com.jobscheduler.goal.dto.GoalWeekRow
 import com.jobscheduler.goal.dto.WeekPlanResponse
+import com.jobscheduler.stats.StudySliceCollector
 import com.jobscheduler.timeblock.TimeBlockRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Duration
 import java.time.LocalDate
@@ -27,6 +29,7 @@ class GoalService(
     private val dailyGoalRepository: DailyGoalRepository,
     private val timeBlockRepository: TimeBlockRepository,
     private val actualLogRepository: ActualLogRepository,
+    private val clock: Clock,
 ) {
     companion object {
         /** 진행 중 목표 최대 개수(docs/design.md 11-6 2-2 ⑦) */
@@ -44,6 +47,7 @@ class GoalService(
         val goal = goalRepository.save(
             Goal(title = req.title.trim(), category = categoryService.getAssignable(req.categoryId), targetDate = req.targetDate),
         )
+        linkLooseDailyGoals(goal)
         return GoalResponse.from(goal)
     }
 
@@ -53,6 +57,7 @@ class GoalService(
         if (req.categoryId != goal.category.id) goal.category = categoryService.getAssignable(req.categoryId)
         goal.title = req.title.trim()
         goal.targetDate = req.targetDate
+        linkLooseDailyGoals(goal)
         return GoalResponse.from(goal)
     }
 
@@ -61,6 +66,7 @@ class GoalService(
         val goal = getEntity(id)
         if (status == GoalStatus.ACTIVE && goal.status != GoalStatus.ACTIVE) requireActiveSlot()
         goal.status = status
+        linkLooseDailyGoals(goal)
         return GoalResponse.from(goal)
     }
 
@@ -109,6 +115,19 @@ class GoalService(
             scheduledMinutes = rows.sumOf { it.scheduledMinutes },
             actualMinutes = rows.sumOf { it.actualMinutes },
         )
+    }
+
+    /**
+     * 할 일을 만든 뒤에 목표를 만들거나 분류를 바꿔도 자동 연결 규칙(2-2 ⑨)이 같게 적용되도록,
+     * 그 분류의 진행 중 목표가 이 목표 하나뿐이면 이번 주부터의 묶이지 않은 같은 분류 할 일을 묶는다.
+     */
+    private fun linkLooseDailyGoals(goal: Goal) {
+        if (goal.status != GoalStatus.ACTIVE) return
+        val sameCategory = goalRepository.findAllByCategoryIdAndStatus(goal.category.id!!, GoalStatus.ACTIVE)
+        if (sameCategory.singleOrNull()?.id != goal.id) return
+        val monday = LocalDate.now(clock.withZone(StudySliceCollector.ZONE)).with(DayOfWeek.MONDAY)
+        dailyGoalRepository.findAllByGoalIsNullAndCategoryIdAndDateGreaterThanEqual(goal.category.id!!, monday)
+            .forEach { it.goal = goal }
     }
 
     fun getEntity(id: Long): Goal =

@@ -14,4 +14,5 @@ interface DailyGoalRepository : JpaRepository<DailyGoal, Long> {
     fun findAllByDateAndType(date: LocalDate, type: DailyGoalType): List<DailyGoal>
     fun countByDateAndType(date: LocalDate, type: DailyGoalType): Long
     fun findAllByGoalId(goalId: Long): List<DailyGoal>
+    fun findAllByGoalIsNullAndCategoryIdAndDateGreaterThanEqual(categoryId: Long, from: LocalDate): List<DailyGoal>
 }

@@ -24,11 +24,13 @@ import kotlin.test.assertTrue
 
 @SpringBootTest
 @ActiveProfiles("test")
+@org.springframework.context.annotation.Import(com.jobscheduler.focus.TestClockConfig::class)
 @Transactional
 class DailyGoalServiceTest(
     @Autowired private val dailyGoalService: DailyGoalService,
     @Autowired private val goalService: GoalService,
     @Autowired private val categoryService: CategoryService,
+    @Autowired private val clock: com.jobscheduler.focus.MutableClock,
 ) {
     private val thursday = LocalDate.of(2026, 10, 22)
     private val friday = LocalDate.of(2026, 10, 23)
@@ -158,6 +160,20 @@ class DailyGoalServiceTest(
 
         goalService.changeStatus(second.id, GoalStatus.DONE)
         assertEquals(resumeGoal.id, create(goalId = null, categoryId = resumeCategoryId).goalId)
+    }
+
+    @Test
+    fun `할 일을 먼저 만들고 나중에 그 분류로 목표를 만들거나 바꾸면 묶인다`() {
+        // 이번 주(10-19 주)부터의 할 일만 묶는다
+        clock.instant = java.time.Instant.parse("2026-10-21T00:00:00Z")
+        val cs = categoryService.list(includeInactive = false).first { it.name == "CS 공부" }.id
+        val loose = create(goalId = null, categoryId = cs)
+        assertNull(loose.goalId)
+
+        val csGoal = goalService.create(GoalRequest(title = "운영체제", categoryId = resumeCategoryId))
+        assertNull(dailyGoalService.list(thursday, thursday).single { it.id == loose.id }.goalId)
+        goalService.update(csGoal.id, GoalRequest(title = "운영체제", categoryId = cs))
+        assertEquals(csGoal.id, dailyGoalService.list(thursday, thursday).single { it.id == loose.id }.goalId)
     }
 
     @Test
