@@ -58,6 +58,15 @@ export default function TodayPage() {
   /** 고른 날: 왼쪽 목록과 [일] 보기가 보여주는 날(이번 주 안). [주] 보기의 날짜 머리로 바꾼다 */
   // ?date=로 들어오면 그 날(주)을 연다(시작 설정을 마친 직후 등)
   const [selected, setSelected] = useState(() => searchParams.get('date') ?? today)
+  // 화면이 뜬 뒤에 주소가 바뀌어도 따라가고, 적용한 date는 주소에서 지운다
+  useEffect(() => {
+    const date = searchParams.get('date')
+    if (!date) return
+    setSelected(date)
+    const next = new URLSearchParams(searchParams)
+    next.delete('date')
+    setSearchParams(next, { replace: true })
+  }, [searchParams, setSearchParams])
   /** 24시간 한눈에(1-4f ㉕). 켠 상태를 기억한다 */
   const [fitDay, setFitDay] = useState(() => {
     try {
