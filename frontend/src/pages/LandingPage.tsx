@@ -106,10 +106,10 @@ export default function LandingPage() {
             하루 한 칸씩, <span className="ld-grad">내 시간표</span>에 쌓아요
           </h1>
           <div className="ld-rv d3 ld-ctas">
-            <GoogleButton>Google로 무료로 시작하기</GoogleButton>
+            <GoogleButton>Google로 시작하기</GoogleButton>
             {/* 기존 사용자 로그인은 시작 버튼 바로 아래로 모은다(2-4 C안). 같은 구글 로그인 */}
             <span className="ld-signin">
-              이미 계정이 있나요? <a href={GOOGLE_LOGIN_URL}>로그인</a>
+              무료예요. 이미 계정이 있다면 <a href={GOOGLE_LOGIN_URL}>로그인</a>
             </span>
             {/* 보조 동작은 아래에 작은 글자로(시작 버튼만 주인공) */}
             <button type="button" className="ld-more" onClick={() => detail.current?.scrollIntoView({ behavior: 'smooth' })}>
@@ -207,7 +207,7 @@ export default function LandingPage() {
         <h2 className="ld-rv d1 ld-h2">오늘 저녁 한 칸부터 넣어 봐요</h2>
         <p className="ld-rv d2 ld-muted">구글 계정으로 바로 시작해요. 무료예요.</p>
         <div className="ld-rv d3">
-          <GoogleButton>무료로 시작하기</GoogleButton>
+          <GoogleButton>Google로 시작하기</GoogleButton>
         </div>
       </section>
 
