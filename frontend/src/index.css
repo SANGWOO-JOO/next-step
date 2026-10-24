@@ -1442,7 +1442,7 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 /* 목표 카드의 ⋯는 늘 보이게(고치기·상태 바꾸기를 찾기 쉽게) */
 .plan-goal .more-trigger { opacity: 1; }
 .plan-colors { display: flex; flex-direction: column; gap: 0.35rem; }
-.plan-form { grid-template-columns: 2fr auto 1fr auto; }
+.plan-form { grid-template-columns: auto 2fr auto 1fr auto; }
 @media (max-width: 720px) { .plan-form { grid-template-columns: 1fr; } }
 /* 목표 시간을 정하지 않은 카드(2-2 추가 결정): 숫자만 */
 .plan-summary.two { grid-template-columns: repeat(2, 1fr); }
@@ -1657,3 +1657,25 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .plan-page .plan-header.cal-header .cal-nav { align-items: center; }
 .plan-page .plan-header.cal-header .cal-nav > button { margin-top: 0; }
 .plan-page .plan-week { line-height: 1; }
+
+/* 목표 아이콘(docs/design.md 11-6 2-5) */
+.plan-goal { display: flex; align-items: flex-start; gap: 0.9rem; }
+.plan-goal-main { flex: 1; min-width: 0; }
+.plan-goal-icon { width: 44px; height: 44px; flex-shrink: 0; }
+.goal-icon-picker { position: relative; align-self: end; }
+.goal-icon-trigger { width: 44px; height: 44px; min-height: 0; padding: 4px; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.goal-icon-trigger:hover, .goal-icon-trigger.open { border-color: var(--accent); }
+.goal-icon-trigger.open { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
+.goal-icon-trigger img { width: 34px; height: 34px; }
+.goal-icon-pop { position: absolute; top: calc(100% + 8px); left: 0; z-index: 20; width: 21rem; max-width: calc(100vw - 2rem); padding: 0.6rem; margin: 0; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35); }
+.goal-icon-tabs { display: flex; gap: 2px; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+.goal-icon-tabs button { flex: 1; min-height: 0; padding: 4px; border: 0; background: none; border-radius: 8px; cursor: pointer; }
+.goal-icon-tabs button:hover { background: var(--soft-fill); }
+.goal-icon-tabs img { width: 22px; height: 22px; display: block; margin: 0 auto; }
+.goal-icon-list { max-height: 17rem; overflow-y: auto; padding-top: 0.25rem; }
+.goal-icon-cap { font-size: 0.75rem; color: var(--muted); margin: 0.5rem 0.15rem 0.3rem; }
+.goal-icon-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; }
+.goal-icon-grid button { min-height: 0; padding: 5px; border: 0; background: none; border-radius: 9px; cursor: pointer; }
+.goal-icon-grid button:hover { background: var(--soft-fill); }
+.goal-icon-grid button.on { background: color-mix(in srgb, var(--accent) 18%, transparent); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.goal-icon-grid img { width: 32px; height: 32px; display: block; margin: 0 auto; }

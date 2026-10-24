@@ -4,6 +4,7 @@ import { errorMessage } from '../api/client'
 import { completeOnboarding, skipOnboarding, type Me, type Purpose } from '../api/me'
 import studentArt from '../assets/illust/mascot-student.svg'
 import workerArt from '../assets/illust/mascot-worker.svg'
+import { autoGoalIcon } from '../goalIcons'
 import { availableColors } from '../utils/categoryColors'
 import { addMonths, mondayOf, seoulIso, shiftDate, todaySeoul } from '../utils/date'
 
@@ -145,7 +146,7 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
       const me = await completeOnboarding({
         agreed,
         purpose,
-        goal: { title, color: availableColors([])[0], targetDate: months === null ? null : plusMonths(today, months) },
+        goal: { title, color: availableColors([])[0], targetDate: months === null ? null : plusMonths(today, months), icon: autoGoalIcon(title) },
         blocks: withBlocks ? blocks() : [],
       })
       // 칠한 주를 일정 화면에서 바로 보이게

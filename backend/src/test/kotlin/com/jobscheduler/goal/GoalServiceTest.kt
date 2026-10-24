@@ -52,6 +52,18 @@ class GoalServiceTest(
     }
 
     @Test
+    fun `아이콘은 아는 이름만 받고 비우면 기본 아이콘이다`() {
+        val created = goalService.create(GoalRequest("토익 900", "#2563eb", icon = "english-test"))
+        assertEquals("english-test", created.icon)
+
+        val updated = goalService.update(created.id, GoalRequest("토익 900", "#2563eb", icon = " "))
+        assertNull(updated.icon)
+
+        val e = assertThrows<BusinessRuleException> { goalService.update(created.id, GoalRequest("토익 900", "#2563eb", icon = "unicorn")) }
+        assertEquals("UNKNOWN_ICON", e.code)
+    }
+
+    @Test
     fun `같은 이름의 분류가 목표 없이 있으면 이어 쓰고 목표 이름은 겹칠 수 없다`() {
         // 테스트 데이터의 사용자 1 분류 3 = CS 공부
         val cs = goal("CS 공부", "#16a34a")

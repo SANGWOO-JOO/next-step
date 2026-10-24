@@ -20,10 +20,12 @@ export type Goal = {
   /** 기한. null이면 정하지 않음 */
   targetDate: string | null
   status: GoalStatus
+  /** 아이콘 이름(src/goalIcons.ts). null이면 기본 아이콘 */
+  icon: string | null
 }
 
 /** 목표 색은 목표와 1:1인 분류의 색이 된다(docs/design.md 11-6 2-2 추가 결정) */
-export type GoalInput = { title: string; color: string; targetDate: string | null }
+export type GoalInput = { title: string; color: string; targetDate: string | null; icon?: string | null }
 
 /** 계획 화면의 목표 한 줄(분) */
 export type GoalWeekRow = { goal: Goal; scheduledMinutes: number; actualMinutes: number }

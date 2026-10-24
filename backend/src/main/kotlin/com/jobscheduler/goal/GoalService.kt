@@ -43,11 +43,12 @@ class GoalService(
 
     fun create(req: GoalRequest): GoalResponse {
         requireActiveSlot()
+        val icon = requireIcon(req.icon)
         val title = req.title.trim()
         // 같은 이름의 분류를 다른 목표가 쓰고 있으면 겹친다(목표와 분류는 1:1)
         categoryService.findByName(title)?.let { if (goalRepository.existsByCategoryId(it.id!!)) throw duplicateTitle(title) }
         val goal = goalRepository.save(
-            Goal(title = title, category = categoryService.forGoal(title, req.color, null), targetDate = req.targetDate),
+            Goal(title = title, category = categoryService.forGoal(title, req.color, null), targetDate = req.targetDate, icon = icon),
         )
         linkLooseDailyGoals(goal)
         return GoalResponse.from(goal)
@@ -55,14 +56,23 @@ class GoalService(
 
     fun update(id: Long, req: GoalRequest): GoalResponse {
         val goal = getEntity(id)
+        val icon = requireIcon(req.icon)
         val title = req.title.trim()
         if (goalRepository.existsByTitleAndIdNot(title, id)) throw duplicateTitle(title)
         // 목표 이름·색을 바꾸면 1:1 분류도 함께 바뀐다
         categoryService.forGoal(title, req.color, goal.category)
         goal.title = title
         goal.targetDate = req.targetDate
+        goal.icon = icon
         linkLooseDailyGoals(goal)
         return GoalResponse.from(goal)
+    }
+
+    /** 아는 아이콘 이름만 받는다. 비우면 기본 아이콘 */
+    private fun requireIcon(icon: String?): String? {
+        val name = icon?.trim()?.ifEmpty { null } ?: return null
+        if (name !in GoalIcons.NAMES) throw BusinessRuleException("없는 아이콘이에요: $name", "UNKNOWN_ICON")
+        return name
     }
 
     /** 완료로 바꿔도 기록과 묶인 할 일은 그대로 둔다. 다시 진행으로 돌릴 때만 개수를 본다 */

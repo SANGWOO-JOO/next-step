@@ -19,6 +19,8 @@ data class GoalRequest(
     val color: String,
     /** 비우면 기한 없음 */
     val targetDate: LocalDate? = null,
+    /** 아이콘 이름(GoalIcons). 비우면 기본 아이콘 */
+    val icon: String? = null,
 )
 
 data class GoalStatusRequest(val status: GoalStatus)
@@ -37,9 +39,10 @@ data class GoalResponse(
     val category: CategoryRef,
     val targetDate: LocalDate?,
     val status: GoalStatus,
+    val icon: String?,
 ) {
     companion object {
-        fun from(g: Goal) = GoalResponse(g.id!!, g.title, CategoryRef.from(g.category), g.targetDate, g.status)
+        fun from(g: Goal) = GoalResponse(g.id!!, g.title, CategoryRef.from(g.category), g.targetDate, g.status, g.icon)
     }
 }
 

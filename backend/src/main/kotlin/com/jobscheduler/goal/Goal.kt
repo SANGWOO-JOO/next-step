@@ -30,6 +30,8 @@ class Goal(
     var category: Category,
     /** 기한. 정하지 않아도 된다 */
     var targetDate: LocalDate? = null,
+    /** 아이콘 이름(GoalIcons). 없으면 기본 아이콘 */
+    var icon: String? = null,
     @Enumerated(EnumType.STRING)
     var status: GoalStatus = GoalStatus.ACTIVE,
 ) {

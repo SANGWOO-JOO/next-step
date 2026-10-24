@@ -20,6 +20,8 @@ import chevronLeft from '../../assets/icons/chevron-left.svg'
 import chevronRight from '../../assets/icons/chevron-right.svg'
 import IconButton from '../../components/IconButton'
 import MoreMenu from '../../components/MoreMenu'
+import GoalIconPicker from '../../components/GoalIconPicker'
+import { autoGoalIcon, goalIconUrl } from '../../goalIcons'
 import { availableColors } from '../../utils/categoryColors'
 import type { Run } from './planData'
 
@@ -236,45 +238,48 @@ function GoalCard({ row, goals, run, full }: CardProps) {
 
   return (
     <article className={activeGoal ? 'plan-goal card' : 'plan-goal card inactive'} style={{ borderLeftColor: goal.category.color }}>
-      <header className="plan-goal-head">
-        <div className="plan-goal-name">
-          <strong>{goal.title}</strong>
-          {!activeGoal && <span className="plan-badge">{GOAL_STATUS_LABEL[goal.status]}</span>}
-          {goal.targetDate && activeGoal && <span className="plan-badge">{dday(goal.targetDate)}</span>}
-        </div>
-        <MoreMenu
-          label={`${goal.title} 메뉴`}
-          items={[
-            { label: '고치기', onClick: () => setEditing(true) },
-            { label: '완료', onClick: () => status('DONE'), show: activeGoal },
-            { label: '다시 진행', onClick: () => status('ACTIVE'), show: !activeGoal, disabled: full },
-            {
-              label: '지우기',
-              danger: true,
-              onClick: () =>
-                confirm(`'${goal.title}' 목표를 지울까요? 할 일과 시간 기록은 그대로 남아요. 나중에 같은 이름으로 다시 만들면 지난 기록과 이어져요.`) &&
-                run(() => deleteGoal(goal.id)),
-            },
-          ]}
-        />
-      </header>
+      <img className="plan-goal-icon" src={goalIconUrl(goal.icon)} alt="" />
+      <div className="plan-goal-main">
+        <header className="plan-goal-head">
+          <div className="plan-goal-name">
+            <strong>{goal.title}</strong>
+            {!activeGoal && <span className="plan-badge">{GOAL_STATUS_LABEL[goal.status]}</span>}
+            {goal.targetDate && activeGoal && <span className="plan-badge">{dday(goal.targetDate)}</span>}
+          </div>
+          <MoreMenu
+            label={`${goal.title} 메뉴`}
+            items={[
+              { label: '고치기', onClick: () => setEditing(true) },
+              { label: '완료', onClick: () => status('DONE'), show: activeGoal },
+              { label: '다시 진행', onClick: () => status('ACTIVE'), show: !activeGoal, disabled: full },
+              {
+                label: '지우기',
+                danger: true,
+                onClick: () =>
+                  confirm(`'${goal.title}' 목표를 지울까요? 할 일과 시간 기록은 그대로 남아요. 나중에 같은 이름으로 다시 만들면 지난 기록과 이어져요.`) &&
+                  run(() => deleteGoal(goal.id)),
+              },
+            ]}
+          />
+        </header>
 
-      {/* 목표 시간은 두지 않는다(2-2 추가 결정): 일정에 잡은 시간과 실제로 한 시간만 */}
-      <div className="plan-goal-plain">
-        {scheduledMinutes + actualMinutes > 0 ? (
-          <span className="small">
-            일정 <strong>{hoursLabel(scheduledMinutes)}</strong>
-            <span className="muted"> · </span>
-            실제 <strong>{hoursLabel(actualMinutes)}</strong>
-          </span>
-        ) : (
-          <span className="muted small">이번 주엔 아직 잡은 일정이 없어요</span>
-        )}
-        {activeGoal && (
-          <Link className="plan-schedule-link" to="/">
-            일정에 잡기 →
-          </Link>
-        )}
+        {/* 목표 시간은 두지 않는다(2-2 추가 결정): 일정에 잡은 시간과 실제로 한 시간만 */}
+        <div className="plan-goal-plain">
+          {scheduledMinutes + actualMinutes > 0 ? (
+            <span className="small">
+              일정 <strong>{hoursLabel(scheduledMinutes)}</strong>
+              <span className="muted"> · </span>
+              실제 <strong>{hoursLabel(actualMinutes)}</strong>
+            </span>
+          ) : (
+            <span className="muted small">이번 주엔 아직 잡은 일정이 없어요</span>
+          )}
+          {activeGoal && (
+            <Link className="plan-schedule-link" to="/">
+              일정에 잡기 →
+            </Link>
+          )}
+        </div>
       </div>
     </article>
   )
@@ -299,15 +304,19 @@ function GoalForm({ goals, initial, submitLabel, onSubmit, onCancel }: FormProps
   const [title, setTitle] = useState(initial?.title ?? '')
   const [color, setColor] = useState(initial?.category.color ?? colors[0])
   const [targetDate, setTargetDate] = useState(initial?.targetDate ?? '')
+  // 직접 고르기 전에는 이름에 맞춰 바뀐다. 고치기는 지금 아이콘을 직접 고른 것으로 본다(2-5 ④)
+  const [pickedIcon, setPickedIcon] = useState<string | null | undefined>(initial ? initial.icon : undefined)
+  const icon = pickedIcon === undefined ? autoGoalIcon(title) : pickedIcon
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
     if (!title.trim()) return
-    onSubmit({ title: title.trim(), color, targetDate: targetDate || null })
+    onSubmit({ title: title.trim(), color, targetDate: targetDate || null, icon })
   }
 
   return (
     <form className="plan-form card" onSubmit={submit}>
+      <GoalIconPicker value={icon} title={title} onChange={setPickedIcon} />
       <label>
         <span className="small muted">목표</span>
         <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="예: 기술 면접 준비" maxLength={50} required autoFocus />
