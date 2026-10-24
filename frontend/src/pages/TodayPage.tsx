@@ -310,6 +310,7 @@ export default function TodayPage() {
                 icon={wideSchedule ? narrowIcon : wideIcon}
                 label={wideSchedule ? '목록 보기' : '넓게 보기'}
                 title={wideSchedule ? '목록 다시 보기' : '넓게 보기: 목록을 접고 시간표만'}
+                tipAlign="right"
                 onClick={toggleWide}
                 on={wideSchedule}
                 pressed={wideSchedule}

@@ -1648,3 +1648,4 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .side-profile-head strong, .side-profile-head span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .side-profile-item { display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0.5rem 0.6rem; border: 0; border-radius: 8px; background: transparent; color: var(--text); font: inherit; font-size: 0.9rem; text-decoration: none; cursor: pointer; }
 .side-profile-item:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.tip-right[data-tip]::after, .tip-right[data-tip]:hover::after { left: auto; right: 0; transform: none; }
