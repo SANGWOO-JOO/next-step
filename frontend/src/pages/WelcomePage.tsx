@@ -291,12 +291,14 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
                         key={k}
                         type="button"
                         className={past ? 'welcome-cell past' : on ? 'welcome-cell on' : 'welcome-cell'}
-                        disabled={past}
+                        // disabled 대신 aria-disabled: 막힌 버튼의 반투명이 툴팁까지 흐리게 하지 않게
+                        aria-disabled={past}
                         aria-pressed={on}
-                        aria-label={`${d}요일 ${h}시`}
-                        data-tip={past ? '지난 요일은 칠할 수 없어요' : undefined}
+                        aria-label={past ? `${d}요일은 지났어요` : `${d}요일 ${h}시`}
+                        data-tip={past ? `${d}요일은 지났어요` : undefined}
                         onPointerDown={(e) => {
                           e.preventDefault()
+                          if (past) return
                           painting.current = !on
                           setDragMode(on ? 'erase' : 'paint')
                           paint(k, !on)
