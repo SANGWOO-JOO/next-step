@@ -41,7 +41,6 @@ job-scheduler/
 ├── backend/            # Spring Boot (Kotlin)
 │   └── src/main/kotlin/com/jobscheduler
 │       ├── category/   # 활동 분류
-│       ├── checklist/  # 체크리스트
 │       ├── common/     # 공통 예외·에러 응답
 │       ├── config/     # CORS 등 설정
 │       ├── daily/      # 하루 목표

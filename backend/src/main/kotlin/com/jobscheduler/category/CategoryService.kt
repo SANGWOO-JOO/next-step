@@ -149,6 +149,6 @@ class CategoryService(
         private val DEFAULTS = listOf(
             Triple("기타", "#6b7280", "📌"),
         )
-        private val USAGE_TABLES = listOf("daily_goal", "goal", "actual_log", "checklist_item", "focus_session")
+        private val USAGE_TABLES = listOf("daily_goal", "goal", "actual_log", "focus_session")
     }
 }

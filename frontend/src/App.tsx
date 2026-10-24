@@ -4,7 +4,6 @@ import Layout from './components/Layout'
 import TodayPage from './pages/TodayPage'
 import PlanPage from './pages/plan/PlanPage'
 import LogPage from './pages/LogPage'
-import ChecklistPage from './pages/ChecklistPage'
 import DashboardPage from './pages/DashboardPage'
 import SettingsPage from './pages/SettingsPage'
 
@@ -25,7 +24,8 @@ export default function App() {
           {/* 1-4e에서 집중 화면을 없앴다. 딴생각 메모는 기록 페이지에서 본다 */}
           <Route path="focus" element={<Navigate to="/log" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="checklist" element={<ChecklistPage />} />
+          {/* 2-2에서 체크리스트를 뺐다. 예전 주소는 일정으로 */}
+          <Route path="checklist" element={<Navigate to="/" replace />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

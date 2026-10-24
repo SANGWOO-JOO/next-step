@@ -6,8 +6,6 @@ import com.jobscheduler.actual.ActualLogService
 import com.jobscheduler.actual.dto.ActualLogRequest
 import com.jobscheduler.category.CategoryService
 import com.jobscheduler.category.dto.CategoryRequest
-import com.jobscheduler.checklist.ChecklistService
-import com.jobscheduler.checklist.dto.ChecklistItemRequest
 import com.jobscheduler.common.NotFoundException
 import com.jobscheduler.daily.DailyGoalService
 import com.jobscheduler.daily.dto.DailyGoalCreateRequest
@@ -49,7 +47,6 @@ class UserIsolationTest(
     @Autowired private val dailyGoalService: DailyGoalService,
     @Autowired private val timeBlockService: TimeBlockService,
     @Autowired private val actualLogService: ActualLogService,
-    @Autowired private val checklistService: ChecklistService,
     @Autowired private val dailyLogService: DailyLogService,
 ) {
     private val day = LocalDate.of(2031, 3, 3)
@@ -66,7 +63,6 @@ class UserIsolationTest(
         val daily = dailyGoalService.create(DailyGoalCreateRequest(date = day, content = "남의 할 일", categoryId = otherCategoryId))
         val block = timeBlockService.create(TimeBlockRequest(daily.id, startAt = at(9), endAt = at(10)))
         val log = actualLogService.create(ActualLogRequest(day, at(11), at(12), ActualKind.STUDY, categoryId = otherCategoryId)).single()
-        val item = checklistService.create(ChecklistItemRequest(categoryId = otherCategoryId, content = "남의 체크"))
         dailyLogService.save(day, DailyLogRequest(memo = "남의 메모"))
 
         TestUsers.loginAs(TestUsers.ME)
@@ -75,7 +71,6 @@ class UserIsolationTest(
         assertTrue(dailyGoalService.list(day, day).isEmpty())
         assertTrue(timeBlockService.list(day, day).isEmpty())
         assertTrue(actualLogService.list(day, day).isEmpty())
-        assertTrue(checklistService.list(null).none { it.id == item.id })
         assertNull(dailyLogService.get(day).memo)
         assertTrue(categoryService.list(includeInactive = true).none { it.id == otherCategoryId })
 
@@ -88,7 +83,6 @@ class UserIsolationTest(
         assertThrows<NotFoundException> { dailyGoalService.delete(daily.id) }
         assertThrows<NotFoundException> { timeBlockService.delete(block.id) }
         assertThrows<NotFoundException> { actualLogService.delete(log.id) }
-        assertThrows<NotFoundException> { checklistService.delete(item.id) }
         assertThrows<NotFoundException> { categoryService.delete(otherCategoryId) }
         // 남의 분류로 내 할 일을 만들 수도 없다
         assertThrows<NotFoundException> {

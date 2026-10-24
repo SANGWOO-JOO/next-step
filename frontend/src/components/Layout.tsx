@@ -22,7 +22,6 @@ const GROUPS: { title: string; menus: Menu[] }[] = [
     title: '돌아보기·준비',
     menus: [
       { to: '/dashboard', label: '대시보드', icon: 'dashboard' },
-      { to: '/checklist', label: '체크리스트', icon: 'checklist' },
     ],
   },
 ]
