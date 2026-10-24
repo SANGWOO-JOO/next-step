@@ -90,6 +90,9 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
 
   const P = PURPOSES.find((p) => p.id === purpose)!
   const title = own.trim() || goalName
+  // 요일별 칠한 시간과 그중 가장 많은 날(막대 길이 기준)
+  const dayHours = DAYS.map((_, i) => HOURS.filter((h) => cells.has(key(i, h))).length)
+  const maxDayHours = Math.max(1, ...dayHours)
   // 칠할 수 있는 칸만 센다
   const hours = [...cells].filter((k) => Number(k.split('-')[0]) >= firstDay).length
 
@@ -294,11 +297,12 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
               ))}
               <span />
               {DAYS.map((d, i) => {
-                const n = HOURS.filter((h) => cells.has(key(i, h))).length
+                const n = dayHours[i]
                 return (
                   <span key={d} className={i < firstDay ? 'welcome-daysum past' : 'welcome-daysum'} aria-label={`${d}요일 ${n}시간`}>
                     <span className="welcome-daybar">
-                      <span style={{ width: `${Math.min(100, (n / 4) * 100)}%` }} />
+                      {/* 그 주에 가장 많이 칠한 날을 가득 찬 막대로 */}
+                      <span style={{ width: `${(n / maxDayHours) * 100}%` }} />
                     </span>
                     {i >= firstDay && <span className={n ? 'welcome-dayhours' : 'welcome-dayhours zero'}>{n}시간</span>}
                   </span>
