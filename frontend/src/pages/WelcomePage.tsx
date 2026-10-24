@@ -76,9 +76,14 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const painting = useRef<boolean | null>(null)
+  // 끄는 동안 마우스 아이콘을 처음 누른 동작(칠하기·지우기)으로 고정한다
+  const [dragMode, setDragMode] = useState<'paint' | 'erase' | null>(null)
 
   useEffect(() => {
-    const stop = () => (painting.current = null)
+    const stop = () => {
+      painting.current = null
+      setDragMode(null)
+    }
     window.addEventListener('pointerup', stop)
     return () => window.removeEventListener('pointerup', stop)
   }, [])
@@ -238,7 +243,15 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
                 다 지우기
               </button>
             </div>
-            <div className="welcome-grid" role="grid" aria-label="이번 주 공부 시간" onPointerLeave={() => (painting.current = null)}>
+            <div
+              className={dragMode ? `welcome-grid ${dragMode}ing` : 'welcome-grid'}
+              role="grid"
+              aria-label="한 주 공부 시간"
+              onPointerLeave={() => {
+                painting.current = null
+                setDragMode(null)
+              }}
+            >
               <span />
               {DAYS.map((d, i) => (
                 <span key={d} className={i < firstDay ? 'welcome-day past' : 'welcome-day'}>
@@ -263,6 +276,7 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
                         onPointerDown={(e) => {
                           e.preventDefault()
                           painting.current = !on
+                          setDragMode(on ? 'erase' : 'paint')
                           paint(k, !on)
                         }}
                         onPointerEnter={() => painting.current !== null && paint(k, painting.current)}
