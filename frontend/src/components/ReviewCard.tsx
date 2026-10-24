@@ -9,6 +9,8 @@ type Props = {
   values: Record<string, string | null>
   /** 서버 값이 바뀌었는지 알리는 값(ReviewFields에 넘김) */
   version: string
+  /** 접힌 안내에 쓰는 이름(날짜 없이). 예: 이번 주 일지 */
+  name: string
   aiSummary: string | null
   /** 이미 저장했으면 글로 보여주고 [수정] */
   saved: boolean
@@ -23,15 +25,15 @@ type Props = {
  * 회고 카드(docs/design.md 1-4c 회고 위치). 평소에는 한 줄로 접고, 쓸 때만 펼친다.
  * 쓴 회고는 입력란 대신 글로 보여준다.
  */
-export default function ReviewCard({ title, fields, values, version, aiSummary, saved, due, prompt, onSave }: Props) {
+export default function ReviewCard({ title, name, fields, values, version, aiSummary, saved, due, prompt, onSave }: Props) {
   const [mode, setMode] = useState<'collapsed' | 'read' | 'edit'>(saved ? 'read' : due ? 'edit' : 'collapsed')
 
   if (mode === 'collapsed') {
     return (
       <div className="card review-collapsed">
-        <span className="muted small">{title}는 기간 끝에 써요.</span>
+        <span className="muted small">{name}는 기간 끝에 써요.</span>
         <button className="ghost" onClick={() => setMode('edit')}>
-          {title} 쓰기
+          {name} 쓰기
         </button>
       </div>
     )

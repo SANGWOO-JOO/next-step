@@ -54,7 +54,8 @@ export default function ReviewWriter({ kind, onSaved }: { kind: 'week' | 'month'
       {kind === 'week' && journal && (
         <ReviewCard
           key={`${monday}|${journal.saved}`}
-          title={`이번 주 일지 · ${weekLabel(monday)}`}
+          title={`이번 주 일지 ${weekLabel(monday)}`}
+          name="이번 주 일지"
           fields={[
             { key: 'good', label: '잘한 점', placeholder: '이번 주에 잘된 것' },
             { key: 'bad', label: '아쉬운 점', placeholder: '막혔던 것, 딴짓한 때' },
@@ -72,7 +73,8 @@ export default function ReviewWriter({ kind, onSaved }: { kind: 'week' | 'month'
       {kind === 'month' && review && (
         <ReviewCard
           key={`${month}|${review.saved}`}
-          title={`이번 달 회고 · ${monthLabel(month)}`}
+          title={`이번 달 회고 ${monthLabel(month)}`}
+          name="이번 달 회고"
           fields={[
             { key: 'review', label: '회고', placeholder: '이번 달에 무엇을 했고 어땠나요?', rows: 4 },
             { key: 'nextDirection', label: '다음 달 방향', placeholder: '다음 달에 집중할 것' },
