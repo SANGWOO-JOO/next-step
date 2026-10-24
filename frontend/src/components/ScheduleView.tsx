@@ -742,7 +742,7 @@ function SchedulePopover({ popover, goals, run, onClose }: PopoverProps) {
         <div className="block-pop-title">
           <strong>{popover.kind === 'new' ? '새 시간 블록' : popover.block.label}</strong>
           <span className="muted small">
-            {dayLabel(date)} · {formatMinutes(start)}–{formatMinutes(end % 1440 === 0 && end > 0 ? 1440 : end)} · {durationLabel(end - start)}
+            {dayLabel(date)} · {formatMinutes(start)}–{formatMinutes(end)} · {durationLabel(end - start)}
           </span>
         </div>
         {popover.kind === 'edit' && (
