@@ -498,17 +498,17 @@ export default function ScheduleView({
                     >
                       <span
                         className="schedule-block-title"
-                        title={`${b.dailyGoalId !== null && b.title ? `${b.title}\n${b.label}` : b.label}\n${formatMinutes(start)}~${formatMinutes(end)}`}
+                        title={`${b.dailyGoalId !== null && b.title ? `${b.label}\n${b.title}` : b.label}\n${formatMinutes(start)}~${formatMinutes(end)}`}
                       >
                         {b.category?.icon && (
                           <span className="schedule-block-icon" aria-hidden="true">
                             {b.category.icon}
                           </span>
                         )}
-                        {/* 세부 내용이 있으면 그걸 제목으로, 목표(할 일) 이름은 아래 작은 줄로(1-4f ㊽, 2-2 두 줄) */}
-                        <span className="schedule-block-label">{b.dailyGoalId !== null && b.title ? b.title : b.label}</span>
+                        {/* 목표(할 일) 이름을 제목으로, 세부 내용은 아래 작은 줄로(2-2 두 줄). 짧은 블록은 목표 이름만 */}
+                        <span className="schedule-block-label">{b.label}</span>
                       </span>
-                      {!size && b.dailyGoalId !== null && b.title && <span className="schedule-block-goal">{b.label}</span>}
+                      {!size && b.dailyGoalId !== null && b.title && <span className="schedule-block-goal">{b.title}</span>}
                       {size !== 'tiny' && (
                         <span className="schedule-block-time">
                           {formatMinutes(start)}~{formatMinutes(end)}
