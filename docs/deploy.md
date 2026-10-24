@@ -64,6 +64,7 @@ Spring Boot → Google OAuth (로그인 확인), Anthropic Claude (주간 피드
 - **세션 인증**(토큰 인증 아님). 구글 OAuth 토큰은 서버(Spring Security)만 갖고, 브라우저에는 HttpOnly 세션 쿠키만 준다. 브라우저 앱에서 토큰을 자바스크립트가 만지지 않게 하는 BFF 방식과 같다. JWT는 XSS, 강제 로그아웃, 토큰 갱신 문제로 쓰지 않는다. 모바일 앱이 생기면 그 앱용 토큰을 따로 더한다.
 - **세션 저장소: Spring Session JDBC**(PostgreSQL 테이블). 재시작과 배포에도 로그인 유지, 서버를 늘려도 공유. 탈퇴하면 그 사람의 모든 세션을 지운다. 대가: 요청마다 세션 읽기와 마지막 접속 시각 쓰기. 비교한 안: 메모리(재시작 시 유실), 톰캣 파일(컨테이너 교체 시 유실), Redis(컨테이너와 메모리 추가), 서명 쿠키와 JWT(강제 로그아웃 어려움), ElastiCache와 DynamoDB(비용).
 - 로그인 유지 기간: 14일(쓸 때마다 연장), 만료 세션은 30분마다 정리.
+- 세션 저장소는 JPA가 아닌 순수 JDBC 트랜잭션을 쓴다(`SessionConfig.kt`). JPA를 쓰면 멀티테넌시가 로그인 사용자를 물으며 세션을 다시 읽어 무한 반복된다. 분석: `docs/troubleshooting/2026-10-25-spring-session-login.md`
 - **CSRF: 쿠키 방식**(`XSRF-TOKEN` 쿠키, 프론트가 `X-XSRF-TOKEN` 헤더로 보냄). 서버에 저장하지 않는다. SameSite=Lax로 막지 못하는 같은 사이트 서브도메인, 본문 없는 요청(탈퇴, 동의)을 한 겹 더 막는다.
 - 쿠키: Secure, HttpOnly(세션), SameSite=Lax.
 - 비밀값: SSM Parameter Store(SecureString). 구글 클라이언트 ID와 시크릿, `ANTHROPIC_API_KEY`(운영용 키 따로), DB 비밀번호(로컬 기본값 `jobscheduler`는 운영에서 쓰지 않음).
