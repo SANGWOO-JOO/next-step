@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type DragEvent, type PointerEvent, type ReactNode } from 'react'
+import GoalIcon from './GoalIcon'
 import {
   changeDailyGoalType,
   createDailyGoal,
@@ -399,7 +400,7 @@ export default function ScheduleView({
                   {dayGoals.length > 0 && (
                     <button type="button" className="ghost schedule-goal-summary" onClick={toggleGoals} title={dayGoals.map((g) => g.content).join('\n')}>
                       {dayGoals.map((g) => (
-                        <span key={g.id} className="category-dot" style={{ background: g.category?.color ?? 'var(--muted)' }} aria-hidden="true" />
+                        <GoalIcon key={g.id} icon={g.category?.icon} color={g.category?.color} size={16} />
                       ))}
                       <span>
                         {dayGoals.filter((g) => g.status === 'DONE').length}/{dayGoals.length}
@@ -500,11 +501,7 @@ export default function ScheduleView({
                         className="schedule-block-title"
                         title={`${b.dailyGoalId !== null && b.title ? `${b.label}\n${b.title}` : b.label}\n${formatMinutes(start)}~${formatMinutes(end)}`}
                       >
-                        {b.category?.icon && (
-                          <span className="schedule-block-icon" aria-hidden="true">
-                            {b.category.icon}
-                          </span>
-                        )}
+                        {b.category?.icon && size !== 'tiny' && <GoalIcon icon={b.category.icon} size={16} className="schedule-block-icon" />}
                         {/* 목표(할 일) 이름을 제목으로, 세부 내용은 아래 작은 줄로(2-2 두 줄). 짧은 블록은 목표 이름만 */}
                         <span className="schedule-block-label">{b.label}</span>
                       </span>
@@ -619,7 +616,7 @@ export default function ScheduleView({
                       >
                         <span className="schedule-block-title">
                           <img className="actual-mark-icon" src={mark.src} alt={mark.label} title={mark.label} width={14} height={14} draggable={false} />{' '}
-                          {a.category?.icon && <span className="schedule-block-icon" aria-hidden="true">{a.category.icon}</span>}
+                          {a.category?.icon && <GoalIcon icon={a.category.icon} size={16} className="schedule-block-icon" />}
                           <span className="schedule-block-label">{a.label}</span>
                         </span>
                         <span className="schedule-block-time">
@@ -737,7 +734,7 @@ function SchedulePopover({ popover, goals, run, onClose }: PopoverProps) {
       {/* 머리글: 목표 색 점 · 이름, 아래 날짜 · 시간 · 길이. 지우기는 ⋯ 안으로(2-2 팝오버 정리) */}
       <div className="block-pop-head">
         {popover.kind === 'edit' && (
-          <span className="category-dot" style={{ background: popover.block.color ?? popover.block.category?.color ?? 'var(--muted)' }} aria-hidden="true" />
+          <GoalIcon icon={popover.block.category?.icon} color={popover.block.color ?? popover.block.category?.color} size={18} />
         )}
         <div className="block-pop-title">
           <strong>{popover.kind === 'new' ? '새 시간 블록' : popover.block.label}</strong>

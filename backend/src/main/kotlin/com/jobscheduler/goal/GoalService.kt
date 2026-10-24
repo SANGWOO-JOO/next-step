@@ -48,7 +48,7 @@ class GoalService(
         // 같은 이름의 분류를 다른 목표가 쓰고 있으면 겹친다(목표와 분류는 1:1)
         categoryService.findByName(title)?.let { if (goalRepository.existsByCategoryId(it.id!!)) throw duplicateTitle(title) }
         val goal = goalRepository.save(
-            Goal(title = title, category = categoryService.forGoal(title, req.color, null), targetDate = req.targetDate, icon = icon),
+            Goal(title = title, category = categoryService.forGoal(title, req.color, icon, null), targetDate = req.targetDate, icon = icon),
         )
         linkLooseDailyGoals(goal)
         return GoalResponse.from(goal)
@@ -60,7 +60,7 @@ class GoalService(
         val title = req.title.trim()
         if (goalRepository.existsByTitleAndIdNot(title, id)) throw duplicateTitle(title)
         // 목표 이름·색을 바꾸면 1:1 분류도 함께 바뀐다
-        categoryService.forGoal(title, req.color, goal.category)
+        categoryService.forGoal(title, req.color, icon, goal.category)
         goal.title = title
         goal.targetDate = req.targetDate
         goal.icon = icon

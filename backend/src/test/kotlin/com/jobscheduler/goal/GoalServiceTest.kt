@@ -55,9 +55,12 @@ class GoalServiceTest(
     fun `아이콘은 아는 이름만 받고 비우면 기본 아이콘이다`() {
         val created = goalService.create(GoalRequest("토익 900", "#2563eb", icon = "english-test"))
         assertEquals("english-test", created.icon)
+        // 1:1 분류에도 같은 아이콘(2-7)
+        assertEquals("english-test", created.category.icon)
 
         val updated = goalService.update(created.id, GoalRequest("토익 900", "#2563eb", icon = " "))
         assertNull(updated.icon)
+        assertNull(updated.category.icon)
 
         val e = assertThrows<BusinessRuleException> { goalService.update(created.id, GoalRequest("토익 900", "#2563eb", icon = "unicorn")) }
         assertEquals("UNKNOWN_ICON", e.code)

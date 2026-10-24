@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import GoalIcon from '../components/GoalIcon'
 import { errorMessage } from '../api/client'
 import { formatDuration } from '../api/focus'
 import {
@@ -222,7 +223,7 @@ function TopicStats({ stats }: { stats: TopicCategoryStat[] }) {
           return (
             <section key={c.category?.id ?? 'none'} className="topic-stats-group">
               <header>
-                {c.category?.icon && <span aria-hidden="true">{c.category.icon}</span>}
+                <GoalIcon icon={c.category?.icon} color={c.category?.color} size={20} />
                 <strong>{c.category?.name ?? '목표 없음'}</strong>
                 <span className="muted small">{formatDuration(c.seconds)}</span>
               </header>
@@ -273,7 +274,7 @@ function CategoryBars({ stats }: { stats: CategoryStat[] }) {
         {stats.map((s) => (
           <li key={s.category?.id ?? 'none'}>
             <span className="category-bar-name">
-              <span className="badge-dot" style={{ background: color(s) }} />
+              <GoalIcon icon={s.category?.icon} color={color(s)} size={22} />
               {name(s)}
             </span>
             <span className="category-bar-track">

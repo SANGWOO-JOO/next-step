@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent, type KeyboardEvent } from 'react'
+import GoalIcon from './GoalIcon'
 import type { Category } from '../api/categories'
 import { errorMessage } from '../api/client'
 import { createGoal, getGoals, MAX_ACTIVE_GOALS, type Goal } from '../api/goals'
@@ -225,12 +226,7 @@ function DailyGoalItem({
           </span>
         )}
         {goal.category && (
-          <span
-            className="category-dot"
-            style={{ background: goal.category.color }}
-            title={goal.category.name}
-            aria-label={`목표: ${goal.category.name}`}
-          />
+          <GoalIcon icon={goal.category.icon} color={goal.category.color} size={18} title={`목표: ${goal.category.name}`} />
         )}
         <MoreMenu
           label="할 일 동작"
@@ -515,7 +511,7 @@ export function NewDailyGoalForm({ date, categories, onSubmit, placeholder, auto
             >
               {o.kind === 'goal' && (
                 <>
-                  <span className="category-dot" style={{ background: o.goal.category.color }} aria-hidden="true" />
+                  <GoalIcon icon={o.goal.icon} color={o.goal.category.color} size={20} />
                   {o.goal.title}
                 </>
               )}
