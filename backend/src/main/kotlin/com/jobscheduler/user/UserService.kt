@@ -3,6 +3,7 @@ package com.jobscheduler.user
 import com.jobscheduler.category.CategoryService
 import com.jobscheduler.common.NotFoundException
 import com.jobscheduler.user.dto.MeResponse
+import com.jobscheduler.user.dto.NotificationSettings
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -38,6 +39,18 @@ class UserService(
     fun changePurpose(purpose: UserPurpose): MeResponse {
         val user = userRepository.findByIdOrNull(CurrentUser.id()) ?: throw NotFoundException("사용자를 찾을 수 없어요")
         user.purpose = purpose
+        return MeResponse.from(user)
+    }
+
+    /** 앱 안 알림 설정 바꾸기(1-5) */
+    @Transactional
+    fun changeNotifications(req: NotificationSettings): MeResponse {
+        val user = userRepository.findByIdOrNull(CurrentUser.id()) ?: throw NotFoundException("사용자를 찾을 수 없어요")
+        user.notifyBlock = req.block
+        user.notifyToday = req.today
+        user.notifyWeekly = req.weekly
+        user.notifyShutdown = req.shutdown
+        user.shutdownHour = req.shutdownHour
         return MeResponse.from(user)
     }
 

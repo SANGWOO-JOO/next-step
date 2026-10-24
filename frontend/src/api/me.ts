@@ -13,7 +13,12 @@ export type Me = {
   purpose: Purpose | null
   /** AI 주간 피드백 동의(docs/design.md 9-1) */
   aiAgreed: boolean
+  /** 앱 안 알림 설정(docs/design.md 10장 1-5) */
+  notifications: NotificationSettings
 }
+
+/** 블록 시작, 오늘 요약, 한 주 마무리, 하루 마무리와 그 시각(20~23시) */
+export type NotificationSettings = { block: boolean; today: boolean; weekly: boolean; shutdown: boolean; shutdownHour: number }
 
 export type OnboardingInput = {
   /** 이용약관·개인정보 수집·이용 동의(2-4) */
@@ -40,6 +45,9 @@ export const skipOnboarding = (agreed: boolean) => api.post<Me>('/api/me/onboard
 
 /** 설정의 "준비 중인 것" 바꾸기(2-6) */
 export const changePurpose = (purpose: Purpose) => api.patch<Me>('/api/me/purpose', { purpose })
+
+/** 앱 안 알림 설정 바꾸기(1-5) */
+export const changeNotifications = (settings: NotificationSettings) => api.patch<Me>('/api/me/notifications', settings)
 
 /** AI 주간 피드백 동의 켜기와 끄기(9-1) */
 export const agreeAi = () => api.post<Me>('/api/me/ai-consent')

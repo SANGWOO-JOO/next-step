@@ -2,6 +2,7 @@ package com.jobscheduler.user
 
 import com.jobscheduler.user.dto.MeResponse
 import com.jobscheduler.user.dto.OnboardingRequest
+import com.jobscheduler.user.dto.NotificationSettings
 import com.jobscheduler.user.dto.OnboardingSkipRequest
 import com.jobscheduler.user.dto.PurposeRequest
 import jakarta.validation.Valid
@@ -39,6 +40,10 @@ class MeController(
     /** 준비 중인 것 바꾸기(2-6) */
     @PatchMapping("/purpose")
     fun changePurpose(@RequestBody req: PurposeRequest): MeResponse = userService.changePurpose(req.purpose)
+
+    /** 앱 안 알림 설정(1-5) */
+    @PatchMapping("/notifications")
+    fun changeNotifications(@Valid @RequestBody req: NotificationSettings): MeResponse = userService.changeNotifications(req)
 
     /** AI 주간 피드백 동의(9-1) */
     @PostMapping("/ai-consent")

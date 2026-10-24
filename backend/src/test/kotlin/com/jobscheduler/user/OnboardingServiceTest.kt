@@ -128,4 +128,13 @@ class OnboardingServiceTest(
         assertEquals(UserPurpose.CAREER_CHANGER, userService.changePurpose(UserPurpose.CAREER_CHANGER).purpose)
         assertEquals(UserPurpose.CAREER_CHANGER, userService.me().purpose)
     }
+
+    @Test
+    fun `알림 설정은 기본이 모두 켜짐과 21시이고 바꿀 수 있다`() {
+        onboardingService.complete(OnboardingRequest(true, UserPurpose.JOB_SEEKER, GoalRequest("면접 준비", "#14b8a6")))
+        assertEquals(com.jobscheduler.user.dto.NotificationSettings(true, true, true, true, 21), userService.me().notifications)
+        val changed = com.jobscheduler.user.dto.NotificationSettings(false, true, false, true, 23)
+        assertEquals(changed, userService.changeNotifications(changed).notifications)
+        assertEquals(changed, userService.me().notifications)
+    }
 }

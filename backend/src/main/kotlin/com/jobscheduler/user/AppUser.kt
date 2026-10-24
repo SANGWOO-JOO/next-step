@@ -31,6 +31,13 @@ class AppUser(
     var termsAgreedAt: OffsetDateTime? = null,
     /** AI 주간 피드백에 동의한 때(docs/design.md 9-1). 끄면 비운다 */
     var aiAgreedAt: OffsetDateTime? = null,
+    /** 앱 안 알림 켜기와 끄기(1-5) */
+    var notifyBlock: Boolean = true,
+    var notifyToday: Boolean = true,
+    var notifyWeekly: Boolean = true,
+    var notifyShutdown: Boolean = true,
+    /** 하루 마무리 알림 시각(20~23시) */
+    var shutdownHour: Int = 21,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -12,9 +12,12 @@ import weeklyIcon from '../assets/reminders/weekly.svg'
 import { journalDue } from '../pages/plan/planData'
 import { formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, todaySeoul } from '../utils/date'
 import { REMINDER_REFRESH } from '../utils/reminders'
+import { useAuth } from '../auth/useAuth'
+
+/** 하루 마무리 알림 제목의 시각 */
+const hourLabel = (h: number) => (h < 22 ? `저녁 ${h - 12}시` : `밤 ${h - 12}시`)
 
 
-const SHUTDOWN_HOUR = 21
 const CHECK_INTERVAL_MS = 60_000
 /** 시작 몇 분 전부터 "곧 시작"을 알릴지 */
 const SOON_MINUTES = 15
@@ -41,6 +44,8 @@ const readDismissed = (kind: Kind, date: string) => {
 export default function ReminderStack() {
   const location = useLocation()
   const navigate = useNavigate()
+  // 앱 안 알림 설정(docs/design.md 10장 1-5). 꺼 둔 종류는 보이지 않는다
+  const { notifications: settings } = useAuth().me
   const [state, setState] = useState<{ shutdown: boolean; weekly: boolean; block: BlockAlert | null; log: DailyLog | null }>({
     shutdown: false,
     weekly: false,
@@ -53,10 +58,10 @@ export default function ReminderStack() {
   const check = useCallback(() => {
     const date = todaySeoul()
     const week = mondayOf(date)
-    const shutdownTime = nowMinutesSeoul() >= SHUTDOWN_HOUR * 60
+    const shutdownTime = settings.shutdown && nowMinutesSeoul() >= settings.shutdownHour * 60
     Promise.all([
       getDailyLog(date),
-      journalDue(week, date) && !readDismissed('weekly', date)
+      settings.weekly && journalDue(week, date) && !readDismissed('weekly', date)
         ? getWeeklyJournals(week, week).then((list) => list.length === 0)
         : Promise.resolve(false),
       getTimeBlocksBetween(date, date),
@@ -69,12 +74,13 @@ export default function ReminderStack() {
           .map((b) => ({ id: b.id, label: b.label, start: minutesOfDay(b.startAt, date), end: minutesOfDay(b.endAt, date), now }))
           .filter((x) => !readDismissed(`block-${x.id}`, date))
           .sort((a, b) => a.start - b.start)
-        const block =
-          spans.find((x) => x.start <= now && now < x.end) ?? spans.find((x) => x.start > now && x.start - now <= SOON_MINUTES) ?? null
+        const block = !settings.block
+          ? null
+          : spans.find((x) => x.start <= now && now < x.end) ?? spans.find((x) => x.start > now && x.start - now <= SOON_MINUTES) ?? null
         setState({ shutdown, weekly, block, log })
       })
       .catch(() => setState({ shutdown: false, weekly: false, block: null, log: null }))
-  }, [])
+  }, [settings])
 
   useEffect(check, [check, location.pathname])
   useEffect(() => {
@@ -101,7 +107,7 @@ export default function ReminderStack() {
   const b = state.block
   const log = state.log
   // 일정 화면에서는 오늘 숫자와 하루 마무리를 카드로(1-4f ⑮). 21시 이후 마무리 알림이 뜨면 그쪽이 대신한다
-  const showToday = location.pathname === '/' && !!log && !state.shutdown && !hidden.includes('today') && !readDismissed('today', today)
+  const showToday = settings.today && location.pathname === '/' && !!log && !state.shutdown && !hidden.includes('today') && !readDismissed('today', today)
   if (!state.shutdown && !state.weekly && !b && !showToday) return null
 
   return (
@@ -163,7 +169,7 @@ export default function ReminderStack() {
       {state.shutdown && (
         <ReminderCard
           icon={shutdownIcon}
-          title="저녁 9시가 지났어요"
+          title={`${hourLabel(settings.shutdownHour)}가 지났어요`}
           onClose={() => dismiss('shutdown')}
           body="오늘을 마무리하고 내일을 가볍게 시작해요."
           actions={

@@ -1778,3 +1778,11 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .log-empty { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; padding: 1.75rem 1rem; text-align: center; margin-top: 0.75rem; }
 .log-empty p { margin: 0; }
 .log-empty button { margin-top: 0.4rem; }
+
+/* 앱 안 알림 설정(1-5) */
+.switch { position: relative; flex: none; width: 40px; height: 24px; min-height: 0; padding: 0; border: 0; border-radius: 12px; background: color-mix(in srgb, var(--text) 20%, transparent); }
+.switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left 0.15s ease; }
+.switch.on { background: #7c5cff; }
+.switch.on::after { left: 19px; }
+.settings-sub { padding-left: 1.75rem; }
+.settings-sub.off { opacity: 0.45; }
