@@ -1634,3 +1634,7 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .settings-account p a { color: var(--muted); margin-right: 0.75rem; }
 .settings-leave { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); }
 .settings-leave p { margin: 0.2rem 0 0; }
+.ld-signin { margin-top: -4px; font-size: 13px; color: #8b8b94; }
+.ld-signin a { color: #c4b5fd !important; text-decoration: underline; text-underline-offset: 3px; }
+.ld-signin a:hover { color: #ddd6fe !important; }
+.ld-google, .ld-google:hover { text-decoration: none; }

@@ -92,9 +92,6 @@ export default function LandingPage() {
           <span className="ld-logo">
             Next <span className="ld-grad-blue">Step</span>
           </span>
-          <a className="ld-ghost" href={GOOGLE_LOGIN_URL}>
-            로그인
-          </a>
         </header>
 
         <div className="ld-hero-body">
@@ -110,6 +107,10 @@ export default function LandingPage() {
           </h1>
           <div className="ld-rv d3 ld-ctas">
             <GoogleButton>Google로 무료로 시작하기</GoogleButton>
+            {/* 기존 사용자 로그인은 시작 버튼 바로 아래로 모은다(2-4 C안). 같은 구글 로그인 */}
+            <span className="ld-signin">
+              이미 계정이 있나요? <a href={GOOGLE_LOGIN_URL}>로그인</a>
+            </span>
             {/* 보조 동작은 아래에 작은 글자로(시작 버튼만 주인공) */}
             <button type="button" className="ld-more" onClick={() => detail.current?.scrollIntoView({ behavior: 'smooth' })}>
               어떤 앱인지 볼래요
