@@ -42,7 +42,7 @@ class ActualLogServiceTest(
     @BeforeEach
     fun setUp() {
         csId = categoryService.list(includeInactive = false).first { it.name == "CS 공부" }.id
-        val goal = goalService.create(GoalRequest(title = "이직", categoryId = 1L))
+        val goal = goalService.create(GoalRequest(title = "이력서 작성", color = "#2563eb"))
         resume = dailyGoalService.create(DailyGoalCreateRequest(goal.id, day, "이력서 작성"))
     }
 

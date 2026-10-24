@@ -36,7 +36,7 @@ export function TrendChart({ from, to, unit }: { from: string; to: string; unit:
   const hasUnclassified = series.buckets.some((b) => b.byCategory.some((v) => v.categoryId === null))
   const keys = [
     ...series.categories.map((c) => ({ key: String(c.id), name: c.name, color: c.color })),
-    ...(hasUnclassified ? [{ key: UNCLASSIFIED, name: '미분류', color: '#9ca3af' }] : []),
+    ...(hasUnclassified ? [{ key: UNCLASSIFIED, name: '목표 없음', color: '#9ca3af' }] : []),
   ]
   const data = series.buckets.map((b) => ({
     label: bucketLabel(b.start, unit),

@@ -24,7 +24,8 @@ export type Goal = {
   status: GoalStatus
 }
 
-export type GoalInput = { title: string; categoryId: number; targetDate: string | null }
+/** 목표 색은 목표와 1:1인 분류의 색이 된다(docs/design.md 11-6 2-2 추가 결정) */
+export type GoalInput = { title: string; color: string; targetDate: string | null }
 
 /** 계획 화면의 목표 한 줄(분) */
 export type GoalWeekRow = { goal: Goal; targetMinutes: number; scheduledMinutes: number; actualMinutes: number }

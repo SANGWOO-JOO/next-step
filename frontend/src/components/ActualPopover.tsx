@@ -103,7 +103,7 @@ export default function ActualPopover({ date, start, end, log, goals, categories
         )}
         {kind === 'STUDY' && (
           <span className="inline-form">
-            <select value={categoryId ?? ''} onChange={(e) => setCategoryId(Number(e.target.value))} aria-label="분류">
+            <select value={categoryId ?? ''} onChange={(e) => setCategoryId(Number(e.target.value))} aria-label="목표">
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}

@@ -30,23 +30,37 @@ class GoalServiceTest(
     @Autowired private val timeBlockService: TimeBlockService,
     @Autowired private val actualLogService: ActualLogService,
 ) {
-    // 테스트 데이터의 사용자 1 분류: 1 이력서 작성, 3 CS 공부
     private val monday = LocalDate.of(2026, 10, 19)
     private val thursday = LocalDate.of(2026, 10, 22)
     private fun at(hour: Int, minute: Int = 0) = OffsetDateTime.of(2026, 10, 22, hour, minute, 0, 0, ZoneOffset.ofHours(9))
 
-    private fun goal(title: String, categoryId: Long = 1) = goalService.create(GoalRequest(title, categoryId))
+    private fun goal(title: String, color: String = "#2563eb") = goalService.create(GoalRequest(title, color))
 
     @Test
-    fun `목표는 분류를 갖고 기한은 비워도 된다`() {
-        val created = goalService.create(GoalRequest(" 이력서 완성 ", 1, LocalDate.of(2026, 12, 31)))
-        assertEquals("이력서 완성", created.title)
-        assertEquals("이력서 작성", created.category.name)
+    fun `목표를 만들면 같은 이름과 색의 분류가 함께 생기고 고치면 함께 바뀐다`() {
+        val created = goalService.create(GoalRequest(" 정보처리기사 ", "#14b8a6", LocalDate.of(2026, 12, 31)))
+        assertEquals("정보처리기사", created.title)
+        assertEquals("정보처리기사", created.category.name)
+        assertEquals("#14b8a6", created.category.color)
         assertEquals(GoalStatus.ACTIVE, created.status)
 
-        val updated = goalService.update(created.id, GoalRequest("이력서·경력기술서", 3, null))
-        assertEquals("CS 공부", updated.category.name)
+        val updated = goalService.update(created.id, GoalRequest("정보처리기사 필기", "#ec4899", null))
+        assertEquals(created.category.id, updated.category.id)
+        assertEquals("정보처리기사 필기", updated.category.name)
+        assertEquals("#ec4899", updated.category.color)
         assertNull(updated.targetDate)
+    }
+
+    @Test
+    fun `같은 이름의 분류가 목표 없이 있으면 이어 쓰고 목표 이름은 겹칠 수 없다`() {
+        // 테스트 데이터의 사용자 1 분류 3 = CS 공부
+        val cs = goal("CS 공부", "#16a34a")
+        assertEquals(3L, cs.category.id)
+
+        val e = assertThrows<BusinessRuleException> { goal("CS 공부") }
+        assertEquals("DUPLICATE_GOAL", e.code)
+        val other = goal("운영체제")
+        assertThrows<BusinessRuleException> { goalService.update(other.id, GoalRequest("CS 공부", "#2563eb")) }
     }
 
     @Test
@@ -83,7 +97,7 @@ class GoalServiceTest(
     @Test
     fun `계획 화면은 목표마다 일정에 잡은 시간과 실제로 한 시간을 묶인 할 일로 센다`() {
         val resume = goal("이력서")
-        val cs = goal("CS", 3)
+        val cs = goal("CS 공부")
         goalService.setWeekMinutes(resume.id, monday, 180)
         val daily = dailyGoalService.create(DailyGoalCreateRequest(resume.id, thursday, "경력기술서"))
         val loose = dailyGoalService.create(DailyGoalCreateRequest(null, thursday, "목표 없는 할 일"))

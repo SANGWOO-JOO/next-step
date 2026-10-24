@@ -35,7 +35,7 @@ class DailyGoalControllerTest(
 
     @BeforeEach
     fun setUp() {
-        val goalId = createdId("/api/goals", """{"title":"이직","categoryId":1}""")
+        val goalId = createdId("/api/goals", """{"title":"이력서 작성","color":"#2563eb"}""")
         weeklyGoalId = goalId
     }
 
@@ -49,7 +49,7 @@ class DailyGoalControllerTest(
             status { isCreated() }
             jsonPath("$.type") { value("CORE") }
             jsonPath("$.category.name") { value("이력서 작성") }
-            jsonPath("$.goalTitle") { value("이직") }
+            jsonPath("$.goalTitle") { value("이력서 작성") }
         }
         mockMvc.get("/api/daily-goals?date=2026-10-22").andExpect {
             status { isOk() }

@@ -42,7 +42,7 @@ class DailyGoalServiceTest(
     @BeforeEach
     fun setUp() {
         resumeCategoryId = categoryService.list(includeInactive = false).first { it.name == "이력서 작성" }.id
-        resumeGoal = goalService.create(GoalRequest(title = "경력기술서 완성", categoryId = resumeCategoryId))
+        resumeGoal = goalService.create(GoalRequest(title = "이력서 작성", color = "#2563eb"))
     }
 
     private fun create(
@@ -152,27 +152,24 @@ class DailyGoalServiceTest(
     }
 
     @Test
-    fun `분류만 고르면 그 분류의 진행 중 목표가 하나일 때만 자동으로 묶인다`() {
+    fun `목표의 분류로 할 일을 만들면 진행 중일 때만 그 목표에 묶인다`() {
         assertEquals(resumeGoal.id, create(goalId = null, categoryId = resumeCategoryId).goalId)
 
-        val second = goalService.create(GoalRequest(title = "자소서", categoryId = resumeCategoryId))
+        goalService.changeStatus(resumeGoal.id, GoalStatus.PAUSED)
         assertNull(create(goalId = null, categoryId = resumeCategoryId).goalId)
-
-        goalService.changeStatus(second.id, GoalStatus.DONE)
-        assertEquals(resumeGoal.id, create(goalId = null, categoryId = resumeCategoryId).goalId)
     }
 
     @Test
-    fun `할 일을 먼저 만들고 나중에 그 분류로 목표를 만들거나 바꾸면 묶인다`() {
+    fun `할 일을 먼저 만들고 나중에 같은 이름의 목표를 만들면 묶인다`() {
         // 이번 주(10-19 주)부터의 할 일만 묶는다
         clock.instant = java.time.Instant.parse("2026-10-21T00:00:00Z")
         val cs = categoryService.list(includeInactive = false).first { it.name == "CS 공부" }.id
         val loose = create(goalId = null, categoryId = cs)
         assertNull(loose.goalId)
 
-        val csGoal = goalService.create(GoalRequest(title = "운영체제", categoryId = resumeCategoryId))
-        assertNull(dailyGoalService.list(thursday, thursday).single { it.id == loose.id }.goalId)
-        goalService.update(csGoal.id, GoalRequest(title = "운영체제", categoryId = cs))
+        // 같은 이름의 분류("CS 공부")를 이어 쓰는 목표를 만들면 먼저 만든 할 일이 묶인다
+        val csGoal = goalService.create(GoalRequest(title = "CS 공부", color = "#16a34a"))
+        assertEquals(cs, csGoal.category.id)
         assertEquals(csGoal.id, dailyGoalService.list(thursday, thursday).single { it.id == loose.id }.goalId)
     }
 
@@ -184,7 +181,7 @@ class DailyGoalServiceTest(
 
         val linked = dailyGoalService.link(goal.id, resumeGoal.id)
         assertEquals(resumeGoal.id, linked.goalId)
-        assertEquals("경력기술서 완성", linked.goalTitle)
+        assertEquals("이력서 작성", linked.goalTitle)
         // 분류가 없던 할 일은 목표의 분류를 물려받는다
         assertEquals(resumeCategoryId, linked.category?.id)
 

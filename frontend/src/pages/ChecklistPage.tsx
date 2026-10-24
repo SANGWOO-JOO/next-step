@@ -55,7 +55,7 @@ export default function ChecklistPage() {
     <section>
       <h1>체크리스트</h1>
       <p className="muted">
-        분류별로 준비할 것을 적어 두고 하나씩 지워요. {items.length > 0 && `전체 ${done}/${items.length} 완료`}
+        목표별로 준비할 것을 적어 두고 하나씩 지워요. {items.length > 0 && `전체 ${done}/${items.length} 완료`}
       </p>
       {error && (
         <p className="error-banner" role="alert">

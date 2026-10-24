@@ -6,5 +6,6 @@ interface CategoryRepository : JpaRepository<Category, Long> {
     fun findAllByOrderBySortOrderAscIdAsc(): List<Category>
     fun findAllByActiveTrueOrderBySortOrderAscIdAsc(): List<Category>
     fun existsByName(name: String): Boolean
+    fun findByName(name: String): Category?
     fun existsByNameAndIdNot(name: String, id: Long): Boolean
 }

@@ -35,7 +35,7 @@ class TimeBlockControllerTest(
 
     @BeforeEach
     fun setUp() {
-        val goalId = createdId("/api/goals", """{"title":"이직","categoryId":1}""")
+        val goalId = createdId("/api/goals", """{"title":"이력서 작성","color":"#2563eb"}""")
         val weeklyId = goalId
         dailyGoalId = createdId(
             "/api/daily-goals",

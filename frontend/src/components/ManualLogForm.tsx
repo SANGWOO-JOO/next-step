@@ -25,7 +25,7 @@ export default function ManualLogForm({ date, categories, run }: Props) {
 
   return (
     <form className="inline-form" onSubmit={submit}>
-      <select value={picked ?? ''} onChange={(e) => setCategoryId(Number(e.target.value))} aria-label="분류">
+      <select value={picked ?? ''} onChange={(e) => setCategoryId(Number(e.target.value))} aria-label="목표">
         {categories.map((c) => (
           <option key={c.id} value={c.id}>
             {c.name}

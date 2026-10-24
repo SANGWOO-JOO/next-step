@@ -76,7 +76,7 @@ export default function DashboardPage() {
   return (
     <section>
       <h1>시간 대시보드</h1>
-      <p className="muted">순 공부시간 = 시간표 실제 기록(하루 목표·분류 공부) + 타이머 없이 한 공부. 실제 기록 이전 날은 지난 집중 세션</p>
+      <p className="muted">순 공부시간 = 시간표 실제 기록(목표 공부) + 타이머 없이 한 공부. 실제 기록 이전 날은 지난 집중 세션</p>
       {error && (
         <p className="error-banner" role="alert">
           {error}
@@ -107,7 +107,7 @@ export default function DashboardPage() {
 
       <div className="card">
         <div className="goal-header">
-          <h2 className="goal-title">기간별 분류</h2>
+          <h2 className="goal-title">기간별 목표</h2>
           <span className="segmented">
             {(Object.keys(PERIOD_LABELS) as Period[]).map((p) => (
               <button key={p} className={period === p ? 'active' : ''} onClick={() => setPeriod(p)}>
@@ -223,7 +223,7 @@ function TopicStats({ stats }: { stats: TopicCategoryStat[] }) {
             <section key={c.category?.id ?? 'none'} className="topic-stats-group">
               <header>
                 {c.category?.icon && <span aria-hidden="true">{c.category.icon}</span>}
-                <strong>{c.category?.name ?? '미분류'}</strong>
+                <strong>{c.category?.name ?? '목표 없음'}</strong>
                 <span className="muted small">{formatDuration(c.seconds)}</span>
               </header>
               <ul>
@@ -252,13 +252,13 @@ function CategoryBars({ stats }: { stats: CategoryStat[] }) {
   const total = stats.reduce((sum, s) => sum + s.seconds, 0)
   const max = Math.max(1, ...stats.map((s) => Math.max(s.seconds, s.targetSeconds ?? 0)))
   const color = (s: CategoryStat) => s.category?.color ?? 'var(--muted)'
-  const name = (s: CategoryStat) => s.category?.name ?? '미분류'
+  const name = (s: CategoryStat) => s.category?.name ?? '목표 없음'
 
   if (total === 0) return <p className="muted small">이 기간에 기록된 공부가 없어요.</p>
 
   return (
     <>
-      <div className="stack-bar" role="img" aria-label="분류별 비율">
+      <div className="stack-bar" role="img" aria-label="목표별 비율">
         {stats
           .filter((s) => s.seconds > 0)
           .map((s) => (

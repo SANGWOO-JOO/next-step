@@ -6,6 +6,7 @@ import com.jobscheduler.goal.GoalStatus
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 import java.time.LocalDate
 
@@ -13,9 +14,11 @@ import java.time.LocalDate
 
 data class GoalRequest(
     @field:NotBlank(message = "목표 이름을 입력해주세요.")
-    @field:Size(max = 200, message = "목표 이름은 200자 이하로 입력해주세요.")
+    @field:Size(max = 50, message = "목표 이름은 50자 이하로 입력해주세요.")
     val title: String,
-    val categoryId: Long,
+    /** 목표 색. 목표와 1:1인 분류의 색이 된다 */
+    @field:Pattern(regexp = "^#[0-9a-fA-F]{6}$", message = "색상은 #RRGGBB 형식이어야 해요.")
+    val color: String,
     /** 비우면 기한 없음 */
     val targetDate: LocalDate? = null,
 )

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { getCategories, type Category } from '../../api/categories'
 import { errorMessage } from '../../api/client'
 import {
   changeGoalStatus,
@@ -22,6 +21,7 @@ import chevronLeft from '../../assets/icons/chevron-left.svg'
 import chevronRight from '../../assets/icons/chevron-right.svg'
 import IconButton from '../../components/IconButton'
 import MoreMenu from '../../components/MoreMenu'
+import { availableColors } from '../../utils/categoryColors'
 import type { Run } from './planData'
 
 /** −/+ 한 번에 바꾸는 시간 */
@@ -59,17 +59,15 @@ export default function PlanPage() {
   const monday = mondayOf(params.get('week') ?? thisMonday)
   const [plan, setPlan] = useState<WeekPlan | null>(null)
   const [goals, setGoals] = useState<Goal[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
   const [error, setError] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
   const [showPast, setShowPast] = useState(false)
 
   const load = useCallback(() => {
-    Promise.all([getWeekPlan(monday), getGoals(), getCategories()])
-      .then(([p, g, c]) => {
+    Promise.all([getWeekPlan(monday), getGoals()])
+      .then(([p, g]) => {
         setPlan(p)
         setGoals(g)
-        setCategories(c)
       })
       .catch((e) => setError(errorMessage(e)))
   }, [monday])
@@ -143,16 +141,16 @@ export default function PlanPage() {
 
           <div className="plan-goals">
             {rows.map((row) => (
-              <GoalCard key={row.goal.id} row={row} monday={monday} categories={categories} run={run} full={full} />
+              <GoalCard key={row.goal.id} row={row} monday={monday} goals={goals} run={run} full={full} />
             ))}
             {pastRows.map((row) => (
-              <GoalCard key={row.goal.id} row={row} monday={monday} categories={categories} run={run} full={full} />
+              <GoalCard key={row.goal.id} row={row} monday={monday} goals={goals} run={run} full={full} />
             ))}
           </div>
 
           {adding ? (
             <GoalForm
-              categories={categories}
+              goals={goals}
               submitLabel="목표 추가"
               onCancel={() => setAdding(false)}
               onSubmit={(input) => run(() => createGoal(input)).then((ok) => ok && setAdding(false))}
@@ -220,10 +218,10 @@ function Stat({ label, value }: { label: string; value: number }) {
   )
 }
 
-type CardProps = { row: GoalWeekRow; monday: string; categories: Category[]; run: Run; full: boolean }
+type CardProps = { row: GoalWeekRow; monday: string; goals: Goal[]; run: Run; full: boolean }
 
 /** 목표 한 장: 이번 주 목표 시간(−/+), 일정에 잡은 시간, 실제로 한 시간, 일정에 잡기 */
-function GoalCard({ row, monday, categories, run, full }: CardProps) {
+function GoalCard({ row, monday, goals, run, full }: CardProps) {
   const { goal, targetMinutes, scheduledMinutes, actualMinutes } = row
   const [editing, setEditing] = useState(false)
   const activeGoal = goal.status === 'ACTIVE'
@@ -235,7 +233,7 @@ function GoalCard({ row, monday, categories, run, full }: CardProps) {
   if (editing) {
     return (
       <GoalForm
-        categories={categories}
+        goals={goals}
         initial={goal}
         submitLabel="저장"
         onCancel={() => setEditing(false)}
@@ -248,9 +246,6 @@ function GoalCard({ row, monday, categories, run, full }: CardProps) {
     <article className={activeGoal ? 'plan-goal card' : 'plan-goal card inactive'} style={{ borderLeftColor: goal.category.color }}>
       <header className="plan-goal-head">
         <div className="plan-goal-name">
-          <span className="plan-cat muted small">
-            {goal.category.icon ?? ''} {goal.category.name}
-          </span>
           <strong>{goal.title}</strong>
           {!activeGoal && <span className="plan-badge">{GOAL_STATUS_LABEL[goal.status]}</span>}
           {goal.targetDate && activeGoal && <span className="plan-badge">{dday(goal.targetDate)}</span>}
@@ -315,49 +310,54 @@ function GoalCard({ row, monday, categories, run, full }: CardProps) {
 }
 
 type FormProps = {
-  categories: Category[]
+  /** 다른 목표의 색을 피해 안 쓴 색 계열을 먼저 보여 준다 */
+  goals: Goal[]
   initial?: Goal
   submitLabel: string
   onSubmit: (input: GoalInput) => void
   onCancel: () => void
 }
 
-/** 목표 이름, 분류, 기한(선택) */
-function GoalForm({ categories, initial, submitLabel, onSubmit, onCancel }: FormProps) {
+/** 목표 이름, 색, 기한(선택). 분류는 목표와 1:1로 서버가 만든다(2-2 추가 결정) */
+function GoalForm({ goals, initial, submitLabel, onSubmit, onCancel }: FormProps) {
+  const others = goals.filter((g) => g.id !== initial?.id).map((g) => g.category.color)
+  const [colors] = useState(() => {
+    const free = availableColors(others)
+    return initial && !free.includes(initial.category.color) ? [initial.category.color, ...free] : free
+  })
   const [title, setTitle] = useState(initial?.title ?? '')
-  const [categoryId, setCategoryId] = useState<number | ''>(initial?.category.id ?? '')
+  const [color, setColor] = useState(initial?.category.color ?? colors[0])
   const [targetDate, setTargetDate] = useState(initial?.targetDate ?? '')
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    if (!title.trim() || categoryId === '') return
-    onSubmit({ title: title.trim(), categoryId, targetDate: targetDate || null })
+    if (!title.trim()) return
+    onSubmit({ title: title.trim(), color, targetDate: targetDate || null })
   }
-
-  // 지금 목표의 분류가 숨겨졌어도 고를 수 있게 남긴다
-  const options = initial && !categories.some((c) => c.id === initial.category.id) ? [...categories, initial.category] : categories
 
   return (
     <form className="plan-form card" onSubmit={submit}>
       <label>
         <span className="small muted">목표</span>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="예: 기술 면접 준비" maxLength={200} required autoFocus />
+        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="예: 기술 면접 준비" maxLength={50} required autoFocus />
       </label>
-      <label>
-        <span className="small muted">분류</span>
-        {/* 미리 채우면 그대로 저장해 일정의 할 일과 분류가 어긋나기 쉬워 직접 고르게 한다 */}
-        <select value={categoryId} onChange={(e) => setCategoryId(Number(e.target.value))} required>
-          <option value="" disabled>
-            분류 고르기
-          </option>
-          {options.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.icon ? `${c.icon} ` : ''}
-              {c.name}
-            </option>
+      <div className="plan-colors">
+        <span className="small muted">색</span>
+        <div className="quick-add-swatches" role="radiogroup" aria-label="목표 색">
+          {colors.slice(0, 8).map((c, i) => (
+            <button
+              key={c}
+              type="button"
+              role="radio"
+              aria-checked={c === color}
+              aria-label={`색 ${i + 1}`}
+              className={c === color ? 'swatch on' : 'swatch'}
+              style={{ background: c }}
+              onClick={() => setColor(c)}
+            />
           ))}
-        </select>
-      </label>
+        </div>
+      </div>
       <label>
         <span className="small muted">기한(선택)</span>
         <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} />

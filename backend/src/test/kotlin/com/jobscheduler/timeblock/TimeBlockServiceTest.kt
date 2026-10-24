@@ -40,7 +40,7 @@ class TimeBlockServiceTest(
 
     @BeforeEach
     fun setUp() {
-        val goal = goalService.create(GoalRequest(title = "이직", categoryId = 1L))
+        val goal = goalService.create(GoalRequest(title = "이력서 작성", color = "#2563eb"))
         resume = dailyGoalService.create(DailyGoalCreateRequest(goal.id, thursday, "성과 정리"))
         cs = dailyGoalService.create(DailyGoalCreateRequest(goal.id, thursday, "운영체제"))
     }

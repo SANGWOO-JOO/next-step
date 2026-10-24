@@ -69,10 +69,10 @@ function CategorySettings() {
 
   return (
     <div className="card">
-      <h2>분류 관리</h2>
+      <h2>목표 색·순서</h2>
       <p className="muted small">
-        활성 분류 목표 비율 합계 <strong className={ratioSum > 100 ? 'status down' : undefined}>{ratioSum}%</strong> (100% 이하).
-        분류는 기록이 참조하므로 삭제하지 않고 비활성화해요.
+        보이는 목표의 비율 합계 <strong className={ratioSum > 100 ? 'status down' : undefined}>{ratioSum}%</strong> (100% 이하).
+        목표 이름·기한·상태는 계획 화면에서 바꿔요. 기록이 있는 목표는 지우지 않고 숨겨요.
       </p>
       {error && <p className="error">{error}</p>}
 
@@ -95,7 +95,7 @@ function CategorySettings() {
             last={i === categories.length - 1}
             onMove={(delta) => move(i, delta)}
             onSave={(input) => run(() => updateCategory(c.id, input))}
-            onDelete={() => confirm(`'${c.name}' 분류를 지울까요?`) && run(() => deleteCategory(c.id))}
+            onDelete={() => confirm(`'${c.name}' 목표를 지울까요?`) && run(() => deleteCategory(c.id))}
           />
         ))}
       </div>
@@ -169,11 +169,11 @@ function CategoryRow({ category, first, last, onMove, onSave, onDelete }: RowPro
           취소
         </button>
         {category.deletable ? (
-          <button type="button" className="ghost danger" onClick={onDelete} title="한 번도 쓰이지 않은 분류라 지울 수 있어요">
+          <button type="button" className="ghost danger" onClick={onDelete} title="한 번도 쓰이지 않아 지울 수 있어요">
             삭제
           </button>
         ) : (
-          <span className="muted small" title="쓰인 분류는 지울 수 없어요. 활성 체크를 꺼서 숨겨요">
+          <span className="muted small" title="쓰인 목표는 지울 수 없어요. 활성 체크를 꺼서 숨겨요">
             사용 중
           </span>
         )}
@@ -207,11 +207,11 @@ function NewCategoryForm({ usedColors, onCreate }: { usedColors: string[]; onCre
           setDraft({ ...draft, color: e.target.value })
           setColorTouched(true)
         }}
-        aria-label="새 분류 색"
+        aria-label="새 항목 색"
       />
-      <IconPicker value={draft.icon} onChange={(icon) => setDraft({ ...draft, icon })} label="새 분류 아이콘" />
+      <IconPicker value={draft.icon} onChange={(icon) => setDraft({ ...draft, icon })} label="새 항목 아이콘" />
       <input
-        placeholder="새 분류 이름"
+        placeholder="새 항목 이름"
         value={draft.name}
         onChange={(e) => setDraft({ ...draft, name: e.target.value })}
         required

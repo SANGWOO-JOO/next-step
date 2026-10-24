@@ -66,7 +66,7 @@ class StatsServiceTest(
         val categories = categoryService.list(includeInactive = false)
         resumeId = categories.first { it.name == "이력서 작성" }.id
         csId = categories.first { it.name == "CS 공부" }.id
-        val goal = goalService.create(GoalRequest(title = "이직", categoryId = resumeId))
+        val goal = goalService.create(GoalRequest(title = "이력서 작성", color = "#2563eb"))
         weeklyId = goal.id
     }
 

@@ -786,8 +786,8 @@ function BlockColorPicker({
         className={current === null ? 'color-dot auto selected' : 'color-dot auto'}
         style={{ background: fallback ?? 'var(--muted)' }}
         onClick={() => pick(null)}
-        title="분류 색(기본)"
-        aria-label="분류 색"
+        title="목표 색(기본)"
+        aria-label="목표 색"
       />
       {BLOCK_COLORS.map((c) => (
         <button

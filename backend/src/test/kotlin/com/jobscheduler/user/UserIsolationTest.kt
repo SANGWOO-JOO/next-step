@@ -62,7 +62,7 @@ class UserIsolationTest(
     @Test
     fun `다른 사용자의 데이터는 목록에 안 보이고 id로 고치거나 지울 수 없다`() {
         TestUsers.loginAs(TestUsers.OTHER)
-        val goal = goalService.create(GoalRequest(title = "남의 목표", categoryId = otherCategoryId))
+        val goal = goalService.create(GoalRequest(title = "이력서 작성", color = "#2563eb"))
         val daily = dailyGoalService.create(DailyGoalCreateRequest(date = day, content = "남의 할 일", categoryId = otherCategoryId))
         val block = timeBlockService.create(TimeBlockRequest(daily.id, startAt = at(9), endAt = at(10)))
         val log = actualLogService.create(ActualLogRequest(day, at(11), at(12), ActualKind.STUDY, categoryId = otherCategoryId)).single()
@@ -127,15 +127,15 @@ class UserIsolationTest(
     }
 
     @Test
-    fun `처음 로그인하면 사용자와 기본 분류가 생기고 다시 로그인하면 이름만 갱신된다`() {
+    fun `처음 로그인하면 사용자와 기타 분류가 생기고 다시 로그인하면 이름만 갱신된다`() {
         val first = userService.signIn("google-new-1", "new@example.com", "새 사람", null)
         val names = CurrentUser.runAs(first.id!!) { categoryService.list(includeInactive = true).map { it.name } }
-        assertEquals(listOf("이력서 작성", "면접 준비", "CS 공부", "코딩 테스트", "사이드 프로젝트", "기타"), names)
+        assertEquals(listOf("기타"), names)
 
         val again = userService.signIn("google-new-1", "new@example.com", "바뀐 이름", "https://example.com/p.png")
         assertEquals(first.id, again.id)
         assertEquals("바뀐 이름", again.name)
         val count = CurrentUser.runAs(first.id!!) { categoryService.list(includeInactive = true).size }
-        assertEquals(6, count)
+        assertEquals(1, count)
     }
 }

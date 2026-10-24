@@ -32,7 +32,7 @@ class GoalControllerTest(
 
     @Test
     fun `목표를 만들고 주 목표 시간을 정하면 계획 화면에 나온다`() {
-        val id = createGoal("""{"title":"이력서 완성","categoryId":1,"targetDate":"2026-12-31"}""")
+        val id = createGoal("""{"title":"이력서 완성","color":"#2563eb","targetDate":"2026-12-31"}""")
 
         mockMvc.put("/api/goals/$id/weeks/2026-10-19") {
             contentType = MediaType.APPLICATION_JSON
@@ -44,7 +44,7 @@ class GoalControllerTest(
         mockMvc.get("/api/plan/week?start=2026-10-19").andExpect {
             status { isOk() }
             jsonPath("$.goals[0].goal.title") { value("이력서 완성") }
-            jsonPath("$.goals[0].goal.category.name") { value("이력서 작성") }
+            jsonPath("$.goals[0].goal.category.color") { value("#2563eb") }
             jsonPath("$.targetMinutes") { value(300) }
         }
         mockMvc.patch("/api/goals/$id/status") {
@@ -57,12 +57,12 @@ class GoalControllerTest(
     fun `잘못된 요청은 공통 에러 형식으로 400을 반환한다`() {
         mockMvc.post("/api/goals") {
             contentType = MediaType.APPLICATION_JSON
-            content = """{"title":" ","categoryId":1}"""
+            content = """{"title":" ","color":"#2563eb"}"""
         }.andExpect {
             status { isBadRequest() }
             jsonPath("$.fieldErrors[0].field") { value("title") }
         }
-        val id = createGoal("""{"title":"이력서","categoryId":1}""")
+        val id = createGoal("""{"title":"이력서","color":"#2563eb"}""")
         mockMvc.put("/api/goals/$id/weeks/2026-10-21") {
             contentType = MediaType.APPLICATION_JSON
             content = """{"minutes":60}"""

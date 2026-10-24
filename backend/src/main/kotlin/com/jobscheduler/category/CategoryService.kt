@@ -27,12 +27,37 @@ class CategoryService(
         return categories.map { CategoryResponse.from(it).copy(deletable = it.id !in used) }
     }
 
-    /** 새 사용자의 기본 분류(docs/design.md 11-6 2-1). 목적별 분류는 2-3에서 바꾼다 */
+    /** 새 사용자는 "기타" 하나로 시작한다. 나머지 분류는 목표를 만들 때 함께 생긴다(docs/design.md 11-6 2-2) */
     fun createDefaults() {
         DEFAULTS.forEachIndexed { i, (name, color, icon) ->
             categoryRepository.save(Category(name = name, color = color, sortOrder = i + 1, icon = icon))
         }
     }
+
+    /**
+     * 목표의 분류(2-2 목표 하나로 통일). 바꿀 분류가 있으면 이름·색을 바꾸고, 없으면 같은 이름의 분류를
+     * 이어 쓰거나(다시 켜고 색을 바꾼다) 새로 만든다. 다른 목표가 쓰는 분류인지는 GoalService가 본다.
+     */
+    fun forGoal(name: String, color: String, current: Category?): Category {
+        if (current != null) {
+            if (categoryRepository.existsByNameAndIdNot(name, current.id!!)) {
+                throw BusinessRuleException("같은 이름이 이미 있어요(설정의 숨긴 항목 포함): $name", "DUPLICATE_GOAL")
+            }
+            current.name = name
+            current.color = color
+            return current
+        }
+        categoryRepository.findByName(name)?.let {
+            it.color = color
+            it.active = true
+            return it
+        }
+        val nextOrder = (categoryRepository.findAll().maxOfOrNull { it.sortOrder } ?: 0) + 1
+        return categoryRepository.save(Category(name = name, color = color, sortOrder = nextOrder))
+    }
+
+    @Transactional(readOnly = true)
+    fun findByName(name: String): Category? = categoryRepository.findByName(name)
 
     fun create(req: CategoryRequest): CategoryResponse {
         val name = req.name.trim()
@@ -122,11 +147,6 @@ class CategoryService(
 
     companion object {
         private val DEFAULTS = listOf(
-            Triple("이력서 작성", "#2563eb", "📝"),
-            Triple("면접 준비", "#dc2626", "💬"),
-            Triple("CS 공부", "#16a34a", "📘"),
-            Triple("코딩 테스트", "#9333ea", "💻"),
-            Triple("사이드 프로젝트", "#ea580c", "🛠️"),
             Triple("기타", "#6b7280", "📌"),
         )
         private val USAGE_TABLES = listOf("daily_goal", "goal", "actual_log", "checklist_item", "focus_session")

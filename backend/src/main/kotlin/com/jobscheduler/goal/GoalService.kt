@@ -44,8 +44,11 @@ class GoalService(
 
     fun create(req: GoalRequest): GoalResponse {
         requireActiveSlot()
+        val title = req.title.trim()
+        // 같은 이름의 분류를 다른 목표가 쓰고 있으면 겹친다(목표와 분류는 1:1)
+        categoryService.findByName(title)?.let { if (goalRepository.existsByCategoryId(it.id!!)) throw duplicateTitle(title) }
         val goal = goalRepository.save(
-            Goal(title = req.title.trim(), category = categoryService.getAssignable(req.categoryId), targetDate = req.targetDate),
+            Goal(title = title, category = categoryService.forGoal(title, req.color, null), targetDate = req.targetDate),
         )
         linkLooseDailyGoals(goal)
         return GoalResponse.from(goal)
@@ -53,9 +56,11 @@ class GoalService(
 
     fun update(id: Long, req: GoalRequest): GoalResponse {
         val goal = getEntity(id)
-        // 이미 지정된 분류는 비활성이어도 유지하고, 바꿀 때만 활성 여부를 본다
-        if (req.categoryId != goal.category.id) goal.category = categoryService.getAssignable(req.categoryId)
-        goal.title = req.title.trim()
+        val title = req.title.trim()
+        if (goalRepository.existsByTitleAndIdNot(title, id)) throw duplicateTitle(title)
+        // 목표 이름·색을 바꾸면 1:1 분류도 함께 바뀐다
+        categoryService.forGoal(title, req.color, goal.category)
+        goal.title = title
         goal.targetDate = req.targetDate
         linkLooseDailyGoals(goal)
         return GoalResponse.from(goal)
@@ -132,6 +137,9 @@ class GoalService(
 
     fun getEntity(id: Long): Goal =
         goalRepository.findByIdOrNull(id) ?: throw NotFoundException("목표를 찾을 수 없어요: $id")
+
+    private fun duplicateTitle(title: String) =
+        BusinessRuleException("이미 있는 목표 이름이에요: $title", "DUPLICATE_GOAL")
 
     private fun requireActiveSlot() {
         if (goalRepository.countByStatus(GoalStatus.ACTIVE) >= MAX_ACTIVE) {

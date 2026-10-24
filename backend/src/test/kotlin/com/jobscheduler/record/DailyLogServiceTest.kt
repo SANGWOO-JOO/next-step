@@ -56,7 +56,7 @@ class DailyLogServiceTest(
     fun setUp() {
         clock.instant = Instant.parse("2026-10-22T00:00:00Z")
         categoryId = categoryService.list(includeInactive = false).first().id
-        val goal = goalService.create(GoalRequest(title = "이직", categoryId = categoryId))
+        val goal = goalService.create(GoalRequest(title = "이력서 작성", color = "#2563eb"))
         weeklyId = goal.id
     }
 

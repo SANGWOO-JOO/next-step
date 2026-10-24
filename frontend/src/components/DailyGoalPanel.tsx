@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent, type KeyboardEvent } from 'react'
-import { createCategory, getCategories, updateCategory, type Category } from '../api/categories'
+import type { Category } from '../api/categories'
 import { errorMessage } from '../api/client'
+import { createGoal, getGoals, MAX_ACTIVE_GOALS, type Goal } from '../api/goals'
 import {
   MAX_CORE,
   changeDailyGoalType,
@@ -228,7 +229,7 @@ function DailyGoalItem({
             className="category-dot"
             style={{ background: goal.category.color }}
             title={goal.category.name}
-            aria-label={`분류: ${goal.category.name}`}
+            aria-label={`목표: ${goal.category.name}`}
           />
         )}
         <MoreMenu
@@ -306,14 +307,18 @@ type NewFormProps = {
 }
 
 type Option =
-  | { kind: 'pick'; category: Category }
-  | { kind: 'revive'; category: Category }
+  | { kind: 'goal'; goal: Goal }
+  | { kind: 'etc'; category: Category }
   | { kind: 'create'; name: string }
+  | { kind: 'full'; name: string }
+
+/** 목표 밖의 일을 넣는 분류(docs/design.md 11-6 2-2 추가 결정 ③) */
+const ETC_NAME = '기타'
 
 /**
- * 한 줄 빠른 추가 = 분류 찾기(1-4f ㊵, Linear·Notion 속성 선택 참고). 할 일은 분류 그 자체라
- * 쓰는 글자로 분류를 찾아 고르면 내용·분류가 모두 그 분류 이름으로 바로 추가된다.
- * 맞는 분류가 없으면 안 쓴 색 계열을 골라 새 분류를 만들고(㊷), 숨긴 분류면 다시 켜고 추가한다.
+ * 한 줄 빠른 추가 = 목표 찾기(1-4f ㊵, 2-2 목표 하나로 통일). 쓰는 글자로 진행 중 목표를 찾아 고르면
+ * 그 목표의 할 일로 바로 추가된다. 목표 밖의 일은 "기타". 맞는 목표가 없으면 안 쓴 색 계열을 골라
+ * 새 목표로 만들고(㊷) 추가한다. 진행 중 목표가 꽉 찼으면 안내만 한다.
  */
 export function NewDailyGoalForm({ date, categories, onSubmit, placeholder, autoFocus, onDone }: NewFormProps) {
   const [query, setQuery] = useState('')
@@ -321,36 +326,38 @@ export function NewDailyGoalForm({ date, categories, onSubmit, placeholder, auto
   const [focused, setFocused] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  // 숨긴 분류까지 알아야 같은 이름을 다시 켤 수 있다
-  const [hidden, setHidden] = useState<Category[]>([])
-  // 새 분류 색 고르기 단계
+  const [goals, setGoals] = useState<Goal[]>([])
+  // 새 목표 색 고르기 단계
   const [creating, setCreating] = useState<{ name: string; colors: string[]; index: number } | null>(null)
 
-  const loadHidden = () =>
-    getCategories(true)
-      .then((all) => setHidden(all.filter((c) => !c.active)))
-      .catch(() => setHidden([]))
+  const loadGoals = () =>
+    getGoals()
+      .then(setGoals)
+      .catch(() => setGoals([]))
   useEffect(() => {
-    loadHidden()
+    loadGoals()
   }, [])
 
+  const activeGoals = goals.filter((g) => g.status === 'ACTIVE')
+  const etc = categories.find((c) => c.name === ETC_NAME)
   const q = query.trim()
   const lower = q.toLowerCase()
-  // 전체 목록을 늘 보여 주고, 쓴 글자와 맞는 분류를 위로 올린다(1-4f ㊵)
-  const rank = (c: Category) => {
-    const name = c.name.toLowerCase()
-    return !lower ? 0 : name.startsWith(lower) ? 0 : name.includes(lower) ? 1 : 2
+  // 전체 목록을 늘 보여 주고, 쓴 글자와 맞는 목표를 위로 올린다(1-4f ㊵)
+  const rank = (name: string) => {
+    const n = name.toLowerCase()
+    return !lower ? 0 : n.startsWith(lower) ? 0 : n.includes(lower) ? 1 : 2
   }
-  const sorted = [...categories].sort((x, y) => rank(x) - rank(y))
-  const matchCount = categories.filter((c) => rank(c) < 2).length
-  const exact = categories.some((c) => c.name.toLowerCase() === lower)
-  const hiddenSame = hidden.find((c) => c.name.toLowerCase() === lower)
+  const sorted = [...activeGoals].sort((x, y) => rank(x.title) - rank(y.title))
+  const matchCount = activeGoals.filter((g) => rank(g.title) < 2).length
+  // 끝난 목표와 같은 이름이면 새로 만들 수 없다(이름이 겹친다). 계획 화면에서 다시 진행하게 둔다
+  const exact = goals.some((g) => g.title.toLowerCase() === lower) || lower === ETC_NAME
   const options: Option[] = [
-    ...sorted.slice(0, matchCount).map((category) => ({ kind: 'pick' as const, category })),
+    ...sorted.slice(0, matchCount).map((goal) => ({ kind: 'goal' as const, goal })),
     ...(q && !exact
-      ? [hiddenSame ? { kind: 'revive' as const, category: hiddenSame } : { kind: 'create' as const, name: q }]
+      ? [activeGoals.length >= MAX_ACTIVE_GOALS ? { kind: 'full' as const, name: q } : { kind: 'create' as const, name: q }]
       : []),
-    ...sorted.slice(matchCount).map((category) => ({ kind: 'pick' as const, category })),
+    ...sorted.slice(matchCount).map((goal) => ({ kind: 'goal' as const, goal })),
+    ...(etc ? [{ kind: 'etc' as const, category: etc }] : []),
   ]
   const open = focused && (creating !== null || options.length > 0)
   const current = Math.min(active, options.length - 1)
@@ -363,15 +370,16 @@ export function NewDailyGoalForm({ date, categories, onSubmit, placeholder, auto
     setFocused(false)
   }
 
-  const add = (category: Category) =>
-    onSubmit({ goalId: null, date, content: category.name, firstAction: null, categoryId: category.id, type: null })
+  const add = (goal: Goal | null, category: Category | Goal['category']) =>
+    onSubmit({ goalId: goal?.id ?? null, date, content: goal?.title ?? category.name, firstAction: null, categoryId: category.id, type: null })
 
-  const act = async (make: () => Promise<Category>) => {
+  const act = async (make: () => Promise<{ goal: Goal | null; category: Category | Goal['category'] }>) => {
     if (busy) return
     setBusy(true)
     setError(null)
     try {
-      if (await add(await make())) {
+      const { goal, category } = await make()
+      if (await add(goal, category)) {
         reset()
         onDone?.()
       }
@@ -383,28 +391,20 @@ export function NewDailyGoalForm({ date, categories, onSubmit, placeholder, auto
   }
 
   const choose = (option: Option) => {
-    if (option.kind === 'pick') act(async () => option.category)
-    else if (option.kind === 'revive')
-      act(async () => {
-        const c = option.category
-        const revived = await updateCategory(c.id, {
-          name: c.name,
-          color: c.color,
-          targetRatio: c.targetRatio,
-          weeklyTargetMinutes: c.weeklyTargetMinutes,
-          active: true,
-          icon: c.icon ?? null,
-        })
-        loadHidden()
-        return revived
-      })
-    else setCreating({ name: option.name, colors: availableColors([...categories, ...hidden].map((c) => c.color)), index: 0 })
+    if (option.kind === 'goal') act(async () => ({ goal: option.goal, category: option.goal.category }))
+    else if (option.kind === 'etc') act(async () => ({ goal: null, category: option.category }))
+    else if (option.kind === 'create')
+      setCreating({ name: option.name, colors: availableColors(goals.map((g) => g.category.color)), index: 0 })
   }
 
   const confirmCreate = () => {
     if (!creating) return
     const { name, colors, index } = creating
-    act(() => createCategory({ name, color: colors[index], targetRatio: null, weeklyTargetMinutes: null, active: true, icon: null }))
+    act(async () => {
+      const goal = await createGoal({ title: name, color: colors[index], targetDate: null })
+      loadGoals()
+      return { goal, category: goal.category }
+    })
   }
 
   const submit = (e: FormEvent) => {
@@ -440,7 +440,7 @@ export function NewDailyGoalForm({ date, categories, onSubmit, placeholder, auto
         <img className="quick-add-plus" src={addIcon} alt="" aria-hidden="true" width={18} height={18} draggable={false} />
         <input
           className="grow"
-          placeholder={placeholder ?? '분류를 찾아 추가 (예: CS 공부)'}
+          placeholder={placeholder ?? '목표를 찾아 추가 (예: 기술 면접 준비)'}
           autoFocus={autoFocus}
           value={query}
           onChange={(e) => {
@@ -458,7 +458,7 @@ export function NewDailyGoalForm({ date, categories, onSubmit, placeholder, auto
           aria-expanded={open}
           aria-controls="quick-add-options"
           aria-activedescendant={open && !creating ? `quick-add-option-${current}` : undefined}
-          aria-label="추가할 분류"
+          aria-label="추가할 목표"
           disabled={busy}
         />
         {q && (
@@ -474,10 +474,10 @@ export function NewDailyGoalForm({ date, categories, onSubmit, placeholder, auto
           <div className="quick-add-create-head">
             <span className="category-dot" style={{ background: creating.colors[creating.index] }} aria-hidden="true" />
             <strong>{creating.name}</strong>
-            <span className="muted small">새 분류</span>
+            <span className="muted small">새 목표</span>
           </div>
           <p className="muted small">색 (아직 안 쓴 색만)</p>
-          <div className="quick-add-swatches" role="radiogroup" aria-label="새 분류 색">
+          <div className="quick-add-swatches" role="radiogroup" aria-label="새 목표 색">
             {creating.colors.map((color, i) => (
               <button
                 key={color}
@@ -500,41 +500,43 @@ export function NewDailyGoalForm({ date, categories, onSubmit, placeholder, auto
         </div>
       )}
       {open && !creating && (
-        <ul className="quick-add-options" id="quick-add-options" role="listbox" aria-label="분류">
+        <ul className="quick-add-options" id="quick-add-options" role="listbox" aria-label="목표">
           {options.map((o, i) => (
             <li
-              key={o.kind === 'create' ? 'create' : `${o.kind}-${o.category.id}`}
+              key={o.kind === 'goal' ? `goal-${o.goal.id}` : o.kind}
               id={`quick-add-option-${i}`}
               role="option"
               aria-selected={i === current}
+              aria-disabled={o.kind === 'full'}
               className={i === current ? 'quick-add-option on' : 'quick-add-option'}
               onMouseDown={(e) => e.preventDefault()}
               onMouseEnter={() => setActive(i)}
               onClick={() => choose(o)}
             >
-              {o.kind === 'pick' && (
+              {o.kind === 'goal' && (
                 <>
-                  <span className="category-dot" style={{ background: o.category.color }} aria-hidden="true" />
-                  {o.category.name}
+                  <span className="category-dot" style={{ background: o.goal.category.color }} aria-hidden="true" />
+                  {o.goal.title}
                 </>
               )}
-              {o.kind === 'revive' && (
+              {o.kind === 'etc' && (
                 <>
-                  <span className="category-dot" style={{ background: o.category.color, opacity: 0.5 }} aria-hidden="true" />
-                  <span>
-                    ‘{o.category.name}’ 숨긴 분류 다시 켜고 추가
-                  </span>
+                  <span className="category-dot" style={{ background: o.category.color }} aria-hidden="true" />
+                  {ETC_NAME} <span className="muted small">· 목표 밖의 일</span>
                 </>
               )}
               {o.kind === 'create' && (
                 <>
                   <span className="quick-add-new" aria-hidden="true">+</span>
-                  <span>
-                    ‘{o.name}’ 분류 만들기
-                  </span>
+                  <span>‘{o.name}’ 새 목표로 만들기</span>
                 </>
               )}
-              {i === current && <span className="quick-add-key">Enter</span>}
+              {o.kind === 'full' && (
+                <span className="muted small">
+                  진행 중 목표가 {MAX_ACTIVE_GOALS}개예요. 계획에서 하나를 완료하거나 멈추면 새 목표를 만들 수 있어요
+                </span>
+              )}
+              {i === current && o.kind !== 'full' && <span className="quick-add-key">Enter</span>}
             </li>
           ))}
         </ul>
@@ -580,7 +582,7 @@ function EditDailyGoalForm({ goal, categories, onSubmit, onCancel }: EditFormPro
         value={firstAction}
         onChange={(e) => setFirstAction(e.target.value)}
       />
-      <CategorySelect categories={options} value={categoryId} onChange={setCategoryId} emptyLabel="미분류" />
+      <CategorySelect categories={options} value={categoryId} onChange={setCategoryId} emptyLabel="목표 없음" />
       <FormButtons submitLabel="저장" onCancel={onCancel} />
     </form>
   )
@@ -598,7 +600,7 @@ function CategorySelect({ categories, value, onChange, emptyLabel }: CategorySel
     <select
       value={value ?? ''}
       onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
-      aria-label="분류"
+      aria-label="목표"
     >
       <option value="">{emptyLabel}</option>
       {categories.map((c) => (

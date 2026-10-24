@@ -373,7 +373,7 @@ export default function TodayPage() {
                 <NewDailyGoalForm
                   date={date}
                   categories={categories}
-                  placeholder={`분류 찾기 · ${dayLabel(date).replace(/^\d+월 /, '')}`}
+                  placeholder={`목표 찾기 · ${dayLabel(date).replace(/^\d+월 /, '')}`}
                   autoFocus
                   onDone={close}
                   onSubmit={(input) => run(() => createDailyGoal(input))}

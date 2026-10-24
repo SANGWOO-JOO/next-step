@@ -50,7 +50,7 @@ class FocusSessionServiceTest(
         clock.instant = Instant.parse("2026-10-22T00:00:00Z")
         val categories = categoryService.list(includeInactive = false)
         csCategoryId = categories.first { it.name == "CS 공부" }.id
-        val goal = goalService.create(GoalRequest(title = "이직", categoryId = categories.first().id))
+        val goal = goalService.create(GoalRequest(title = "이력서 작성", color = "#2563eb"))
         resume = dailyGoalService.create(DailyGoalCreateRequest(goal.id, thursday, "성과 정리", firstAction = "문서 열기"))
     }
 
