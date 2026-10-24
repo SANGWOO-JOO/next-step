@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { errorMessage } from '../api/client'
 import { completeOnboarding, skipOnboarding, type Me, type Purpose } from '../api/me'
 import studentArt from '../assets/illust/mascot-student.svg'
@@ -76,6 +76,8 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
 
   const [step, setStep] = useState(1)
   const [purpose, setPurpose] = useState<Purpose>('JOB_SEEKER')
+  // 이용약관·개인정보 수집과 이용 동의(2-4 ③). 체크해야 다음으로 간다
+  const [agreed, setAgreed] = useState(false)
   const [goalName, setGoalName] = useState(PURPOSES[0].goals[0])
   const [own, setOwn] = useState('')
   const [deadline, setDeadline] = useState('3m')
@@ -141,6 +143,7 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
     try {
       const months = DEADLINES.find((d) => d.id === deadline)!.months
       const me = await completeOnboarding({
+        agreed,
         purpose,
         goal: { title, color: availableColors([])[0], targetDate: months === null ? null : plusMonths(today, months) },
         blocks: withBlocks ? blocks() : [],
@@ -157,7 +160,7 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
   const skip = async () => {
     setBusy(true)
     try {
-      onDone(await skipOnboarding())
+      onDone(await skipOnboarding(agreed))
     } catch (e) {
       setError(errorMessage(e))
       setBusy(false)
@@ -175,7 +178,13 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
               <span key={n} className={n <= step ? 'welcome-step on' : 'welcome-step'} />
             ))}
           </span>
-          <button type="button" className="ghost small" onClick={skip} disabled={busy}>
+          <button
+            type="button"
+            className="ghost small"
+            onClick={skip}
+            disabled={busy || !agreed}
+            title={agreed ? undefined : '아래 약관에 동의하면 건너뛸 수 있어요'}
+          >
             건너뛰기
           </button>
         </div>
@@ -200,6 +209,19 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
                 </button>
               ))}
             </div>
+            <label className="welcome-agree">
+              <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
+              <span>
+                <Link to="/terms" target="_blank">
+                  이용약관
+                </Link>
+                과{' '}
+                <Link to="/privacy" target="_blank">
+                  개인정보 수집과 이용
+                </Link>
+                에 동의해요 <span className="muted">(필수)</span>
+              </span>
+            </label>
           </section>
         )}
 
@@ -345,7 +367,7 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
               </button>
             )}
             {step < 3 ? (
-              <button type="button" onClick={() => setStep(step + 1)} disabled={step === 2 && !title.trim()}>
+              <button type="button" onClick={() => setStep(step + 1)} disabled={(step === 1 && !agreed) || (step === 2 && !title.trim())}>
                 다음
               </button>
             ) : (

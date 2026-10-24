@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 260"><defs>
+<linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8FB1FF"/><stop offset=".55" stop-color="#8B7CF8"/><stop offset="1" stop-color="#A06CF6"/></linearGradient>
+<radialGradient id="hl" cx=".3" cy=".22" r=".55"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<linearGradient id="limb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8E86F7"/><stop offset="1" stop-color="#7A62E8"/></linearGradient>
+</defs>
+<ellipse cx="120" cy="248" rx="62" ry="10" fill="#000" opacity=".22"/>
+
+<rect x="88" y="200" width="20" height="44" rx="10" fill="url(#limb)"/>
+<rect x="132" y="200" width="20" height="44" rx="10" fill="url(#limb)"/>
+<ellipse cx="96" cy="244" rx="16" ry="8" fill="#6D55DE"/><ellipse cx="144" cy="244" rx="16" ry="8" fill="#6D55DE"/>
+<rect x="18" y="128" width="40" height="20" rx="10" fill="url(#limb)" transform="rotate(20 38 138)"/><rect x="186" y="74" width="20" height="56" rx="10" fill="url(#limb)" transform="rotate(25 196 128)"/><circle cx="216" cy="70" r="13" fill="#8E86F7"/>
+<rect x="40" y="58" width="160" height="152" rx="52" fill="url(#b)"/>
+<rect x="40" y="58" width="160" height="152" rx="52" fill="url(#hl)"/>
+<ellipse cx="88" cy="88" rx="22" ry="12" fill="#fff" opacity=".35" transform="rotate(-20 88 88)"/>
+<ellipse cx="98" cy="126" rx="10" ry="13" fill="#2B2350"/><ellipse cx="142" cy="126" rx="10" ry="13" fill="#2B2350"/>
+<circle cx="101" cy="121" r="3.6" fill="#fff"/><circle cx="145" cy="121" r="3.6" fill="#fff"/>
+<ellipse cx="80" cy="148" rx="11" ry="7" fill="#FF9EC7" opacity=".75"/><ellipse cx="160" cy="148" rx="11" ry="7" fill="#FF9EC7" opacity=".75"/>
+<path d="M110 148q10 10 20 0" fill="none" stroke="#2B2350" stroke-width="4.5" stroke-linecap="round"/>
+<rect x="104" y="186" width="10" height="10" rx="3" fill="#fff" opacity=".45"/><rect x="114" y="178" width="10" height="10" rx="3" fill="#fff" opacity=".7"/><rect x="124" y="170" width="10" height="10" rx="3" fill="#fff"/>
+<path d="M226 40l3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="#FDE68A"/><path d="M28 70l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#FBCFE8"/></svg>

@@ -27,6 +27,8 @@ class AppUser(
     /** 시작 설정에서 고른 목적. 건너뛰었으면 비어 있다 */
     @Enumerated(EnumType.STRING)
     var purpose: UserPurpose? = null,
+    /** 이용약관·개인정보 수집·이용에 동의한 때(2-4) */
+    var termsAgreedAt: OffsetDateTime? = null,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

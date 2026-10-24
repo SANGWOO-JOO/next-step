@@ -9,6 +9,8 @@ import {
   type CategoryInput,
 } from '../api/categories'
 import { errorMessage } from '../api/client'
+import { withdraw } from '../api/me'
+import { Link } from 'react-router-dom'
 import { availableColors } from '../utils/categoryColors'
 import CategoryBadge from '../components/CategoryBadge'
 import IconPicker from '../components/IconPicker'
@@ -30,6 +32,7 @@ export default function SettingsPage() {
       <h1>설정</h1>
       <p className="muted">타이머, 알림, 텔레그램 설정은 1-5단계에서 추가돼요.</p>
       <CategorySettings />
+      <AccountSection />
     </section>
   )
 }
@@ -227,5 +230,44 @@ function NewCategoryForm({ usedColors, onCreate }: { usedColors: string[]; onCre
       <button type="submit">추가</button>
       {draft.name && <CategoryBadge name={draft.name} color={draft.color} />}
     </form>
+  )
+}
+
+/** 계정: 약관 링크와 회원 탈퇴(docs/design.md 11-6 2-4 ④) */
+function AccountSection() {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const leave = async () => {
+    if (!confirm('정말 탈퇴할까요? 목표, 할 일, 시간표, 기록이 모두 바로 지워지고 되돌릴 수 없어요.')) return
+    setBusy(true)
+    setError(null)
+    try {
+      await withdraw()
+      // 세션이 끝났으니 처음(랜딩)부터 다시 연다
+      window.location.href = '/'
+    } catch (e) {
+      setError(errorMessage(e))
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="card settings-account">
+      <h2>계정</h2>
+      <p className="muted small">
+        <Link to="/terms">이용약관</Link> <Link to="/privacy">개인정보 처리방침</Link>
+      </p>
+      <div className="settings-leave">
+        <div>
+          <strong>탈퇴하기</strong>
+          <p className="muted small">계정과 모든 기록을 바로 지워요. 되돌릴 수 없어요.</p>
+        </div>
+        <button type="button" className="danger" onClick={leave} disabled={busy}>
+          탈퇴하기
+        </button>
+      </div>
+      {error && <p className="error-banner">{error}</p>}
+    </div>
   )
 }

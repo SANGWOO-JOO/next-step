@@ -10,6 +10,7 @@ import com.jobscheduler.timeblock.TimeBlockService
 import com.jobscheduler.timeblock.dto.TimeBlockRequest
 import com.jobscheduler.user.dto.MeResponse
 import com.jobscheduler.user.dto.OnboardingRequest
+import java.time.OffsetDateTime
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -33,6 +34,7 @@ class OnboardingService(
     fun complete(req: OnboardingRequest): MeResponse {
         val user = currentUser()
         if (user.onboarded) throw BusinessRuleException("이미 시작 설정을 마쳤어요.", "ALREADY_ONBOARDED")
+        requireAgreed(req.agreed)
 
         val (from, to) = paintableDays()
         val byDate = req.blocks.groupBy { it.startAt.atZoneSameInstant(StudySliceCollector.ZONE).toLocalDate() }
@@ -50,13 +52,16 @@ class OnboardingService(
             }
         }
         user.purpose = req.purpose
+        user.termsAgreedAt = OffsetDateTime.now(clock)
         user.onboarded = true
         return MeResponse.from(user)
     }
 
     /** 이미 쓰던 사람은 건너뛴다(2-3 ⑤). 아무것도 만들지 않는다 */
-    fun skip(): MeResponse {
+    fun skip(agreed: Boolean): MeResponse {
+        requireAgreed(agreed)
         val user = currentUser()
+        user.termsAgreedAt = OffsetDateTime.now(clock)
         user.onboarded = true
         return MeResponse.from(user)
     }
@@ -65,6 +70,10 @@ class OnboardingService(
     fun paintableDays(): Pair<LocalDate, LocalDate> {
         val today = LocalDate.now(clock.withZone(StudySliceCollector.ZONE))
         return today to today.with(DayOfWeek.SUNDAY)
+    }
+
+    private fun requireAgreed(agreed: Boolean) {
+        if (!agreed) throw BusinessRuleException("이용약관과 개인정보 수집과 이용에 동의해 주세요.", "TERMS_NOT_AGREED")
     }
 
     private fun currentUser(): AppUser =

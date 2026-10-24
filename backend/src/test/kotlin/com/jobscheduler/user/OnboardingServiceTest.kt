@@ -49,7 +49,7 @@ class OnboardingServiceTest(
     private fun at(date: LocalDate, hour: Int) = OffsetDateTime.of(date.atTime(hour, 0), ZoneOffset.ofHours(9))
     private fun block(date: LocalDate, from: Int, to: Int) = OnboardingBlock(at(date, from), at(date, to))
     private fun request(vararg blocks: OnboardingBlock) =
-        OnboardingRequest(UserPurpose.JOB_SEEKER, GoalRequest("코딩 테스트 합격", "#14b8a6", LocalDate.of(2027, 1, 31)), blocks.toList())
+        OnboardingRequest(true, UserPurpose.JOB_SEEKER, GoalRequest("코딩 테스트 합격", "#14b8a6", LocalDate.of(2027, 1, 31)), blocks.toList())
 
     @BeforeEach
     fun newUser() {
@@ -105,8 +105,18 @@ class OnboardingServiceTest(
     }
 
     @Test
+    fun `약관에 동의하지 않으면 마칠 수도 건너뛸 수도 없다`() {
+        val e = assertThrows<BusinessRuleException> {
+            onboardingService.complete(OnboardingRequest(false, UserPurpose.JOB_SEEKER, GoalRequest("목표", "#14b8a6")))
+        }
+        assertEquals("TERMS_NOT_AGREED", e.code)
+        assertThrows<BusinessRuleException> { onboardingService.skip(false) }
+        assertFalse(userService.me().onboarded)
+    }
+
+    @Test
     fun `건너뛰면 아무것도 만들지 않고 시작 설정만 끝낸다`() {
-        val me = onboardingService.skip()
+        val me = onboardingService.skip(true)
         assertTrue(me.onboarded)
         assertEquals(null, me.purpose)
         assertTrue(goalService.list().isEmpty())

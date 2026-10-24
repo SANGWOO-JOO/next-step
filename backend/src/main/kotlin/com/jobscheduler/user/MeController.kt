@@ -2,8 +2,14 @@ package com.jobscheduler.user
 
 import com.jobscheduler.user.dto.MeResponse
 import com.jobscheduler.user.dto.OnboardingRequest
+import com.jobscheduler.user.dto.OnboardingSkipRequest
 import jakarta.validation.Valid
+import jakarta.servlet.http.HttpServletRequest
+import org.springframework.http.HttpStatus
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -14,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 class MeController(
     private val userService: UserService,
     private val onboardingService: OnboardingService,
+    private val withdrawalService: WithdrawalService,
 ) {
     /** 로그인한 사용자. 로그인 안 했으면 보안 설정이 401을 돌려준다 */
     @GetMapping
@@ -25,5 +32,14 @@ class MeController(
 
     /** 시작 설정 건너뛰기(이미 쓰던 사람) */
     @PostMapping("/onboarding/skip")
-    fun skipOnboarding(): MeResponse = onboardingService.skip()
+    fun skipOnboarding(@RequestBody req: OnboardingSkipRequest): MeResponse = onboardingService.skip(req.agreed)
+
+    /** 회원 탈퇴(2-4). 모든 기록과 계정을 지우고 로그인 세션도 끝낸다 */
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun withdraw(request: HttpServletRequest) {
+        withdrawalService.withdraw(CurrentUser.id())
+        SecurityContextHolder.clearContext()
+        request.getSession(false)?.invalidate()
+    }
 }

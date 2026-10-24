@@ -14,6 +14,8 @@ export type Me = {
 }
 
 export type OnboardingInput = {
+  /** 이용약관·개인정보 수집·이용 동의(2-4) */
+  agreed: boolean
   purpose: Purpose
   goal: GoalInput
   /** 칠한 칸(이어진 칸은 합쳐서). 서울 오프셋 ISO */
@@ -32,4 +34,7 @@ export const GOOGLE_LOGIN_URL = '/oauth2/authorization/google'
 export const completeOnboarding = (input: OnboardingInput) => api.post<Me>('/api/me/onboarding', input)
 
 /** 이미 쓰던 사람은 건너뛴다 */
-export const skipOnboarding = () => api.post<Me>('/api/me/onboarding/skip')
+export const skipOnboarding = (agreed: boolean) => api.post<Me>('/api/me/onboarding/skip', { agreed })
+
+/** 회원 탈퇴(2-4). 모든 기록과 계정을 지우고 세션을 끝낸다 */
+export const withdraw = () => api.delete<void>('/api/me')

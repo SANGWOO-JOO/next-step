@@ -6,6 +6,7 @@ import PlanPage from './pages/plan/PlanPage'
 import LogPage from './pages/LogPage'
 import DashboardPage from './pages/DashboardPage'
 import SettingsPage from './pages/SettingsPage'
+import LegalPage from './pages/LegalPage'
 
 export default function App() {
   return (
@@ -27,6 +28,8 @@ export default function App() {
           {/* 2-2에서 체크리스트를 뺐다. 예전 주소는 일정으로 */}
           <Route path="checklist" element={<Navigate to="/" replace />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="terms" element={<LegalPage kind="terms" />} />
+          <Route path="privacy" element={<LegalPage kind="privacy" />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
