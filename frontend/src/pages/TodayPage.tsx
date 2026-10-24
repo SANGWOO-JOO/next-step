@@ -39,7 +39,7 @@ export default function TodayPage() {
       return 'day'
     }
   })
-  /** 이번 주(오늘이 속한 주)에 목표 시간을 나눴는지. 알림 칸용(보는 주와 다를 수 있음) */
+  /** 진행 중 목표가 있는지. 목표 시간은 선택이라 보지 않는다(2-2 추가 결정 ③). 알림 칸용 */
   const [thisWeekHasPlan, setThisWeekHasPlan] = useState<boolean | null>(null)
   const [unfinished, setUnfinished] = useState<DailyGoal[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -138,7 +138,7 @@ export default function TodayPage() {
       getWeekPlan(thisMonday),
     ])
       .then(([d, u, c, b, actual, plan]) => {
-        setThisWeekHasPlan(plan.targetMinutes > 0)
+        setThisWeekHasPlan(plan.goals.some((r) => r.goal.status === 'ACTIVE'))
         setActuals(actual)
         setWeekGoals(d)
         setUnfinished(u)
@@ -402,7 +402,7 @@ export default function TodayPage() {
 /** 지금 걸친 시간 블록, 없으면 다음 블록을 한 줄로 알려준다(Structured의 지금/다음 강조 참고) */
 
 /**
- * 알림 한 칸(docs/design.md 6장 1-4d): 이번 주 계획 없음(목표에 나눈 시간 0) > 월요일 계획하기.
+ * 알림 한 칸(docs/design.md 6장 1-4d): 진행 중 목표 없음 > 월요일 계획하기.
  * 금~일 돌아보기와 21시 이후 하루 마무리는 오른쪽 위 알림 카드(ReminderStack, 1-4f ⑬)로 옮겼다.
  */
 function AlertSlot({
@@ -434,7 +434,7 @@ function AlertSlot({
   const planLink = `/plan?week=${monday}`
   let alert: { text: string; action: ReactNode; onClose?: () => void } | null = null
   if (!hasWeekPlan) {
-    alert = { text: '이번 주 계획이 아직 없어요.', action: <Link className="button-link" to={planLink}>이번 주 계획하기 ▶</Link> }
+    alert = { text: '집중할 목표를 정해 볼까요?', action: <Link className="button-link" to={planLink}>목표 정하기 ▶</Link> }
   } else if (today === monday && !planDismissed) {
     alert = {
       text: '새로운 한 주예요. 지난주를 돌아보고 이번 주를 계획해요.',

@@ -1456,3 +1456,9 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .plan-colors { display: flex; flex-direction: column; gap: 0.35rem; }
 .plan-form { grid-template-columns: 2fr auto 1fr auto; }
 @media (max-width: 720px) { .plan-form { grid-template-columns: 1fr; } }
+/* 목표 시간을 정하지 않은 카드(2-2 추가 결정): 숫자만 */
+.plan-summary.two { grid-template-columns: repeat(2, 1fr); }
+.plan-goal-plain { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin-top: 0.6rem; }
+.plan-goal-plain strong { font-weight: 600; }
+.plan-set-time { margin-left: auto; color: var(--muted); }
+.plan-bars dd { grid-template-columns: 1fr 7.5rem; }

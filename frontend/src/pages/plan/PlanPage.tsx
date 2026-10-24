@@ -100,8 +100,8 @@ export default function PlanPage() {
     <section className="plan-page">
       <div className="plan-header cal-header">
         <div>
-          <h1 className="plan-title">이번 주에 무엇을 얼마나 할까요?</h1>
-          <p className="muted small">언제 할지는 일정에서 정해요.</p>
+          <h1 className="plan-title">이번 주에 무엇을 할까요?</h1>
+          <p className="muted small">얼마나 할지는 정해도 되고 안 정해도 돼요. 언제 할지는 일정에서 정해요.</p>
         </div>
         <span className="cal-nav">
           <button className="ghost" onClick={() => goWeek(thisMonday)} disabled={monday === thisMonday}>
@@ -127,8 +127,9 @@ export default function PlanPage() {
       ) : (
         <>
           {/* 쓸 수 있는 시간·남은 시간은 2-3 시작 설정 뒤에 넣는다(2-2 ⑧) */}
-          <div className="plan-summary card">
-            <Stat label="목표에 나눈 시간" value={plan.targetMinutes} />
+          {/* 목표 시간은 선택이라(2-2 추가 결정) 정한 것이 있을 때만 보인다 */}
+          <div className={plan.targetMinutes > 0 ? 'plan-summary card' : 'plan-summary card two'}>
+            {plan.targetMinutes > 0 && <Stat label="정한 목표 시간" value={plan.targetMinutes} />}
             <Stat label="일정에 잡은 시간" value={plan.scheduledMinutes} />
             <Stat label="실제로 한 시간" value={plan.actualMinutes} />
           </div>
@@ -269,9 +270,38 @@ function GoalCard({ row, monday, goals, run, full }: CardProps) {
         />
       </header>
 
+      {/* 목표 시간은 선택(2-2 추가 결정): 정하지 않았으면 숫자만, 정한 목표에만 −/+와 막대 */}
+      {targetMinutes === 0 ? (
+        <div className="plan-goal-plain">
+          {scheduledMinutes + actualMinutes > 0 ? (
+            <span className="small">
+              일정 <strong>{hoursLabel(scheduledMinutes)}</strong>
+              <span className="muted"> · </span>
+              실제 <strong>{hoursLabel(actualMinutes)}</strong>
+            </span>
+          ) : (
+            <span className="muted small">이번 주엔 아직 잡은 일정이 없어요</span>
+          )}
+          {activeGoal && (
+            <button className="ghost small plan-set-time" onClick={() => setMinutes(STEP * 2)}>
+              목표 시간 정하기
+            </button>
+          )}
+          {activeGoal && (
+            <Link className="plan-schedule-link" to="/">
+              일정에 잡기 →
+            </Link>
+          )}
+        </div>
+      ) : (
       <div className="plan-goal-body">
         <div className="plan-stepper" role="group" aria-label="이번 주 목표 시간">
-          <button className="icon" onClick={() => setMinutes(targetMinutes - STEP)} disabled={targetMinutes === 0} aria-label="30분 줄이기">
+          <button
+            className="icon"
+            onClick={() => setMinutes(targetMinutes - STEP)}
+            aria-label="30분 줄이기"
+            title={targetMinutes <= STEP ? '0분이 되면 목표 시간을 정하지 않은 상태로 돌아가요' : undefined}
+          >
             −
           </button>
           <span className="plan-target">{hoursLabel(targetMinutes)}</span>
@@ -286,7 +316,9 @@ function GoalCard({ row, monday, goals, run, full }: CardProps) {
               <span className="plan-bar">
                 <span className="plan-bar-fill scheduled" style={{ width: `${pct(scheduledMinutes)}%`, background: goal.category.color }} />
               </span>
-              <span className="small">{hoursLabel(scheduledMinutes)}</span>
+              <span className="small">
+                {hoursLabel(scheduledMinutes)} / {hoursLabel(targetMinutes)}
+              </span>
             </dd>
           </div>
           <div>
@@ -305,6 +337,7 @@ function GoalCard({ row, monday, goals, run, full }: CardProps) {
           </Link>
         )}
       </div>
+      )}
     </article>
   )
 }
