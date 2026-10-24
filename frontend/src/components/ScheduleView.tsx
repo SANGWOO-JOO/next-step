@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type DragEvent, type PointerEvent, type ReactNode } from 'react'
 import {
   changeDailyGoalType,
+  createDailyGoal,
   deleteDailyGoal,
   moveDailyGoal,
   toDailyGoalUpdateInput,
@@ -9,6 +10,7 @@ import {
 } from '../api/dailyGoals'
 import { actualFromBlock, updateActualLog, type ActualLog } from '../api/actualLogs'
 import type { Category } from '../api/categories'
+import { createGoal, getGoals, type Goal } from '../api/goals'
 import { createTimeBlock, deleteTimeBlock, setTimeBlockColor, toTimeBlockInput, updateTimeBlock, type TimeBlock } from '../api/timeBlocks'
 import { dayLabel, formatMinutes, minutesOfDay, mondayOf, nowMinutesSeoul, seoulIso, shiftDate, todaySeoul } from '../utils/date'
 import markDistraction from '../assets/icons/actual-distraction.svg'
@@ -17,7 +19,7 @@ import markUnplanned from '../assets/icons/actual-unplanned.svg'
 import asPlannedIcon from '../assets/icons/as-planned.svg'
 import ActualPopover from './ActualPopover'
 import MoreMenu from './MoreMenu'
-import TimeBlockForm from './TimeBlockForm'
+import TimeBlockForm, { type BlockTarget } from './TimeBlockForm'
 import TopicField from './TopicField'
 
 const HOUR_PX = 48
@@ -688,6 +690,32 @@ function SchedulePopover({ popover, goals, run, onClose }: PopoverProps) {
   const start = popover.kind === 'new' ? popover.start : minutesOfDay(popover.block.startAt, date)
   const end = popover.kind === 'new' ? popover.end : minutesOfDay(popover.block.endAt, date)
   const choosable = popover.kind === 'new' ? goals.filter((g) => g.status === 'TODO') : goals
+  // 새 블록은 진행 중 목표로도 바로 잡을 수 있다(2-2): 그날 할 일이 없는 목표만
+  const [allGoals, setAllGoals] = useState<Goal[] | null>(popover.kind === 'new' ? null : [])
+  useEffect(() => {
+    if (popover.kind !== 'new') return
+    getGoals()
+      .then(setAllGoals)
+      .catch(() => setAllGoals([]))
+  }, [popover.kind])
+  const dayGoalIds = new Set(goals.filter((g) => g.date === date).map((g) => g.goalId))
+  const planGoals =
+    popover.kind === 'new' && allGoals ? allGoals.filter((g) => g.status === 'ACTIVE' && !dayGoalIds.has(g.id)) : undefined
+
+  /** 목표를 골랐으면 목표(새로) → 그날 할 일 → 블록 순서로 만든다 */
+  const createWithTarget = async (input: Parameters<typeof createTimeBlock>[0], target: BlockTarget) => {
+    if (!target) return createTimeBlock(input)
+    const goal = target.kind === 'goal' ? target.goal : await createGoal({ title: target.title, color: target.color, targetDate: null })
+    const daily = await createDailyGoal({
+      goalId: goal.id,
+      date,
+      content: goal.title,
+      firstAction: null,
+      categoryId: goal.category.id,
+      type: null,
+    })
+    return createTimeBlock({ ...input, dailyGoalId: daily.id })
+  }
   const goal = popover.kind === 'edit' ? goals.find((g) => g.id === popover.block.dailyGoalId) : undefined
 
   // 아래쪽이면 팝업이 잘리지 않게 블록 위로 올린다
@@ -709,20 +737,22 @@ function SchedulePopover({ popover, goals, run, onClose }: PopoverProps) {
           ×
         </button>
       </div>
-      {choosable.length === 0 && popover.kind === 'new' && (
-        <p className="muted small">이 날의 할 일 목표가 없어서 목표 아닌 일정만 넣을 수 있어요.</p>
-      )}
+      {popover.kind === 'new' && allGoals === null ? (
+        <p className="muted small">불러오는 중…</p>
+      ) : (
       <TimeBlockForm
         date={date}
         goals={choosable}
         allowFree
+        planGoals={planGoals}
+        usedColors={(allGoals ?? []).map((g) => g.category.color)}
         dailyGoalId={popover.kind === 'edit' ? popover.block.dailyGoalId : (choosable[0]?.id ?? null)}
         title={popover.kind === 'edit' ? popover.block.title : null}
         startMinutes={start}
         endMinutes={end}
         submitLabel={popover.kind === 'new' ? '추가' : '저장'}
-        onSubmit={(input) =>
-          run(() => (popover.kind === 'new' ? createTimeBlock(input) : updateTimeBlock(popover.block.id, input))).then(
+        onSubmit={(input, target) =>
+          run(() => (popover.kind === 'new' ? createWithTarget(input, target) : updateTimeBlock(popover.block.id, input))).then(
             (ok) => ok && onClose(),
           )
         }
@@ -733,6 +763,7 @@ function SchedulePopover({ popover, goals, run, onClose }: PopoverProps) {
             : undefined
         }
       />
+      )}
       {popover.kind === 'edit' && (
         <BlockColorPicker
           value={popover.block.color}
