@@ -1538,6 +1538,7 @@ button.plan-crumb:hover { background: var(--soft-fill, color-mix(in srgb, var(--
 .welcome-purpose:hover .welcome-mascot, .welcome-purpose.on .welcome-mascot { transform: translateY(-0.25rem); }
 .welcome-purpose strong, .welcome-purpose .muted { position: relative; z-index: 1; max-width: calc(100% - 6rem); }
 @media (prefers-reduced-motion: reduce) { .welcome-mascot { transition: none; } }
-/* 지난 요일 칸: 브라우저 기본 툴팁(늦게 뜸) 대신 바로 뜨는 툴팁 */
-.welcome-cell.past { position: relative; }
-.welcome-cell.past:hover::after { content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%); z-index: 2; padding: 0.3rem 0.6rem; border-radius: 8px; background: #2c2a36; color: #ececec; font-size: 0.72rem; white-space: nowrap; box-shadow: 0 4px 12px rgb(0 0 0 / 0.3); pointer-events: none; }
+/* 지난 요일(2-3): 마우스를 올리기 전에 보이게 옅은 빗금 + 요일 아래 '지남' */
+.welcome-cell.past { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--border) 35%, transparent) 0 3px, transparent 3px 7px); }
+.welcome-day { display: flex; flex-direction: column; align-items: center; line-height: 1.2; }
+.welcome-past-tag { font-size: 0.62rem; color: var(--muted); }
