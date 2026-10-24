@@ -98,7 +98,7 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
   const P = PURPOSES.find((p) => p.id === purpose)!
   const title = own.trim() || goalName
   // 요일별 칠한 시간과 그중 가장 많은 날(막대 길이 기준)
-  const dayHours = DAYS.map((_, i) => HOURS.filter((h) => cells.has(key(i, h))).length)
+  const dayHours = DAYS.map((_, i) => (i < firstDay ? 0 : HOURS.filter((h) => cells.has(key(i, h))).length))
   const maxDayHours = Math.max(1, ...dayHours)
   // 칠할 수 있는 칸만 센다
   const hours = [...cells].filter((k) => Number(k.split('-')[0]) >= firstDay).length
@@ -110,7 +110,9 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
     setCells(presetCells(id, firstDay))
   }
 
+  // 지난 요일 칸은 끌면서 지나가도 칠하지 않는다
   const paint = (k: string, on: boolean) =>
+    Number(k.split('-')[0]) >= firstDay &&
     setCells((prev) => {
       const next = new Set(prev)
       if (on) next.add(k)
