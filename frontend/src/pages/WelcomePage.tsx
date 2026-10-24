@@ -294,7 +294,7 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
                         disabled={past}
                         aria-pressed={on}
                         aria-label={`${d}요일 ${h}시`}
-                        title={past ? '지난 요일은 칠할 수 없어요' : undefined}
+                        data-tip={past ? '지난 요일은 칠할 수 없어요' : undefined}
                         onPointerDown={(e) => {
                           e.preventDefault()
                           painting.current = !on
