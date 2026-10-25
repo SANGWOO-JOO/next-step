@@ -1,0 +1,97 @@
+# v* 태그를 push하면 검사 → jar와 프론트 빌드 → GitHub Release(docs/deploy.md 5장).
+# 배포 단계는 AWS가 준비되는 8단계에서 켠다.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    uses: ./.github/workflows/checks.yml
+
+  build:
+    name: 결과물 만들기
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: 백엔드 jar
+        working-directory: backend
+        run: |
+          ./gradlew bootJar
+          mkdir -p ../out
+          cp "$(ls build/libs/*.jar | grep -v -- '-plain.jar')" "../out/next-step-${GITHUB_REF_NAME}.jar"
+      - name: 프론트 빌드
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+          (cd dist && zip -qr "../../out/next-step-web-${GITHUB_REF_NAME}.zip" .)
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-files
+          path: out/
+          retention-days: 7
+
+  release:
+    name: GitHub Release 만들기
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-files
+          path: out
+      - name: 릴리즈 노트 초안
+        run: |
+          TAG="$GITHUB_REF_NAME"
+          PREV=$(git describe --tags --abbrev=0 "$TAG^" 2>/dev/null || true)
+          RANGE=${PREV:+$PREV..}$TAG
+          {
+            echo "## 핵심 변경"
+            echo "_(사용자 입장에서 바뀐 것을 직접 적는다)_"
+            echo
+            echo "## 변경 커밋${PREV:+ ($PREV 이후)}"
+            git log --no-merges --format='%s' "$RANGE" | sort -s -t']' -k1,1 | sed 's/^/- /'
+            echo
+            echo "## DB 마이그레이션"
+            MIG=$(git diff --name-only --diff-filter=A ${PREV:-$(git rev-list --max-parents=0 HEAD)} "$TAG" -- backend/src/main/resources/db/migration | xargs -r -n1 basename)
+            if [ -n "$MIG" ]; then echo "$MIG" | sed 's/^/- `/; s/$/` (위험도: 새 테이블, 인덱스만이면 안전 \/ 기존 열 변경이면 주의)/'; else echo "- 없음"; fi
+            echo
+            echo "## 배포 후 확인"
+            echo "- [ ] 서버 로그에 마이그레이션 적용"
+            echo "- [ ] 로그인 유지(다시 로그인하지 않아도 됨)"
+            echo "- [ ] 대시보드, 계획, 돌아보기 화면"
+            echo "- [ ] 주간 피드백"
+          } > notes.md
+          cat notes.md
+      - name: Release 만들기
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" out/* --title "$GITHUB_REF_NAME" --notes-file notes.md
+
+  # deploy: 8단계에서 추가(S3 업로드, SSM으로 EC2 jar 교체, /actuator/health 확인)
