@@ -133,11 +133,11 @@ Spring Boot → Google OAuth (로그인 확인), Anthropic Claude (주간 피드
 |---|---|---|---|
 | 0 | 사용자별 날짜 묶음 인덱스 | 아니요 | 완료 2026-10-25 |
 | 1 | Spring Session JDBC, CSRF 쿠키 방식 | 아니요 | 완료 2026-10-25 |
-| 2 | GitHub 공개 저장소, Secret Scanning과 Push Protection | 아니요 | |
+| 2 | GitHub 공개 저장소, Secret Scanning과 Push Protection | 아니요 | 완료 2026-10-25 |
 | 3 | CI 워크플로(`ci.yml`) | 아니요 | 완료 2026-10-25 |
 | 4 | 릴리즈 워크플로(`release.yml`), 배포 단계는 꺼 둔 채 Release 생성까지 | 아니요 | 완료 2026-10-25 |
 | 5 | 운영 설정(`application-prod.yml`, Secure 쿠키, 로그), Docker Compose 운영 파일 | 아니요 | 완료 2026-10-25 |
-| 6 | 도메인, AWS 인프라(EC2, S3, CloudFront, ACM, SSM, OIDC 역할, CloudWatch) | 예 | |
+| 6 | 도메인, AWS 인프라(EC2, S3, CloudFront, ACM, SSM, OIDC 역할, CloudWatch) | 예 | 진행 중(계정 준비 끝, 도메인 고르는 중) |
 | 7 | 구글 OAuth 운영 도메인 추가와 프로덕션 게시, 운영용 Anthropic 키 | 예 | |
 | 8 | 배포 단계 켜고 첫 배포 `v0.1.0`, 백업 복구 연습 | 예 | |
 
