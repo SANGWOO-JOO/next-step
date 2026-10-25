@@ -1,0 +1,58 @@
+# 운영 서버(EC2 t4g.small) 한 대에 앱과 DB. docs/deploy.md 2장.
+# 이미지를 따로 만들지 않고 Release의 jar를 ./app.jar로 받아 붙인다. 배포는 "jar 바꾸고 app 다시 켜기"
+# 필수 값이 비어 있으면 compose가 켜지 않는다(:?). 비밀값은 같은 폴더의 .env(서버에서 SSM 값으로 만듦, 저장소에는 .env.prod.example만)
+name: next-step
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "5"
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: jobscheduler
+      POSTGRES_USER: jobscheduler
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD가 필요해요}
+      TZ: Asia/Seoul
+      PGTZ: Asia/Seoul
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobscheduler -d jobscheduler"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    mem_limit: 512m
+    logging: *logging
+    # 포트를 밖으로 열지 않는다. 앱만 접속한다
+
+  app:
+    image: eclipse-temurin:21-jre
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["java", "-XX:MaxRAMPercentage=60", "-Duser.timezone=Asia/Seoul", "-jar", "/app/app.jar"]
+    volumes:
+      - ./app.jar:/app/app.jar:ro
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://db:5432/jobscheduler
+      DB_USERNAME: jobscheduler
+      DB_PASSWORD: ${DB_PASSWORD}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?GOOGLE_CLIENT_ID가 필요해요}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?GOOGLE_CLIENT_SECRET가 필요해요}
+      APP_BASE_URL: ${APP_BASE_URL:?APP_BASE_URL가 필요해요}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      TZ: Asia/Seoul
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    mem_limit: 1g
+    logging: *logging
+
+volumes:
+  pgdata:

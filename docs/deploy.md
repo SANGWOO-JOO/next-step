@@ -33,6 +33,21 @@ Spring Boot → Google OAuth (로그인 확인), Anthropic Claude (주간 피드
 - EC2 보안 그룹은 CloudFront에서 오는 HTTP만 연다(CloudFront 관리형 접두사 목록). SSH(22)는 열지 않고 SSM Session Manager로 접속한다.
 - 24시간 운영(2026-10-25 결정). 9~18시만 켜는 안은 사용자가 저녁과 주말에 공부해서 맞지 않음.
 
+### 운영 파일 (5단계, 2026-10-25)
+| 파일 | 내용 |
+|---|---|
+| `backend/src/main/resources/application-prod.yml` | `SPRING_PROFILES_ACTIVE=prod`일 때만 켜짐. Secure 쿠키, 프록시 뒤 HTTPS 인식, 구글 로그인 돌아올 주소 고정(`APP_BASE_URL`), 오류 응답에 스택 트레이스와 메시지 숨김, 헬스 체크 세부 정보 숨김, 로그 INFO. DB, 구글 값은 기본값 없음(빠지면 켜지지 않음) |
+| `deploy/docker-compose.prod.yml` | 앱(`eclipse-temurin:21-jre`에 Release jar를 `./app.jar`로 붙임)과 PostgreSQL 16. DB 포트는 밖으로 열지 않음. 메모리 상한 앱 1GB(힙은 그 60%), DB 512MB. 로그 파일 10MB x 5개. 필수 값이 비면 compose가 켜지지 않음(`:?`) |
+| `deploy/.env.prod.example` | 서버의 `deploy/.env` 예시. 실제 값은 SSM에서 받아 채운다 |
+| `deploy/backup.sh` | `pg_dump -Fc` → S3 `db/`. 7일 지난 것은 S3 수명 주기 규칙이 지운다. 복구는 `pg_restore` |
+
+- 배포는 "새 jar를 `deploy/app.jar`로 바꾸고 `docker compose up -d app`"이다. 이미지를 만들지 않는다(위 표의 ECR 이유).
+- 시간대는 jar 실행 옵션(`-Duser.timezone=Asia/Seoul`)과 `main()` 두 곳에서 고정한다. 분석: `docs/troubleshooting/2026-10-25-ci-timezone.md`
+- **6단계에서 꼭 맞출 것**
+  - CloudFront에서 EC2로 가는 동작의 오리진 요청 정책에 `CloudFront-Forwarded-Proto` 헤더를 넣는다. 앱은 이 헤더로 원래 요청이 https인지 안다(CloudFront는 `X-Forwarded-Proto`를 붙일 수 없다).
+  - 앱은 모든 프록시 헤더를 믿으므로(`internal-proxies: .*`), EC2 보안 그룹은 CloudFront 접두사 목록에서 오는 요청만 연다.
+- 로컬 확인(2026-10-25): 운영 compose를 띄워 마이그레이션 31개 적용, `/actuator/health` UP, 미로그인 `/api` 401, https 헤더가 있으면 세션과 XSRF 쿠키에 Secure, 구글 로그인 주소에 고정한 돌아올 주소가 들어감, 필수 값이 비면 compose와 Spring 모두 켜지지 않음. 실제 구글 로그인은 HTTPS가 필요해 8단계에서 확인한다.
+
 ### 고려했지만 뺀 것
 | 안 | 이유 |
 |---|---|
@@ -121,7 +136,7 @@ Spring Boot → Google OAuth (로그인 확인), Anthropic Claude (주간 피드
 | 2 | GitHub 공개 저장소, Secret Scanning과 Push Protection | 아니요 | |
 | 3 | CI 워크플로(`ci.yml`) | 아니요 | 완료 2026-10-25 |
 | 4 | 릴리즈 워크플로(`release.yml`), 배포 단계는 꺼 둔 채 Release 생성까지 | 아니요 | 완료 2026-10-25 |
-| 5 | 운영 설정(`application-prod.yml`, Secure 쿠키, 로그), Docker Compose 운영 파일 | 아니요 | |
+| 5 | 운영 설정(`application-prod.yml`, Secure 쿠키, 로그), Docker Compose 운영 파일 | 아니요 | 완료 2026-10-25 |
 | 6 | 도메인, AWS 인프라(EC2, S3, CloudFront, ACM, SSM, OIDC 역할, CloudWatch) | 예 | |
 | 7 | 구글 OAuth 운영 도메인 추가와 프로덕션 게시, 운영용 Anthropic 키 | 예 | |
 | 8 | 배포 단계 켜고 첫 배포 `v0.1.0`, 백업 복구 연습 | 예 | |
