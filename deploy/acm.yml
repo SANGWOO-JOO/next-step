@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFront viewer certificate for nextstep-plan.work. Deploy in us-east-1.
+
+Parameters:
+  DomainName:
+    Type: String
+    Default: nextstep-plan.work
+    AllowedPattern: '^[a-z0-9.-]+$'
+  HostedZoneId:
+    Type: String
+    Description: Public Route 53 hosted zone ID from dns.yml.
+
+Resources:
+  ViewerCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref DomainName
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Ref DomainName
+          HostedZoneId: !Ref HostedZoneId
+      Tags:
+        - Key: Project
+          Value: next-step
+
+Outputs:
+  CertificateArn:
+    Description: Pass this certificate ARN to infra.yml in ap-northeast-2.
+    Value: !Ref ViewerCertificate

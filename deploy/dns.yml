@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Public DNS zone for nextstep-plan.work. Registrar stays at Porkbun.
+
+Parameters:
+  DomainName:
+    Type: String
+    Default: nextstep-plan.work
+    AllowedPattern: '^[a-z0-9.-]+$'
+    Description: Domain registered at Porkbun.
+
+Resources:
+  PublicHostedZone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name: !Ref DomainName
+      HostedZoneConfig:
+        Comment: Next Step production DNS
+      HostedZoneTags:
+        - Key: Project
+          Value: next-step
+
+Outputs:
+  HostedZoneId:
+    Description: Pass this to acm.yml and infra.yml.
+    Value: !Ref PublicHostedZone
+  NameServers:
+    Description: Add all four name servers in Porkbun's domain details.
+    Value: !Join [',', !GetAtt PublicHostedZone.NameServers]

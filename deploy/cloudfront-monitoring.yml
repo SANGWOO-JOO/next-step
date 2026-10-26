@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFront 5xx alarm. Deploy in us-east-1 because CloudFront metrics are global there.
+
+Parameters:
+  DistributionId:
+    Type: String
+    Description: CloudFront distribution ID from infra.yml.
+  AlarmEmail:
+    Type: String
+    AllowedPattern: '^[^@ ]+@[^@ ]+\.[^@ ]+$'
+
+Resources:
+  CloudFrontAlarmTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: next-step-cloudfront-alarms
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref AlarmEmail
+      Tags:
+        - Key: Project
+          Value: next-step
+
+  CloudFront5xxAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: next-step-cloudfront-5xx-rate
+      AlarmDescription: CloudFront 5xx errors exceeded 5 percent for five minutes.
+      Namespace: AWS/CloudFront
+      MetricName: 5xxErrorRate
+      Dimensions:
+        - Name: DistributionId
+          Value: !Ref DistributionId
+        - Name: Region
+          Value: Global
+      Statistic: Average
+      Unit: Percent
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 5
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions: [!Ref CloudFrontAlarmTopic]
+      OKActions: [!Ref CloudFrontAlarmTopic]
+      TreatMissingData: notBreaching
+
+Outputs:
+  AlarmTopicArn:
+    Value: !Ref CloudFrontAlarmTopic

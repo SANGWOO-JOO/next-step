@@ -1,7 +1,7 @@
 # Next Step 인프라와 배포 설계
 
 기능 설계는 `docs/design.md`, 여기는 인프라와 배포만 다룬다. 결정을 바꾸면 이 문서를 먼저 고치고 이유를 남긴다.
-작성 2026-10-25. 상태: 설계 중(아직 배포하지 않음).
+작성 2026-10-25. 상태: AWS 인프라 배포 완료(SNS 경보 이메일 구독 확인 대기, 앱은 아직 미배포). 도메인은 Porkbun에 등록했고 DNS는 Route 53에서 관리한다.
 
 ## 1. 원칙
 - MVP 규모(사용자 수천 명 이하)에 맞춰 **서버 한 대, 관리할 것 최소**로 시작한다.
@@ -27,6 +27,17 @@ CloudFront (HTTPS, ACM 인증서, 도메인 하나)
 Spring Boot → Google OAuth (로그인 확인), Anthropic Claude (주간 피드백)
 운영: SSM Parameter Store(비밀값), CloudWatch(지표, 경보, 로그), Route 53(도메인)
 ```
+
+- `nextstep-plan.work`의 등록기관은 Porkbun으로 유지한다. Route 53에 공개 호스팅 영역을 만들고, 그 영역의 네임서버 4개를 Porkbun 도메인 설정에 입력해 DNS 관리를 Route 53으로 위임한다. 도메인 등록기관을 AWS로 이전하지 않는다.
+- CloudFront의 EC2 오리진은 `origin.nextstep-plan.work` DNS 이름으로 고정 IP에 연결한다. 이 오리진 이름은 CloudFront 접두사 목록에서 오는 HTTP만 EC2 보안 그룹이 받는다.
+- 위임이 전파된 뒤 ACM DNS 검증과 Route 53 레코드로 CloudFront에 연결한다. CloudFront용 인증서는 `us-east-1`에서 만든다.
+
+### 인프라 템플릿 순서
+1. AWS 리소스 생성은 월 요금이 발생하므로 템플릿과 비용을 검토한 뒤 사용자 확인을 받고 시작한다.
+2. `deploy/dns.yml`을 서울 리전에서 실행해 공개 호스팅 영역을 만든다. 출력된 네임서버 4개를 사용자가 Porkbun 도메인 설정에 입력한다.
+3. 네임서버 위임이 확인되면 `deploy/acm.yml`을 `us-east-1`에서 실행해 Route 53 DNS 검증 인증서를 만든다.
+4. `deploy/infra.yml`을 서울 리전에서 실행한다. 호스팅 영역 ID, 인증서 ARN, CloudFront 오리진 접두사 목록 ID, 경보 이메일 주소가 필요하다.
+5. `deploy/cloudfront-monitoring.yml`을 `us-east-1`에서 실행해 CloudFront 5xx 경보를 만든다. CloudFront 지표는 us-east-1에 게시되며, 이 stack은 별도 SNS 이메일 확인이 필요하다.
 
 - 도메인 하나로 묶는 이유: 프론트와 API가 같은 출처라 세션 쿠키(SameSite=Lax), CSRF 쿠키, CORS 문제가 없다. 로컬의 Vite 프록시와 같은 구조다.
 - CloudFront에서 EC2로 가는 경로는 캐시하지 않고(쿠키, 헤더, 쿼리 전달), `/`만 캐시한다.
@@ -70,7 +81,7 @@ Spring Boot → Google OAuth (로그인 확인), Anthropic Claude (주간 피드
 | CloudWatch (기본 지표, 사용자 지표 10개, 경보 10개, 로그 5GB 무료 한도 안) | | $0 |
 | **합계** | | **약 $21** |
 
-- 따로: 도메인 연 약 $13~15, Anthropic API(피드백 1회 약 $0.0005, Haiku 5.5).
+- 따로: `nextstep-plan.work` 첫해 등록비 $2.06, 현재 표시된 갱신가는 연 $10.81(도메인 자동 갱신 꺼짐), Anthropic API(피드백 1회 약 $0.0005, Haiku 5.5).
 - 메모리가 빠듯하면 t4g.medium(4GB, 월 $30.37, 합계 약 $37)으로 올린다.
 - 가격은 제3자 집계(aws-pricing.com)와 AWS 페이지 기준(2026-10-25). 띄우기 전에 AWS 요금 계산기로 다시 확인한다.
 - 비용을 더 줄일 때: 반응을 본 뒤 1년 Savings Plan(서버비 약 30~40% 절감). 운영 시간 줄이기는 하지 않는다.
@@ -82,7 +93,7 @@ Spring Boot → Google OAuth (로그인 확인), Anthropic Claude (주간 피드
 - 세션 저장소는 JPA가 아닌 순수 JDBC 트랜잭션을 쓴다(`SessionConfig.kt`). JPA를 쓰면 멀티테넌시가 로그인 사용자를 물으며 세션을 다시 읽어 무한 반복된다. 분석: `docs/troubleshooting/2026-10-25-spring-session-login.md`
 - **CSRF: 쿠키 방식**(`XSRF-TOKEN` 쿠키, 프론트가 `X-XSRF-TOKEN` 헤더로 보냄). 서버에 저장하지 않는다. SameSite=Lax로 막지 못하는 같은 사이트 서브도메인, 본문 없는 요청(탈퇴, 동의)을 한 겹 더 막는다.
 - 쿠키: Secure, HttpOnly(세션), SameSite=Lax.
-- 비밀값: SSM Parameter Store(SecureString). 구글 클라이언트 ID와 시크릿, `ANTHROPIC_API_KEY`(운영용 키 따로), DB 비밀번호(로컬 기본값 `jobscheduler`는 운영에서 쓰지 않음).
+- 비밀값: SSM Parameter Store(SecureString). 구글 클라이언트 ID와 시크릿, `ANTHROPIC_API_KEY`, DB 비밀번호(로컬 기본값 `jobscheduler`는 운영에서 쓰지 않음). Anthropic은 기존 개발용 키를 운영에도 사용한다(2026-10-25 사용자 결정). 개발과 운영은 같은 키의 사용량과 한도를 공유한다.
 - GitHub에서 AWS로는 OIDC 역할(오래 가는 키 없음). 권한은 S3 업로드, CloudFront 무효화, SSM 명령 보내기만.
 - 공개 저장소: Secret Scanning과 Push Protection을 켠다. 2026-10-25 기준 커밋 기록에 키 없음(확인함).
 
@@ -137,11 +148,11 @@ Spring Boot → Google OAuth (로그인 확인), Anthropic Claude (주간 피드
 | 3 | CI 워크플로(`ci.yml`) | 아니요 | 완료 2026-10-25 |
 | 4 | 릴리즈 워크플로(`release.yml`), 배포 단계는 꺼 둔 채 Release 생성까지 | 아니요 | 완료 2026-10-25 |
 | 5 | 운영 설정(`application-prod.yml`, Secure 쿠키, 로그), Docker Compose 운영 파일 | 아니요 | 완료 2026-10-25 |
-| 6 | 도메인, AWS 인프라(EC2, S3, CloudFront, ACM, SSM, OIDC 역할, CloudWatch) | 예 | 진행 중(계정 준비 끝, 도메인 고르는 중) |
-| 7 | 구글 OAuth 운영 도메인 추가와 프로덕션 게시, 운영용 Anthropic 키 | 예 | |
+| 6 | AWS 인프라(EC2, S3, CloudFront, ACM, Route 53 DNS, SSM, OIDC 역할, CloudWatch) | 예 | 배포 완료(SNS 경보 메일 확인 대기, 앱 미배포) |
+| 7 | 구글 OAuth 운영 도메인 추가와 프로덕션 게시, Anthropic 키 설정 | 예 | Google 운영 클라이언트, 기존 Anthropic 키의 SSM 저장과 서버 연결, 도메인 소유권 확인 완료. 프론트 배포 후 공개 게시 대기 |
 | 8 | 배포 단계 켜고 첫 배포 `v0.1.0`, 백업 복구 연습 | 예 | |
 
-직접 해 주셔야 할 것: GitHub 저장소 만들기, 도메인 구입, AWS 계정과 결제, 구글 OAuth 콘솔 설정.
+직접 해 주셔야 할 것: GitHub 저장소 만들기, AWS 계정과 결제, Porkbun에 Route 53 네임서버 입력, 구글 OAuth 콘솔 설정.
 
 ## 10. 늘릴 때의 기준
 | 신호 | 할 일 |
