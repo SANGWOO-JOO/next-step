@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1254 1254" fill="none">
+  <title>스텝이 눈 레이어</title>
+  <defs>
+    <linearGradient id="eye" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#29274f"/>
+      <stop offset="1" stop-color="#242247"/>
+    </linearGradient>
+  </defs>
+  <rect x="459" y="537" width="106" height="39" rx="19.5" fill="url(#eye)"/>
+  <rect x="780" y="526" width="107" height="39" rx="19.5" fill="url(#eye)"/>
+</svg>
