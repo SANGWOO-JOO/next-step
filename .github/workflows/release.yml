@@ -1,5 +1,5 @@
 # v* 태그를 push하면 검사 → jar와 프론트 빌드 → GitHub Release(docs/deploy.md 5장).
-# 배포 단계는 AWS가 준비되는 8단계에서 켠다.
+# 배포는 GitHub OIDC 역할로 한다. 계정별 값(버킷, 배포 ID, 역할 ARN)은 저장소 Variables에 둔다.
 name: Release
 
 on:
@@ -85,7 +85,7 @@ jobs:
             echo "## 배포 후 확인"
             echo "- [ ] 서버 로그에 마이그레이션 적용"
             echo "- [ ] 로그인 유지(다시 로그인하지 않아도 됨)"
-            echo "- [ ] 대시보드, 계획, 돌아보기 화면"
+            echo "- [ ] 대시보드, 계획, 회고 화면"
             echo "- [ ] 주간 피드백"
           } > notes.md
           cat notes.md
@@ -94,4 +94,56 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "$GITHUB_REF_NAME" out/* --title "$GITHUB_REF_NAME" --notes-file notes.md
 
-  # deploy: 8단계에서 추가(S3 업로드, SSM으로 EC2 jar 교체, /actuator/health 확인)
+  deploy:
+    name: 운영 배포
+    needs: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      TAG: ${{ github.ref_name }}
+      AWS_REGION: ap-northeast-2
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-files
+          path: out
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ap-northeast-2
+      - name: 백엔드 파일을 릴리즈 버킷에 올리기
+        run: |
+          DEST="s3://${{ vars.RELEASE_BUCKET }}/releases/$TAG"
+          aws s3 cp "out/next-step-$TAG.jar" "$DEST/" --only-show-errors
+          aws s3 cp deploy/docker-compose.prod.yml "$DEST/" --only-show-errors
+          aws s3 cp deploy/deploy.sh "$DEST/" --only-show-errors
+      - name: EC2에서 앱 다시 켜기(SSM)
+        run: |
+          SRC="s3://${{ vars.RELEASE_BUCKET }}/releases/$TAG/deploy.sh"
+          CMD_ID=$(aws ssm send-command --instance-ids "${{ vars.INSTANCE_ID }}" \
+            --document-name AWS-RunShellScript --comment "next-step $TAG" \
+            --parameters "commands=[\"aws s3 cp $SRC /tmp/next-step-deploy.sh --only-show-errors\",\"bash /tmp/next-step-deploy.sh $TAG ${{ vars.RELEASE_BUCKET }}\"]" \
+            --query Command.CommandId --output text)
+          for _ in $(seq 1 60); do
+            STATUS=$(aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "${{ vars.INSTANCE_ID }}" --query Status --output text 2>/dev/null || echo Pending)
+            case "$STATUS" in Pending|InProgress|Delayed) sleep 5 ;; *) break ;; esac
+          done
+          aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "${{ vars.INSTANCE_ID }}" --query '[StandardOutputContent,StandardErrorContent]' --output text
+          [ "$STATUS" = Success ]
+      - name: 프론트를 웹 버킷에 올리기
+        run: |
+          mkdir web && unzip -q "out/next-step-web-$TAG.zip" -d web
+          aws s3 sync web/assets "s3://${{ vars.FRONTEND_BUCKET }}/assets" --cache-control "public,max-age=31536000,immutable" --only-show-errors
+          aws s3 sync web "s3://${{ vars.FRONTEND_BUCKET }}" --exclude "assets/*" --cache-control "no-cache" --delete --only-show-errors
+          aws cloudfront create-invalidation --distribution-id "${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}" --paths "/*" --query Invalidation.Id --output text
+      - name: 공개 주소에서 확인
+        run: |
+          for _ in $(seq 1 20); do
+            if curl -fsS --max-time 5 "https://${{ vars.APP_DOMAIN }}/api/health" | grep -q '"UP"'; then echo "ok"; exit 0; fi
+            sleep 6
+          done
+          echo "https://${{ vars.APP_DOMAIN }}/api/health 응답 없음"; exit 1
