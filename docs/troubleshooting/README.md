@@ -13,3 +13,4 @@
 | 2026-10-25 | [CloudFormation에서 CloudFront 배포가 실패함](2026-10-25-cloudformation-cloudfront-policy.md) | AWS 인프라 |
 | 2026-10-26 | [첫 배포에서 GitHub OIDC 역할을 받지 못함](2026-10-26-github-oidc-immutable-sub.md) | 배포 |
 | 2026-10-26 | [회고 작성 팝업 단순화](2026-10-26-daily-reflection-dialog.md) | 프론트엔드 |
+| 2026-10-26 | [운영에서 구글 계정을 고르면 화면이 넘어가지 않음](2026-10-26-oauth-redirect-origin-host.md) | 배포 |
