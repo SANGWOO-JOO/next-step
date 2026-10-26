@@ -20,6 +20,8 @@ server:
   # 모든 프록시를 믿으므로 EC2 보안 그룹은 CloudFront에서 오는 요청만 열어야 한다(6단계)
   forward-headers-strategy: native
   tomcat:
+    # CloudFront는 오리진 호스트(origin.도메인)를 넘긴다. 절대 주소로 바꾸면 로그인 뒤 그 주소로 가서 멈추므로 상대 주소 그대로 보낸다
+    use-relative-redirects: true
     remoteip:
       internal-proxies: ".*"
       protocol-header: CloudFront-Forwarded-Proto
