@@ -1,19 +1,18 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { errorMessage } from '../api/client'
 import { formatDuration } from '../api/focus'
 import { getDailyLogs, type DailyLog } from '../api/records'
 import { getWeeklyJournals, type WeeklyJournalBrief } from '../api/reviews'
 import bookIllust from '../assets/illust/deco-book.svg'
-import pencilIllust from '../assets/illust/deco-pencil.svg'
-import mascotStudent from '../assets/illust/mascot-student.svg'
+import mascotStudent from '../assets/illust/mascot-student-v2.png'
 import chevronLeft from '../assets/icons/chevron-left.svg'
 import chevronRight from '../assets/icons/chevron-right.svg'
 import ConditionFace from '../components/ConditionFace'
 import IconButton from '../components/IconButton'
 import NoteInbox from '../components/NoteInbox'
 import ReviewWriter from '../components/ReviewWriter'
-import DayWrapUp from '../components/today/DayWrapUp'
+import DailyReflectionDialog from '../components/DailyReflectionDialog'
 import { addMonths, currentMonthSeoul, dayLabel, mondayOf, monthLabel, shiftDate, todaySeoul, weekLabel } from '../utils/date'
 import { monthRange } from '../utils/health'
 
@@ -25,7 +24,7 @@ type Picked = { kind: 'day'; date: string } | { kind: 'week'; monday: string } |
 const hasRecord = (log: DailyLog | undefined) => !!log && (log.saved || log.summary.studySeconds > 0)
 
 /**
- * 돌아보기(docs/design.md 11-6 2-9): 글로 돌아보는 곳. 탭 없이 한 화면.
+ * 회고(docs/design.md 11-6 2-9): 기록과 일지를 살펴보는 곳. 탭 없이 한 화면.
  * 맨 위 이번 주 카드(일지 + 지난 주 피드백), 달력(컨디션, 실제 시간, 마무리 표시, 한 주 칸), 고른 날(주) 패널.
  */
 export default function LogPage() {
@@ -35,6 +34,16 @@ export default function LogPage() {
   const [weeks, setWeeks] = useState<WeeklyJournalBrief[]>([])
   const [error, setError] = useState<string | null>(null)
   const [picked, setPicked] = useState<Picked>(null)
+  const pickedPanel = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!picked) return
+    const frame = window.requestAnimationFrame(() => {
+      const panel = pickedPanel.current
+      panel?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'nearest' })
+      panel?.focus({ preventScroll: true })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [picked])
   /** 일지나 하루 마무리를 저장하면 다시 불러온다 */
   const [version, setVersion] = useState(0)
   /** 하루 마무리 창을 연 날짜 */
@@ -72,7 +81,7 @@ export default function LogPage() {
         <span className="cal-nav">
           <IconButton icon={chevronLeft} label="이전 달" onClick={() => move(-1)} />
           <IconButton icon={chevronRight} label="다음 달" onClick={() => move(1)} />
-          <h1 className="cal-title">돌아보기 {monthLabel(month)}</h1>
+          <h1 className="cal-title">회고 {monthLabel(month)}</h1>
         </span>
       </div>
       {error && <p className="error-banner">{error}</p>}
@@ -80,8 +89,9 @@ export default function LogPage() {
       <ReviewWriter onSaved={() => setVersion((v) => v + 1)} />
 
       <div className="card log-calendar">
+        <div className="log-calendar-toolbar"><div><h2>하루 회고</h2><p>날짜를 눌러 하루를 돌아보세요.</p></div><button type="button" onClick={() => setWrapDate(today)}>{byDate.get(today)?.saved ? '오늘 회고 수정' : '오늘 회고 쓰기'}</button></div>
         <div className="log-cal-grid">
-          {[...WEEKDAYS, '한 주'].map((w) => (
+          {[...WEEKDAYS, '주간 일지'].map((w) => (
             <span key={w} className="muted small log-cal-head">
               {w}
             </span>
@@ -106,25 +116,27 @@ export default function LogPage() {
             컨디션
           </span>
           <span>
-            <img src={pencilIllust} alt="" width={14} height={14} />
-            하루 마무리 씀
+            <span className="log-complete-mark" aria-hidden="true">✓</span>
+            회고 완료
           </span>
           <span>
             <img src={bookIllust} alt="" width={14} height={14} />
-            일지 씀
+            주간 일지 완료
           </span>
           <span>숫자: 실제로 한 시간</span>
         </div>
       </div>
 
+      {picked && <div ref={pickedPanel} className="log-picked-panel" tabIndex={-1} role="region" aria-label="선택한 회고 상세">
       {picked?.kind === 'day' && (
         <DayPanel date={picked.date} log={byDate.get(picked.date)} onWrite={() => setWrapDate(picked.date)} onClose={() => setPicked(null)} />
       )}
       {picked?.kind === 'week' && <WeekPanel monday={picked.monday} journal={journalOf.get(picked.monday)} onClose={() => setPicked(null)} />}
+      </div>}
       {!picked && empty && (
         <div className="card log-empty">
           <img src={mascotStudent} alt="" width={110} height={110} />
-          <strong>{isCurrentMonth ? '아직 돌아본 날이 없어요' : `${monthLabel(month)}에는 남긴 기록이 없어요`}</strong>
+          <strong>{isCurrentMonth ? '아직 남긴 회고가 없어요' : `${monthLabel(month)}에는 남긴 기록이 없어요`}</strong>
           {isCurrentMonth && (
             <>
               <p className="muted small">하루를 마칠 때 컨디션과 한 줄 메모를 남겨 보세요</p>
@@ -137,7 +149,8 @@ export default function LogPage() {
       <NoteInbox />
 
       {wrapDate && (
-        <DayWrapUp
+        <DailyReflectionDialog
+          key={wrapDate}
           date={wrapDate}
           onClose={() => {
             setWrapDate(null)
@@ -181,14 +194,19 @@ function WeekRow({
           <button
             key={date}
             type="button"
-            className={['log-cal-cell', date.startsWith(month) ? '' : 'outside', date === today ? 'today' : '', isPicked ? 'picked' : ''].join(' ')}
+            className={['log-cal-cell', date.startsWith(month) ? '' : 'outside', date === today ? 'today' : '', log?.saved ? 'saved' : '', date > today ? 'future' : '', isPicked ? 'picked' : ''].join(' ')}
             onClick={() => onPick({ kind: 'day', date })}
-            aria-label={`${dayLabel(date)}${seconds > 0 ? `, 실제 ${formatDuration(seconds)}` : ''}${log?.saved ? ', 하루 마무리 씀' : ''}`}
+            aria-current={date === today ? 'date' : undefined}
+            aria-pressed={isPicked}
+            aria-label={`${dayLabel(date)}${seconds > 0 ? `, 실제 ${formatDuration(seconds)}` : ''}${log?.saved ? ', 회고 완료' : ''}`}
           >
-            <span className="log-cal-date">{Number(date.slice(8))}</span>
-            {log?.condition && <ConditionFace value={log.condition} size={18} className="log-cal-face" />}
+            <span className="log-cal-date-row"><span className="log-cal-date">{Number(date.slice(8))}</span>{date === today && <span className="log-cal-today-label">오늘</span>}</span>
+            <span className="log-cal-status">
+              {log?.condition && <ConditionFace value={log.condition} size={18} className="log-cal-face" />}
+              {log?.saved && <span className="log-cal-completed"><span aria-hidden="true">✓</span><span>회고 완료</span></span>}
+            </span>
             {seconds > 0 && <span className="log-cal-study">{formatDuration(seconds)}</span>}
-            {log?.saved && <img className="log-cal-pen" src={pencilIllust} alt="" width={14} height={14} />}
+            {!log?.saved && date <= today && <span className="log-cal-write" aria-hidden="true">회고 쓰기</span>}
           </button>
         )
       })}
@@ -199,7 +217,7 @@ function WeekRow({
         aria-label={`${weekLabel(monday)} 일지${journal ? ' 씀' : ''}`}
       >
         {journal && <img src={bookIllust} alt="" width={22} height={22} />}
-        <span>{journal ? '일지 씀' : '일지'}</span>
+        <span>{journal ? '작성 완료' : '일지 보기'}</span>
       </button>
     </>
   )
@@ -238,10 +256,10 @@ function DayPanel({ date, log, onWrite, onClose }: { date: string; log: DailyLog
           <span className="log-cta">
             {log?.saved ? (
               <button className="ghost" onClick={onWrite}>
-                고치기
+                회고 수정
               </button>
             ) : (
-              <button onClick={onWrite}>하루 마무리 쓰기</button>
+              <button onClick={onWrite}>이날 회고 쓰기</button>
             )}
           </span>
         )}

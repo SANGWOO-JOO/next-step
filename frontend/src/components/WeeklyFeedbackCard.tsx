@@ -3,6 +3,7 @@ import { errorMessage } from '../api/client'
 import { agreeAi } from '../api/me'
 import { createWeeklyFeedback, getWeeklyJournal, parseFeedback, type AiFeedbackBlock, type WeeklyJournal } from '../api/reviews'
 import { useAuth } from '../auth/useAuth'
+import WeeklyReviewPanel from './WeeklyReviewPanel'
 import { weekLabel } from '../utils/date'
 
 const BLOCKED: Record<AiFeedbackBlock, string> = {
@@ -19,6 +20,7 @@ const BLOCKED: Record<AiFeedbackBlock, string> = {
 export default function WeeklyFeedbackCard({ weekStart }: { weekStart: string }) {
   const { me, setMe } = useAuth()
   const [journal, setJournal] = useState<WeeklyJournal | null>(null)
+  const [expanded, setExpanded] = useState(false)
   const [asking, setAsking] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -41,6 +43,7 @@ export default function WeeklyFeedbackCard({ weekStart }: { weekStart: string })
       if (agree) setMe(await agreeAi())
       setAsking(false)
       setJournal(await createWeeklyFeedback(weekStart))
+      setExpanded(true)
     } catch (e) {
       setError(errorMessage(e))
     } finally {
@@ -51,16 +54,12 @@ export default function WeeklyFeedbackCard({ weekStart }: { weekStart: string })
   const request = () => (me.aiAgreed ? run(false) : setAsking(true))
 
   return (
-    <div className="card weekly-feedback">
-      <div className="daily-panel-head">
-        <h3 className="timeline-title">지난 주 피드백 {weekLabel(weekStart)}</h3>
-        {!asking && blocked !== 'LIMIT' && (
-          <button type="button" className={feedback ? 'ghost' : undefined} disabled={busy || blocked !== null} onClick={request}>
-            {busy ? '만드는 중…' : feedback ? '한 번 더 받기' : '피드백 받기'}
-          </button>
-        )}
-      </div>
-
+    <WeeklyReviewPanel title="지난주 AI 피드백" period={weekLabel(weekStart)} kind="feedback" expanded={expanded} onCollapse={() => { setExpanded(false); setAsking(false) }}>
+      {!expanded && <>
+        <p className="weekly-review-preview">{feedback ? feedback.summary : blocked ? BLOCKED[blocked] : '지난주 기록과 일지를 바탕으로 다음 주에 해볼 일을 제안해요.'}</p>
+        <footer className="weekly-review-actions"><span className="muted small">{feedback ? '피드백 도착' : '아직 받은 피드백이 없어요'}</span><button type="button" aria-expanded={false} disabled={!feedback && (busy || blocked !== null)} onClick={() => { setExpanded(true); if (!feedback) request() }}>{feedback ? '피드백 보기' : '피드백 받기'}</button></footer>
+      </>}
+      <div className="weekly-review-content weekly-feedback" hidden={!expanded}>
       {feedback ? (
         <div className="weekly-feedback-body">
           <p className="weekly-feedback-summary">{feedback.summary}</p>
@@ -83,6 +82,10 @@ export default function WeeklyFeedbackCard({ weekStart }: { weekStart: string })
       {feedback && blocked && blocked !== 'TOO_LITTLE' && <p className="muted small">{BLOCKED[blocked]}</p>}
       {feedback && !blocked && count > 0 && <p className="muted small">한 번 더 받기는 {journal.aiFeedback.maxCount - count}번 남았어요</p>}
 
+      {!asking && <footer className="weekly-review-actions">
+        {blocked !== 'LIMIT' && <button type="button" className={feedback ? 'ghost' : undefined} disabled={busy || blocked !== null} onClick={request}>{busy ? '만드는 중…' : feedback ? '한 번 더 받기' : '피드백 받기'}</button>}
+      </footer>}
+
       {asking && (
         <div className="weekly-feedback-consent">
           <p className="small">
@@ -99,6 +102,7 @@ export default function WeeklyFeedbackCard({ weekStart }: { weekStart: string })
         </div>
       )}
       {error && <p className="error">{error}</p>}
-    </div>
+      </div>
+    </WeeklyReviewPanel>
   )
 }

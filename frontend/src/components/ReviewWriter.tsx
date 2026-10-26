@@ -8,7 +8,7 @@ import ReviewCard from './ReviewCard'
 import WeeklyFeedbackCard from './WeeklyFeedbackCard'
 
 /**
- * 돌아보기 맨 위 이번 주 카드(docs/design.md 11-6 2-9 ②): 왼쪽 이번 주 일지, 오른쪽 지난 주 AI 피드백.
+ * 회고 화면 맨 위 이번 주 카드(docs/design.md 11-6 2-9 ②): 왼쪽 이번 주 일지, 오른쪽 지난 주 AI 피드백.
  * 월간 회고는 화면에서 뺐다(2-9 ⑤).
  */
 export default function ReviewWriter({ onSaved }: { onSaved: () => void }) {
@@ -44,8 +44,8 @@ export default function ReviewWriter({ onSaved }: { onSaved: () => void }) {
       {journal && (
         <ReviewCard
           key={`${monday}|${journal.saved}`}
-          title={`이번 주 일지 ${weekLabel(monday)}`}
-          name="이번 주 일지"
+          title="이번 주 일지"
+          period={weekLabel(monday)}
           fields={[
             { key: 'good', label: '잘한 점', placeholder: '이번 주에 잘된 것' },
             { key: 'bad', label: '아쉬운 점', placeholder: '막혔던 것, 딴짓한 때' },

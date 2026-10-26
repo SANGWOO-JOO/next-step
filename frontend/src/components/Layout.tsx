@@ -15,11 +15,11 @@ const GROUPS: { title: string; menus: Menu[] }[] = [
     menus: [
       { to: '/', label: '일정', icon: 'schedule', end: true },
       { to: '/goals', label: '목표', icon: 'plan' },
-      { to: '/log', label: '돌아보기', icon: 'log' },
+      { to: '/log', label: '회고', icon: 'log' },
     ],
   },
   {
-    title: '돌아보기·준비',
+    title: '회고와 준비',
     menus: [
       { to: '/dashboard', label: '대시보드', icon: 'dashboard' },
     ],

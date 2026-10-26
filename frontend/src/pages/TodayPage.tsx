@@ -22,7 +22,6 @@ import fitDayIcon from '../assets/icons/fit-day.svg'
 import narrowIcon from '../assets/icons/narrow.svg'
 import wideIcon from '../assets/icons/wide.svg'
 import IconButton from '../components/IconButton'
-import pullIcon from '../assets/icons/pull.svg'
 import { dayLabel, minutesOfDay, mondayOf, nowMinutesSeoul, shiftDate, todaySeoul, weekDates } from '../utils/date'
 import { plannedKey } from './plan/planData'
 
@@ -101,7 +100,6 @@ export default function TodayPage() {
       return true
     }
   })
-  const [pullOpen, setPullOpen] = useState(false)
 
   const saveLeftWidth = (w: number) => {
     const clamped = Math.round(Math.min(MAX_LEFT_WIDTH, Math.max(MIN_LEFT_WIDTH, w)))
@@ -174,7 +172,6 @@ export default function TodayPage() {
   }
 
   const goals = weekGoals.filter((g) => g.date === today)
-  const pullCount = unfinished.length
   const changeView = (v: 'day' | 'week') => {
     setView(v)
     try {
@@ -317,34 +314,6 @@ export default function TodayPage() {
               />
             </span>
           </div>
-          {/* 넓게 보기 위 줄은 지난 할 일 버튼만. 추가는 [일] 카드 열 아래, [주] 날짜 칸 ⊕(1-4f ㊹·㊿) */}
-          {wideSchedule && isToday && pullCount > 0 && (
-            <div className="schedule-toolbar">
-              {isToday && pullCount > 0 && (
-                <span className="toolbar-pull">
-                  <button
-                    className={pullOpen ? 'icon-only pull-toggle on' : 'icon-only pull-toggle'}
-                    onClick={() => setPullOpen(!pullOpen)}
-                    aria-expanded={pullOpen}
-                    aria-label={`지난 할 일 ${pullCount}개`}
-                    title={`지난 할 일 ${pullCount}개: 눌러서 오늘로 가져오기`}
-                  >
-                    <img src={pullIcon} alt="" aria-hidden="true" width={26} height={26} draggable={false} />
-                    <span className="icon-badge">{pullCount}</span>
-                  </button>
-                  {pullOpen && (
-                    <div className="card toolbar-pull-panel">
-                      <PullSection
-                        today={today}
-                        unfinished={unfinished}
-                        run={run}
-                      />
-                    </div>
-                  )}
-                </span>
-              )}
-            </div>
-          )}
           <SidebarTip />
           {/* 사용법 안내는 이 기간에 블록이 하나도 없을 때(처음 쓸 때)만 */}
           {!blocks.some((b) => (view === 'day' ? b.date === selected : weekDates(viewMonday).includes(b.date))) && (
@@ -414,7 +383,7 @@ export default function TodayPage() {
 
 /**
  * 알림 한 칸(docs/design.md 6장 1-4d): 진행 중 목표 없음 > 월요일 계획하기.
- * 금~일 돌아보기와 21시 이후 하루 마무리는 오른쪽 위 알림 카드(ReminderStack, 1-4f ⑬)로 옮겼다.
+ * 금~일 회고와 21시 이후 하루 마무리는 오른쪽 위 알림 카드(ReminderStack, 1-4f ⑬)로 옮겼다.
  */
 function AlertSlot({
   today,

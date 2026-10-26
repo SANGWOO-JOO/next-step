@@ -718,7 +718,6 @@ function SchedulePopover({ popover, goals, run, onClose }: PopoverProps) {
     })
     return createTimeBlock({ ...input, dailyGoalId: daily.id })
   }
-  const goal = popover.kind === 'edit' ? goals.find((g) => g.id === popover.block.dailyGoalId) : undefined
 
   // 아래쪽이면 팝업이 잘리지 않게 블록 위로 올린다
   const style = start > 18 * 60 ? { bottom: `calc(100% - ${toPx(start)}px + 4px)` } : { top: toPx(end) + 4 }
@@ -731,7 +730,7 @@ function SchedulePopover({ popover, goals, run, onClose }: PopoverProps) {
       role="dialog"
       aria-label={popover.kind === 'new' ? '시간 블록 추가' : '시간 블록 수정'}
     >
-      {/* 머리글: 목표 색 점 · 이름, 아래 날짜 · 시간 · 길이. 지우기는 ⋯ 안으로(2-2 팝오버 정리) */}
+      {/* 머리글: 목표 색 점과 이름, 아래 날짜, 시간, 길이. 삭제는 폼 하단에 표시 */}
       <div className="block-pop-head">
         {popover.kind === 'edit' && (
           <GoalIcon icon={popover.block.category?.icon} color={popover.block.color ?? popover.block.category?.color} size={18} />
@@ -749,11 +748,6 @@ function SchedulePopover({ popover, goals, run, onClose }: PopoverProps) {
               {
                 label: '실제로 기록하기',
                 onClick: () => run(() => actualFromBlock(popover.block.id)).then((ok) => ok && onClose()),
-              },
-              {
-                label: '블록 지우기',
-                danger: true,
-                onClick: () => run(() => deleteTimeBlock(popover.block.id)).then((ok) => ok && onClose()),
               },
             ]}
           />
@@ -792,19 +786,7 @@ function SchedulePopover({ popover, goals, run, onClose }: PopoverProps) {
             )
           }
           footerLeft={
-            goal && (
-              <button
-                type="button"
-                className="ghost block-done"
-                onClick={() =>
-                  run(() =>
-                    updateDailyGoal(goal.id, { ...toDailyGoalUpdateInput(goal), status: goal.status === 'DONE' ? 'TODO' : 'DONE' }),
-                  ).then((ok) => ok && onClose())
-                }
-              >
-                {goal.status === 'DONE' ? '완료 취소' : '✓ 할 일 완료'}
-              </button>
-            )
+            popover.kind === 'edit' && <button type="button" className="ghost danger" onClick={() => run(() => deleteTimeBlock(popover.block.id)).then(ok => ok && onClose())}>일정 삭제</button>
           }
         />
       )}

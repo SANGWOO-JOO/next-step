@@ -45,10 +45,10 @@ export default function ReviewFields({ fields, values, version, aiSummary, onSav
           />
         </label>
       ))}
-      <span className="inline-form">
-        <button type="submit">저장</button>
+      <div className="weekly-review-actions">
+        <button type="submit">일지 저장</button>
         {message && <span className="muted small">{message}</span>}
-      </span>
+      </div>
       {aiSummary && <p className="muted small">AI 요약: {aiSummary}</p>}
     </form>
   )
