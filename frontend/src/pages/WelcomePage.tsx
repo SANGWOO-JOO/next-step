@@ -41,7 +41,7 @@ const DAYS = ['월', '화', '수', '목', '금', '토', '일']
 const HOURS = Array.from({ length: 16 }, (_, i) => 7 + i) // 7~22시
 const WEEKDAYS = [0, 1, 2, 3, 4]
 
-/** 목적별 기본 칸(docs/design.md 11-3): 요일 번호(월=0) × 시 */
+/** 목적별 예시 칸("예시로 채우기", docs/design.md 11-3): 요일 번호(월=0) × 시 */
 const PRESETS: Record<Purpose, [number[], number[]][]> = {
   JOB_SEEKER: [
     [WEEKDAYS, [9, 10, 11]],
@@ -82,7 +82,8 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
   const [goalName, setGoalName] = useState(PURPOSES[0].goals[0])
   const [own, setOwn] = useState('')
   const [deadline, setDeadline] = useState('3m')
-  const [cells, setCells] = useState<Set<string>>(() => presetCells('JOB_SEEKER', firstDay))
+  // 빈 칸으로 시작한다. 예시는 버튼으로만 넣는다(2-3 변경, v0.1.2)
+  const [cells, setCells] = useState<Set<string>>(() => new Set())
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const painting = useRef<boolean | null>(null)
@@ -110,7 +111,6 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
     setPurpose(id)
     setGoalName(PURPOSES.find((p) => p.id === id)!.goals[0])
     setOwn('')
-    setCells(presetCells(id, firstDay))
   }
 
   // 지난 요일 칸은 끌면서 지나가도 칠하지 않는다
@@ -284,9 +284,18 @@ export default function WelcomePage({ me, onDone }: { me: Me; onDone: (me: Me) =
                   일주일 <strong key={hours}>{hours}시간</strong>
                 </span>
               )}
-              <button type="button" className="ghost small welcome-clear" onClick={() => setCells(new Set())} disabled={hours === 0}>
-                다 지우기
-              </button>
+              {hours === 0 ? (
+                // 주말에 시작해 예시 요일이 다 지났으면 버튼을 숨긴다
+                presetCells(purpose, firstDay).size > 0 && (
+                  <button type="button" className="ghost small welcome-clear" onClick={() => setCells(presetCells(purpose, firstDay))}>
+                    예시로 채우기
+                  </button>
+                )
+              ) : (
+                <button type="button" className="ghost small welcome-clear" onClick={() => setCells(new Set())}>
+                  다 지우기
+                </button>
+              )}
             </div>
             <div
               className={dragMode ? `welcome-grid ${dragMode}ing` : 'welcome-grid'}
