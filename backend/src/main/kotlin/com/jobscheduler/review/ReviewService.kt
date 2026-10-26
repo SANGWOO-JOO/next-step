@@ -116,7 +116,13 @@ class ReviewService(
             updatedAt = journal?.updatedAt,
             days = days,
             total = total,
-            aiFeedback = aiFeedbackPolicy.state(weekStart, journal?.aiFeedbackCount ?: 0, total.studySeconds),
+            aiFeedback = aiFeedbackPolicy.state(
+                weekStart,
+                journal?.aiFeedbackCount ?: 0,
+                journal?.aiFeedbackAt,
+                listOf(journal?.good, journal?.bad, journal?.nextAction).any { !it.isNullOrBlank() },
+                total.studySeconds,
+            ),
         )
     }
 

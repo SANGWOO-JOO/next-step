@@ -12,6 +12,7 @@ import ConditionFace from '../components/ConditionFace'
 import IconButton from '../components/IconButton'
 import NoteInbox from '../components/NoteInbox'
 import ReviewWriter from '../components/ReviewWriter'
+import WeeklyFeedbackCard from '../components/WeeklyFeedbackCard'
 import DailyReflectionDialog from '../components/DailyReflectionDialog'
 import { addMonths, currentMonthSeoul, dayLabel, mondayOf, monthLabel, shiftDate, todaySeoul, weekLabel } from '../utils/date'
 import { monthRange } from '../utils/health'
@@ -25,7 +26,7 @@ const hasRecord = (log: DailyLog | undefined) => !!log && (log.saved || log.summ
 
 /**
  * 회고(docs/design.md 11-6 2-9): 기록과 일지를 살펴보는 곳. 탭 없이 한 화면.
- * 맨 위 이번 주 카드(일지 + 지난 주 피드백), 달력(컨디션, 실제 시간, 마무리 표시, 한 주 칸), 고른 날(주) 패널.
+ * 맨 위 이번 주 카드(일지 + 같은 주 AI 피드백), 달력(컨디션, 실제 시간, 마무리 표시, 한 주 칸), 고른 날(주) 패널.
  */
 export default function LogPage() {
   const [params, setParams] = useSearchParams()
@@ -268,7 +269,7 @@ function DayPanel({ date, log, onWrite, onClose }: { date: string; log: DailyLog
   )
 }
 
-/** 고른 주: 그 주 일지 */
+/** 고른 주: 그 주 일지와 같은 주 AI 피드백(9-1, 2026-10-26) */
 function WeekPanel({ monday, journal, onClose }: { monday: string; journal: WeeklyJournalBrief | undefined; onClose: () => void }) {
   const items: [string, string | null][] = journal
     ? [
@@ -278,6 +279,7 @@ function WeekPanel({ monday, journal, onClose }: { monday: string; journal: Week
       ]
     : []
   return (
+    <>
     <div className="card log-panel">
       <img src={bookIllust} alt="" width={44} height={44} />
       <div className="log-panel-main">
@@ -303,5 +305,7 @@ function WeekPanel({ monday, journal, onClose }: { monday: string; journal: Week
         )}
       </div>
     </div>
+    {journal && <WeeklyFeedbackCard weekStart={monday} />}
+    </>
   )
 }

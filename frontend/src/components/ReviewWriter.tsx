@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { errorMessage } from '../api/client'
 import { getWeeklyJournal, saveWeeklyJournal, type WeeklyJournal } from '../api/reviews'
 import { journalDue } from '../pages/plan/planData'
-import { mondayOf, shiftDate, todaySeoul, weekLabel } from '../utils/date'
+import { mondayOf, todaySeoul, weekLabel } from '../utils/date'
 import { refreshReminders } from '../utils/reminders'
 import ReviewCard from './ReviewCard'
 import WeeklyFeedbackCard from './WeeklyFeedbackCard'
@@ -60,7 +60,8 @@ export default function ReviewWriter({ onSaved }: { onSaved: () => void }) {
           onSave={(v) => save(() => saveWeeklyJournal(monday, { good: v.good, bad: v.bad, nextAction: v.nextAction }))}
         />
       )}
-      <WeeklyFeedbackCard weekStart={shiftDate(monday, -7)} />
+      {/* 일지와 같은 주. 일지를 저장하면 다시 읽어 받을 수 있는지 갱신한다(9-1, 2026-10-26) */}
+      <WeeklyFeedbackCard key={`${monday}|${journal?.updatedAt}`} weekStart={monday} />
     </div>
   )
 }

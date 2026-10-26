@@ -58,10 +58,14 @@ data class AiFeedbackState(val count: Int, val maxCount: Int, val blocked: AiFee
 enum class AiFeedbackBlock {
     /** ANTHROPIC_API_KEY가 없다 */
     UNAVAILABLE,
-    /** 아직 끝나지 않은 주 */
-    NOT_ENDED,
-    /** 그 주 실제 기록이 2시간 미만 */
+    /** 아직 시작하지 않은 주 */
+    NOT_STARTED,
+    /** 그 주 일지를 아직 쓰지 않았다 */
+    NO_JOURNAL,
+    /** 그 주 실제 기록이 1시간 미만 */
     TOO_LITTLE,
+    /** 오늘 이미 받았다(하루 1회) */
+    TODAY_DONE,
     /** 한 주 최대 횟수를 다 썼다 */
     LIMIT,
 }

@@ -55,7 +55,7 @@ class FakeFeedbackClientConfig {
     fun fakeFeedbackClient() = FakeFeedbackClient()
 }
 
-/** AI 주간 피드백(docs/design.md 9-1): 동의, 끝난 주, 2시간, 주 2회, 보내는 내용, 말투 거르기 */
+/** AI 주간 피드백(docs/design.md 9-1, 2026-10-26 변경): 동의, 일지, 1시간, 하루 1회와 주 3회, 진행 중인 주, 보내는 내용, 말투 거르기 */
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
@@ -75,13 +75,15 @@ class WeeklyFeedbackServiceTest(
     private fun at(h: Int) = OffsetDateTime.of(day.atTime(h, 0), ZoneOffset.ofHours(9))
 
     /** 목요일에 기록하고, 다음 주 화요일(주가 끝난 뒤)로 시계를 옮긴다 */
-    private fun studied(hours: Int) {
+    private fun studied(hours: Int, minutes: Int = 0) {
         clock.instant = Instant.parse("2026-10-22T15:00:00Z")
         val goal = goalService.create(GoalRequest("기술 면접 준비", "#ec4899", icon = "tech-interview"))
         val todo = dailyGoalService.create(DailyGoalCreateRequest(goal.id, day, "기술 면접 준비"))
-        actualLogService.create(ActualLogRequest(day, at(9), at(9 + hours), ActualKind.GOAL, dailyGoalId = todo.id, title = "운영체제 질문"))
+        actualLogService.create(ActualLogRequest(day, at(9), at(9 + hours).plusMinutes(minutes.toLong()), ActualKind.GOAL, dailyGoalId = todo.id, title = "운영체제 질문"))
         clock.instant = Instant.parse("2026-10-27T01:00:00Z")
     }
+
+    private fun wroteJournal() = reviewService.saveJournal(monday, WeeklyJournalRequest(good = "운영체제 정리", bad = "주말에 못 함"))
 
     @BeforeEach
     fun setUp() {
@@ -98,19 +100,38 @@ class WeeklyFeedbackServiceTest(
     }
 
     @Test
-    fun `끝난 주에 기록이 2시간 넘으면 만들고 주 2회까지만 받는다`() {
+    fun `일지를 쓰고 기록이 1시간 넘으면 만들고 하루 1회, 주 3회까지 받는다`() {
         userService.setAiConsent(true)
         studied(3)
-        reviewService.saveJournal(monday, WeeklyJournalRequest(good = "운영체제 정리", bad = "주말에 못 함"))
+        wroteJournal()
 
         val first = service.create(monday)
         assertEquals(1, first.aiFeedback.count)
-        assertNull(first.aiFeedback.blocked)
+        assertEquals(AiFeedbackBlock.TODAY_DONE, first.aiFeedback.blocked)
         assertContains(first.aiSummary!!, "평일 저녁")
+        assertEquals("AI_TODAY_DONE", assertThrows<BusinessRuleException> { service.create(monday) }.code)
 
-        val second = service.create(monday)
-        assertEquals(AiFeedbackBlock.LIMIT, second.aiFeedback.blocked)
+        clock.instant = Instant.parse("2026-10-28T01:00:00Z")
+        assertNull(reviewService.getJournal(monday).aiFeedback.blocked)
+        service.create(monday)
+        clock.instant = Instant.parse("2026-10-29T01:00:00Z")
+        val third = service.create(monday)
+        assertEquals(3, third.aiFeedback.count)
+        assertEquals(AiFeedbackBlock.LIMIT, third.aiFeedback.blocked)
+        clock.instant = Instant.parse("2026-10-30T01:00:00Z")
         assertEquals("AI_LIMIT", assertThrows<BusinessRuleException> { service.create(monday) }.code)
+    }
+
+    @Test
+    fun `진행 중인 이번 주도 받을 수 있고 진행 중이라고 알린다`() {
+        userService.setAiConsent(true)
+        studied(3)
+        wroteJournal()
+        clock.instant = Instant.parse("2026-10-23T01:00:00Z") // 금요일, 그 주 안
+
+        val result = service.create(monday)
+        assertEquals(1, result.aiFeedback.count)
+        assertContains(client.inputs.single(), "진행 중(5일째)")
     }
 
     @Test
@@ -119,6 +140,7 @@ class WeeklyFeedbackServiceTest(
         studied(3)
         reviewService.saveJournal(monday, WeeklyJournalRequest(good = "운영체제 정리"))
         service.create(monday)
+        assertContains(client.inputs.single(), "끝남")
 
         val input = client.inputs.single()
         assertContains(input, "기술 면접 준비")
@@ -129,11 +151,14 @@ class WeeklyFeedbackServiceTest(
     }
 
     @Test
-    fun `아직 끝나지 않은 주, 2시간 미만, 키가 없으면 막는다`() {
+    fun `일지가 없거나, 1시간 미만이거나, 시작 전 주이거나, 키가 없으면 막는다`() {
         userService.setAiConsent(true)
-        studied(1)
+        studied(0, minutes = 50)
+        assertEquals(AiFeedbackBlock.NO_JOURNAL, reviewService.getJournal(monday).aiFeedback.blocked)
+        assertEquals("AI_NO_JOURNAL", assertThrows<BusinessRuleException> { service.create(monday) }.code)
+        wroteJournal()
         assertEquals(AiFeedbackBlock.TOO_LITTLE, reviewService.getJournal(monday).aiFeedback.blocked)
-        assertEquals(AiFeedbackBlock.NOT_ENDED, reviewService.getJournal(monday.plusWeeks(1)).aiFeedback.blocked)
+        assertEquals(AiFeedbackBlock.NOT_STARTED, reviewService.getJournal(monday.plusWeeks(2)).aiFeedback.blocked)
         client.available = false
         assertEquals(AiFeedbackBlock.UNAVAILABLE, reviewService.getJournal(monday).aiFeedback.blocked)
         assertTrue(client.inputs.isEmpty())
@@ -143,6 +168,7 @@ class WeeklyFeedbackServiceTest(
     fun `중간 점은 지우고 없는 숫자가 나오면 한 번 다시 만든다`() {
         userService.setAiConsent(true)
         studied(3)
+        wroteJournal()
         client.answers.addAll(
             listOf(
                 WeeklyFeedback("이번 주 9시간 공부했어요", "꾸준했어요", listOf("저녁 공부")),

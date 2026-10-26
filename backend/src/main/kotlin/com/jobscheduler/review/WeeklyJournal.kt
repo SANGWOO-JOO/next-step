@@ -21,8 +21,10 @@ class WeeklyJournal(
     var nextAction: String? = null,
     /** AI 주간 피드백(JSON: summary, good, suggestions). docs/design.md 9-1 */
     var aiSummary: String? = null,
-    /** 이 주에 피드백을 만든 횟수. 처음 1회 + 한 번 더 1회 */
+    /** 이 주에 피드백을 만든 횟수. 한 주 최대 3회 */
     var aiFeedbackCount: Int = 0,
+    /** 마지막으로 피드백을 만든 시각. 하루 1회 제한에 쓴다 */
+    var aiFeedbackAt: OffsetDateTime? = null,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
