@@ -135,9 +135,15 @@ Spring Boot → Google OAuth (로그인 확인), Anthropic Claude (주간 피드
 - EBS 스냅샷은 선택(주 1회).
 
 ## 8. 롤백
+- 배포 스크립트 `deploy/deploy.sh`는 헬스 체크가 3분 안에 UP이 안 되면 직전 jar(`app.jar.prev`)로 스스로 되돌린다.
 - S3 `releases/`에 최근 jar 5개를 남긴다. SSM 명령으로 이전 jar를 지정해 다시 켠다.
 - 프론트는 이전 Release의 빌드를 S3에 다시 올리고 무효화.
 - DB 마이그레이션은 되돌리지 않는다. 그래서 마이그레이션은 이전 버전 코드와도 같이 돌 수 있게(열 추가 먼저, 지우기는 다음 릴리즈) 쓴다.
+
+### 스택 갱신 주의 (2026-10-26)
+- `next-step-infra`는 처음 만들 때 AMI를 "최신 Amazon Linux"로 읽었다. 그래서 스택을 갱신하면 CloudFormation이 `AppInstance`를 "교체 가능(Conditional)"으로 본다. 서버가 교체되면 EC2 안 PostgreSQL 데이터가 사라진다.
+- 템플릿은 지금 서버 AMI로 고정했지만(`AppImageId`), 스택에는 아직 반영하지 않았다. **스택을 갱신할 때는 반드시 변경 세트를 먼저 보고, `AppInstance`가 교체 대상이면 백업을 받은 뒤 진행한다.**
+- 배포 역할의 신뢰 정책은 GitHub의 새 OIDC 형식 때문에 IAM에서 직접 고쳤다(템플릿에도 같은 내용 반영). 스택과 실제 값이 잠시 다르다(드리프트). 분석: `docs/troubleshooting/2026-10-26-github-oidc-immutable-sub.md`
 
 ## 9. 작업 순서
 | 순서 | 작업 | AWS 필요 | 상태 |
@@ -148,9 +154,9 @@ Spring Boot → Google OAuth (로그인 확인), Anthropic Claude (주간 피드
 | 3 | CI 워크플로(`ci.yml`) | 아니요 | 완료 2026-10-25 |
 | 4 | 릴리즈 워크플로(`release.yml`), 배포 단계는 꺼 둔 채 Release 생성까지 | 아니요 | 완료 2026-10-25 |
 | 5 | 운영 설정(`application-prod.yml`, Secure 쿠키, 로그), Docker Compose 운영 파일 | 아니요 | 완료 2026-10-25 |
-| 6 | AWS 인프라(EC2, S3, CloudFront, ACM, Route 53 DNS, SSM, OIDC 역할, CloudWatch) | 예 | 배포 완료(SNS 경보 메일 확인 대기, 앱 미배포) |
+| 6 | AWS 인프라(EC2, S3, CloudFront, ACM, Route 53 DNS, SSM, OIDC 역할, CloudWatch) | 예 | 완료(SNS 경보 메일 확인 대기) |
 | 7 | 구글 OAuth 운영 도메인 추가와 프로덕션 게시, Anthropic 키 설정 | 예 | Google 운영 클라이언트, 기존 Anthropic 키의 SSM 저장과 서버 연결, 도메인 소유권 확인 완료. 프론트 배포 후 공개 게시 대기 |
-| 8 | 배포 단계 켜고 첫 배포 `v0.1.0`, 백업 복구 연습 | 예 | |
+| 8 | 배포 단계 켜고 첫 배포 `v0.1.0`, 백업 복구 연습 | 예 | 첫 배포와 복구 연습 완료 2026-10-26. 실제 구글 로그인, 재시작 후 로그인 유지 확인 대기 |
 
 직접 해 주셔야 할 것: GitHub 저장소 만들기, AWS 계정과 결제, Porkbun에 Route 53 네임서버 입력, 구글 OAuth 콘솔 설정.
 

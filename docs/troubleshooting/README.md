@@ -11,5 +11,5 @@
 | 2026-10-25 | [다른 Gradle 데몬이 캐시를 잡아 테스트가 돌지 않음](2026-10-25-gradle-cache-lock.md) | 개발 환경 |
 | 2026-10-23~24 | [툴팁 문제 모음](2026-10-25-tooltip-issues.md) | 프론트엔드 CSS |
 | 2026-10-25 | [CloudFormation에서 CloudFront 배포가 실패함](2026-10-25-cloudformation-cloudfront-policy.md) | AWS 인프라 |
-
-- [회고 작성 팝업 단순화](2026-10-26-daily-reflection-dialog.md)
+| 2026-10-26 | [첫 배포에서 GitHub OIDC 역할을 받지 못함](2026-10-26-github-oidc-immutable-sub.md) | 배포 |
+| 2026-10-26 | [회고 작성 팝업 단순화](2026-10-26-daily-reflection-dialog.md) | 프론트엔드 |

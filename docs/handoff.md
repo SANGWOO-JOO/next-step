@@ -14,7 +14,14 @@
   - 0 인덱스, 1 세션과 CSRF, 2 공개 저장소, 3 `ci.yml`, 4 `release.yml`(태그 `v*` → 검사 → jar와 웹 zip → GitHub Release, 배포 단계는 아직 꺼짐), 5 운영 설정(`application-prod.yml`, `deploy/docker-compose.prod.yml`, `deploy/backup.sh`) 완료
 - 트러블 슈팅 기록 6건: `docs/troubleshooting/README.md`
 
-## 지금 하는 일: 배포 7단계(운영 계정 설정)
+## 지금 하는 일: 배포 8단계 마무리(첫 배포 완료, 2026-10-26)
+- `v0.1.0`을 https://nextstep-plan.work 에 배포했다. 마이그레이션 31개 적용, prod 프로필, Secure 쿠키, 구글 콜백 주소가 운영 도메인인 것을 확인했다. 배포 직후 메모리 1.84GB 중 약 0.9GB 여유.
+- 백업 복구 연습 완료: 새 백업을 임시 PostgreSQL 컨테이너에 복구해 테이블 17개, 마이그레이션 31개가 운영과 같았다. 운영 DB는 건드리지 않았다.
+- 남은 확인: 사용자의 실제 구글 로그인, 앱 재시작 후 로그인 유지, 주요 화면과 주간 피드백, 구글 OAuth 앱 프로덕션 게시, SNS 경보 메일 구독 확인.
+- 배포 방법: `vX.Y.Z` 태그 push → release.yml이 검사, Release, 배포까지 한다. 계정별 값은 GitHub 저장소 Variables(`AWS_DEPLOY_ROLE_ARN`, `RELEASE_BUCKET`, `FRONTEND_BUCKET`, `CLOUDFRONT_DISTRIBUTION_ID`, `INSTANCE_ID`, `APP_DOMAIN`)에 있다.
+- **스택 갱신 주의:** `docs/deploy.md` "스택 갱신 주의" 참고. 변경 세트에서 `AppInstance` 교체 여부를 꼭 본다.
+
+## 이전 기록: 배포 7단계(운영 계정 설정)
 **AWS 계정과 도메인 준비는 끝났다.** (계정 번호, 포털 주소 같은 구체 값은 공개 저장소에 두지 않고 로컬 `docs/handoff.private.md`에 있다. git에 올라가지 않는다.)
 - 루트 MFA(패스키), 월 $25 예산 알림, IAM Identity Center 작업용 관리자(AdministratorAccess), CLI 프로필 `next-step`(SSO)
 - 이 계정은 AWS Organizations 관리 계정이고, next-step 리소스도 이 계정에 둔다(사용자 결정, 단순함 우선).
@@ -43,7 +50,7 @@
    - Google 게시 상태는 아직 테스트다. 공개 홈페이지와 개인정보 처리방침 확인이 남았다. 현재 운영 웹은 빈 페이지이므로 공개 게시 전에 8단계 프론트 배포와 순서를 맞춘다.
    - Anthropic은 기존 개발용 키를 그대로 쓰기로 했다(2026-10-25 사용자 결정). 로컬 `ANTHROPIC_API_KEY`를 서울 리전 SSM `/nextstep/prod/anthropic-api-key`에 `SecureString`으로 저장했다. 새 키 발급, 크레딧 구매, 자동 충전 설정 변경은 하지 않았다. 개발과 운영은 같은 키의 사용량과 한도를 공유한다.
    - EC2에서 SSM의 Google 값과 Anthropic 키를 받아 운영 `.env`에 연결했다(권한 0600). Compose 설정 검사가 통과했고 실행 서비스는 DB뿐이다. 앱 시작은 8단계에서 한다. Google 실제 로그인과 Anthropic API 호출은 아직 확인하지 않았다.
-5. 8단계: `release.yml` 배포 단계 켜기, 첫 배포 `v0.1.0`, 실제 구글 로그인과 재시작 후 로그인 유지 확인, 백업 복구 연습
+5. 8단계: 배포 단계 켜기, 첫 배포 `v0.1.0`, 백업 복구 연습 완료(2026-10-26). 실제 구글 로그인과 재시작 후 로그인 유지 확인만 남음
 
 ## 미뤄 둔 것
 - 루트 계정에 휴대폰 인증 앱을 두 번째 MFA로 추가
