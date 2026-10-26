@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { errorMessage } from '../api/client'
 import { completeOnboarding, skipOnboarding, type Me, type Purpose } from '../api/me'
-import studentArt from '../assets/illust/mascot-student.svg'
-import workerArt from '../assets/illust/mascot-worker.svg'
+import studentArt from '../assets/illust/mascot-student-v2.png'
+import workerArt from '../assets/illust/mascot-worker-v2.png'
 import { autoGoalIcon } from '../goalIcons'
 import { availableColors } from '../utils/categoryColors'
 import { addMonths, mondayOf, seoulIso, shiftDate, todaySeoul } from '../utils/date'
@@ -24,7 +24,7 @@ const PURPOSES: { id: Purpose; title: string; desc: string; goals: string[] }[] 
   },
 ]
 
-/** 목적 카드의 스텝이(손에 든 이력서·노트북이 상황을 말해 준다) */
+/** 목적 카드의 스텝이(손에 든 책과 노트북으로 상황을 보여 준다) */
 const ART: Record<Purpose, { mascot: string }> = {
   JOB_SEEKER: { mascot: studentArt },
   CAREER_CHANGER: { mascot: workerArt },

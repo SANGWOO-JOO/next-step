@@ -21,3 +21,7 @@ backups/
 docs/brand/mascot-brief/
 deploy/*.jar
 docs/handoff.private.md
+
+# 랜딩 시안 미리보기(로컬 검토용, src/assets를 상대 경로로 씀)
+frontend/landing-preview.html
+frontend/landing-flow-preview.html
