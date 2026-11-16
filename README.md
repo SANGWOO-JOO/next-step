@@ -54,6 +54,7 @@
 <img src="docs/images/architecture.png" alt="시스템 아키텍처. 사용자가 CloudFront를 거쳐 S3 웹과 EC2의 Spring Boot, PostgreSQL에 닿고, EC2는 Google OAuth와 Anthropic, SSM, 백업 S3, CloudWatch를 쓴다. GitHub Actions가 OIDC로 배포한다">
 
 원본: [docs/diagrams/architecture.drawio](docs/diagrams/architecture.drawio) (draw.io에서 열기)
+아이콘: AWS Architecture Icons(draw.io 기본 제공), [Simple Icons](https://simpleicons.org)(CC0). 각 로고의 상표는 해당 회사에 있습니다.
 
 - **도메인 하나로 묶기:** CloudFront가 `/`는 S3(React 빌드)로, `/api`, `/oauth2`, `/login`, `/logout`은 EC2로 보냅니다. 같은 출처라 세션 쿠키와 CSRF, CORS 문제가 없습니다.
 - **서버 한 대:** EC2 t4g.small 한 대에 Docker Compose로 Spring Boot와 PostgreSQL을 둡니다. 매일 03:00 `pg_dump`를 S3에 7일 보관하고, 복구 연습까지 했습니다.
