@@ -95,6 +95,8 @@ jobs:
         run: gh release create "$GITHUB_REF_NAME" out/* --title "$GITHUB_REF_NAME" --notes-file notes.md
 
   deploy:
+    # 2026-11-18 비용 문제로 AWS 운영을 내렸다. 다시 켜면 저장소 변수 DEPLOY_ENABLED=true
+    if: vars.DEPLOY_ENABLED == 'true'
     name: 운영 배포
     needs: release
     runs-on: ubuntu-latest

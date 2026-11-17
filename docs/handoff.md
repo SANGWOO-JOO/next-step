@@ -2,6 +2,13 @@
 
 다른 에이전트나 다음 세션이 바로 이어서 작업할 수 있게 지금 상태를 적는다. 새 작업을 끝내면 이 파일도 고친다.
 
+## 운영 중지 (2026-11-18)
+- 비용 문제로 AWS 운영을 내렸다. `next-step-infra`(EC2, 고정 IP, CloudFront, VPC, S3 3개, 알람, GitHub 배포 역할)와 `next-step-cloudfront-monitoring`(us-east-1) 스택을 지웠다.
+- 남긴 것: `next-step-dns`(Route 53 호스팅 영역, 월 $0.5, Google 인증 TXT 포함), `next-step-acm`(인증서), SSM Parameter Store 비밀값. 도메인은 Porkbun에 2027-10-25까지 등록돼 있다.
+- 마지막 DB 백업: 사용자 Mac `~/next-step-backup/jobscheduler-20261118-0004.dump` (pg_dump -Fc, 테이블 데이터 17개 확인). 저장소에는 넣지 않는다.
+- `release.yml`의 deploy 작업은 저장소 변수 `DEPLOY_ENABLED=true`일 때만 돈다. 다시 올리려면 `infra.yml`로 스택을 만들고, 새 출력값으로 저장소 Variables를 갱신하고, 백업을 `pg_restore`한 뒤 변수를 켜고 태그를 push한다.
+- 같은 계정의 이번 달 비용 대부분은 Next Step과 무관한 Bedrock(Claude Haiku 4.5)과 gyeol 리소스다.
+
 ## 프로젝트
 - **Next Step**: 취업 준비생과 이직 준비생을 위한 공부 계획, 기록, 돌아보기 도구(여러 사용자).
 - 저장소: https://github.com/SANGWOO-JOO/next-step (공개, MIT, Secret Scanning과 Push Protection 켜짐)
