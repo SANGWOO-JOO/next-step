@@ -2,8 +2,6 @@
 
 [![CI](https://github.com/SANGWOO-JOO/next-step/actions/workflows/ci.yml/badge.svg)](https://github.com/SANGWOO-JOO/next-step/actions/workflows/ci.yml)
 
-> A study planner for job seekers and career changers: set goals, plan your week, record what you actually did, and review it with AI feedback.
-
 공부 계획은 세워도, 실제로 어디에 시간을 썼는지와 다음 주에 무엇을 바꿀지는 따로 챙기기 어렵습니다. **Next Step은 목표, 주간 시간표, 실제 기록, 회고를 한곳에 묶어 계획과 실제를 나란히 보여 주는 공부 도구입니다.** 이직을 준비하며 직접 쓰려고 시작했고, 기획, 디자인, 백엔드, 프론트엔드, AWS 배포까지 혼자 만들었습니다.
 
 **백엔드에서 다룬 것:** Hibernate `@TenantId`로 사용자별 데이터 분리, PostgreSQL에 저장하는 서버 세션과 CSRF 토큰, 서버가 집계한 숫자만 넘기는 AI 주간 피드백(Claude Haiku 5.5), GitHub Actions OIDC 태그 배포와 자동 롤백.
